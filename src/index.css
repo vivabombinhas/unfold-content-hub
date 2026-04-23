@@ -2,95 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* ==========================================================
+   Estética Batel · Design System
+   Paleta editorial — Preto, Verde profundo, Dourado, Creme
+   ========================================================== */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Brand surfaces */
+    --bg-black: 0 0% 4%;            /* #0A0A0A */
+    --bg-graphite: 240 3% 11%;      /* #1A1A1C */
+    --bg-green: 168 59% 9%;         /* #0A2620 */
+    --bg-green-2: 168 59% 6%;       /* #071A14 */
+    --bg-cream: 38 47% 92%;         /* #F5EEE1 */
+    --bg-cream-2: 38 38% 87%;       /* #EBE3D2 */
+    --bg-bordeaux: 330 33% 13%;     /* #2A1520 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Brand accents */
+    --gold: 41 49% 58%;             /* #C9A961 */
+    --gold-soft: 39 36% 54%;        /* #B8985A */
+    --gold-deep: 39 49% 38%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Text */
+    --text-light: 42 33% 97%;       /* #FAF8F3 */
+    --text-soft: 41 16% 79%;        /* #D4CFC0 */
+    --text-muted: 42 9% 57%;        /* #9B9486 */
+    --text-dark: 168 59% 9%;
+    --text-dark-2: 0 0% 23%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Semantic — dark first (default page) */
+    --background: var(--bg-black);
+    --foreground: var(--text-light);
+    --card: var(--bg-graphite);
+    --card-foreground: var(--text-light);
+    --popover: var(--bg-green);
+    --popover-foreground: var(--text-light);
+    --primary: var(--gold);
+    --primary-foreground: var(--bg-green);
+    --secondary: var(--bg-green);
+    --secondary-foreground: var(--text-light);
+    --muted: 0 0% 15%;
+    --muted-foreground: var(--text-muted);
+    --accent: var(--gold);
+    --accent-foreground: var(--bg-green);
+    --destructive: 0 62% 45%;
+    --destructive-foreground: var(--text-light);
+    --border: 41 49% 58% / 0.18;
+    --input: 41 49% 58% / 0.25;
+    --ring: var(--gold);
+    --radius: 0.25rem;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Type scale */
+    --h1: clamp(44px, 6.4vw, 80px);
+    --h2: clamp(32px, 4.4vw, 52px);
+    --h3: clamp(22px, 2.2vw, 28px);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Motion */
+    --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+    --shadow-soft: 0 20px 60px hsl(0 0% 0% / 0.25);
+    --shadow-card: 0 8px 24px hsl(0 0% 0% / 0.08);
+    --shadow-gold: 0 10px 40px -10px hsl(var(--gold) / 0.35);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: var(--bg-green);
+    --sidebar-foreground: var(--text-light);
+    --sidebar-primary: var(--gold);
+    --sidebar-primary-foreground: var(--bg-green);
+    --sidebar-accent: var(--bg-green-2);
+    --sidebar-accent-foreground: var(--text-light);
+    --sidebar-border: 41 49% 58% / 0.15;
+    --sidebar-ring: var(--gold);
   }
 }
 
@@ -99,7 +79,173 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-padding-top: 96px;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    overflow-x: hidden;
   }
+
+  /* Subtle film grain overlay across entire site */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.022;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.8 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  ::selection {
+    background: hsl(var(--gold) / 0.4);
+    color: hsl(var(--text-light));
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+  }
+  .font-body {
+    font-family: 'Montserrat', -apple-system, sans-serif;
+  }
+
+  .h-display-1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: var(--h1);
+    line-height: 0.98;
+    letter-spacing: -0.01em;
+  }
+  .h-display-2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: var(--h2);
+    line-height: 1.05;
+    letter-spacing: -0.005em;
+  }
+  .h-display-3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: var(--h3);
+    line-height: 1.2;
+  }
+  .h-display-1 em,
+  .h-display-2 em,
+  .h-display-3 em {
+    font-style: italic;
+    color: hsl(var(--gold));
+  }
+
+  .eyebrow {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: hsl(var(--gold));
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 28px;
+    height: 1px;
+    background: hsl(var(--gold));
+  }
+
+  .gold-rule {
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: hsl(var(--gold));
+  }
+
+  .container-editorial {
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-left: clamp(20px, 5vw, 72px);
+    padding-right: clamp(20px, 5vw, 72px);
+  }
+
+  .section-pad {
+    padding-top: clamp(64px, 10vw, 120px);
+    padding-bottom: clamp(64px, 10vw, 120px);
+  }
+
+  /* Premium custom scrollbars inside side-sheets */
+  .scrollbar-gold::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-gold::-webkit-scrollbar-track {
+    background: hsl(var(--bg-green-2));
+  }
+  .scrollbar-gold::-webkit-scrollbar-thumb {
+    background: hsl(var(--gold) / 0.4);
+    border-radius: 3px;
+  }
+  .scrollbar-gold::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--gold) / 0.7);
+  }
+
+  /* Hide scrollbar but keep scroll for horizontal carousels */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  /* Animated gold rule entrance */
+  .gold-rule-animated {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1.2s var(--ease-editorial);
+  }
+  .gold-rule-animated.is-visible {
+    transform: scaleX(1);
+  }
+
+  /* Reveal-on-scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 900ms var(--ease-editorial), transform 900ms var(--ease-editorial);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Keyframes */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes float-medal {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-6px) rotate(-3deg); }
 }
