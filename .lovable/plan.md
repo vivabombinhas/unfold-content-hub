@@ -1,136 +1,204 @@
-# Landing-mãe · Botox Masculino · Clínica Estética Batel
 
-Uma página de venda que parece enxuta, mas carrega 10× mais conteúdo do que aparenta — indexado pelo Google, impecável no mobile, e editável por você sozinho via painel.
+# CRM Admin · Rodada 2A — Base + edição da landing atual
 
----
+Vamos construir a fundação do CRM. Ao final desta rodada você consegue: fazer login, ver a lista de páginas, abrir a landing Botox Masculino no editor, ligar/desligar/reordenar blocos e editar todos os campos estruturados — com sistema de Rascunho/Publicado. **Não inclui ainda**: criar páginas novas, slot HTML cru, IA, biblioteca de mídia. Isso vem nas rodadas 2B e 2C, sobre a mesma base.
 
-## 1. Princípio de UX: "Enxugar sem esconder"
+## 1. O que muda na landing
 
-Três camadas de profundidade, cada uma com um padrão visual diferente — para que repetir a mesma técnica em tudo não vire monotonia.
+A landing pública continua exatamente igual visualmente. A diferença é interna: hoje os textos vivem em `src/data/landing.ts` (hardcoded). A partir de agora, vivem no banco. A página passa a buscar os dados pelo slug (`botox-masculino`) e renderizar bloco a bloco, na ordem que o admin definir, pulando blocos desligados.
 
+Em produção a página renderiza apenas a versão **publicada**. No admin você vê a versão **rascunho** com badge "Pré-visualização".
 
-| Camada                          | Padrão de UX                                                                                           | Usado em                                                                      |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| **Superfície** (sempre visível) | Texto curto, 1 imagem, 1 CTA                                                                           | Hero, promessa, preço-âncora, 6 casos destacados                              |
-| **Expansão editorial**          | Inline expand suave (acordeão refinado, linha dourada, ícone +/−)                                      | FAQ, bullets do método, "o que está incluso"                                  |
-| **Aprofundamento imersivo**     | Side-sheet deslizante da direita (desktop) / bottom-sheet (mobile), com header fixo e conteúdo rolável | Tabela de preço completa, ficha de caso clínico, manifesto longo, vídeo+texto |
+## 2. Filosofia do editor (o que ficou decidido)
 
+- **Híbrido**: cada bloco tem 2 modos — Estruturado (campos prontos) ou HTML custom (sandbox). Nesta rodada construímos só o modo Estruturado; o slot HTML fica preparado na arquitetura mas habilitado na 2B.
+- **Bloco-a-bloco com toggle on/off + drag-to-reorder**. Você não consegue quebrar layout — cada bloco se renderiza no design certo independente da ordem.
+- **Toda página nasce duplicando uma "página-mãe"** (a Botox Masculino vira o template). Você nunca começa do zero. Implementação real do "duplicar" entra na 2B.
 
-**Por que variar:** FAQ merece leitura rápida no lugar; caso clínico merece foco total (fullscreen imersivo); preço precisa caber tabela longa sem tirar o leitor do contexto (side-sheet). O cérebro do leitor percebe como **três gestos diferentes**, não como "mais um acordeão".
+## 3. Estrutura de blocos (a espinha que vai escalar)
 
-**SEO preservado em 100%:** todo o conteúdo "dobrado" renderiza no HTML desde o primeiro load — só é escondido via CSS (`max-height`/`transform`). Google lê tudo. Nada é carregado depois do clique.
+Os 11 blocos da landing atual viram tipos editáveis. Cada um com seus próprios campos:
 
----
+| Bloco | Campos editáveis principais |
+|---|---|
+| `hero` | eyebrow, título (com itálico marcado), parágrafo, CTAs, imagem, caption |
+| `authority_strip` | 4 selos (label + valor) |
+| `manifesto_curto` | eyebrow, citação, autor, texto longo (side-sheet) |
+| `metodo` | passos (título + descrição + detalhe expansível) |
+| `casos` | quais casos exibir (do pool global) + ordem |
+| `preco_ancora` | eyebrow, título, valor, bullets, texto do side-sheet |
+| `depoimentos` | seleciona reviews do pool + ordem |
+| `ai_opinions` | lista de citações de IAs |
+| `equipe_rt` | foto, nome, CRBM, bio, acordeões |
+| `cursos` | lista de cursos/mentorias |
+| `faq` | perguntas (do pool) com toggle "destacada" |
+| `cta_final` | título, parágrafo, 2 CTAs |
+| `footer_compliance` | (global, não por página) |
 
-## 2. Estrutura da página (de cima para baixo)
+Adicionar um bloco novo no futuro = nova entrada no enum + componente de render + componente de edição. A engine não muda.
 
-1. **Breadcrumb + header sticky** (com medalha 30 Anos mini que aparece ao rolar — já está no seu CSS)
-2. **Hero** — título editorial serif + itálico dourado, foto vertical 4:5, medalha flutuante, 2 CTAs (WhatsApp / Avaliação)
-3. **Faixa de autoridade** — "30 anos · desde 1995 · Curitiba · Batel" + 4 selos discretos
-4. **Manifesto curto** (3-4 linhas visíveis) → link "Ler manifesto completo" abre **side-sheet** com texto longo + vídeo opcional
-5. **Promessa / Método em 3 passos** — cards horizontais, cada passo expande inline para detalhes
-6. **Casos clínicos** — vitrine de 6 destaques + botão "Ver biblioteca completa" → abre side-sheet "Biblioteca" com busca, filtro por área, e lista rolável (escala de 6 a 30+ sem redesign). Cada card → abre **ficha fullscreen imersiva** com slider antes/depois, notas do Dr., dosagem, tempo
-7. **Preço-âncora** — card único "A partir de R$ X · inclui Y, Z" + botão "Entender o preço" → abre side-sheet **com slot de HTML custom** (ver item 4 abaixo)
-8. **Depoimentos** — carrossel editorial curto (3 visíveis, arrasta)
-9. **FAQ** — 5 perguntas visíveis + botão "Ver todas" expande o restante inline (indexado desde o load)
-10. **CTA final** — bloco verde escuro, medalha grande, 2 botões
-11. **Rodapé** + **FAB WhatsApp desktop** + **bottom-bar mobile** (já definidos no seu CSS)
+## 4. Banco de dados
 
-Blocos marcados como "emocionais no futuro" (manifesto longo, vídeo-carta, história da clínica) ficam prontos no código, mas com **toggle de visibilidade por página** no admin — você liga/desliga por landing sem mexer em código.
+```text
+pages
+  id, slug (único), title, meta_title, meta_description,
+  status ('draft'|'published'), published_at,
+  created_at, updated_at
 
----
+page_blocks
+  id, page_id (fk pages), type (enum), position (int),
+  enabled (bool), mode ('structured'|'html'),  -- 'html' fica para 2B
+  data (jsonb)  -- campos do bloco estruturado
+  html_content (text)  -- usado quando mode='html', null por enquanto
 
-## 3. Mobile impecável (inegociável)
+cases (pool global)
+  id, slug, area, age, cover_url, gallery (jsonb),
+  before_url, after_url, notes, dosage, duration, toxin,
+  created_at
 
-- Todo side-sheet vira **bottom-sheet** que sobe do rodapé com handle de arrastar
-- Ficha de caso fullscreen em mobile ocupa 100% da tela, slider antes/depois com toque
-- Bottom-bar fixa (medalha + CTA WhatsApp) sempre presente, com auto-hide ao rolar pra baixo (já no seu CSS)
-- Tipografia responsiva via `clamp()` (já no seu CSS)
-- Imagens em `loading="lazy"` + `srcset` para 1x/2x
-- Zero carrossel automático; tudo por toque/swipe
-- Teste obrigatório em 360px, 390px, 414px antes de entregar
+case_page_overrides (override por página: ordem, destaque, esconder)
+  id, page_id, case_id, position, featured (bool), hidden (bool)
 
----
+faqs (pool global)
+  id, question, answer, tags (text[]), position
 
-## 4. Slot de HTML custom (a grande sacada pro seu fluxo)
+reviews (pool global)
+  id, name, rating, date_label, text, position
 
-Você disse: *"e se para cada página eu puder colar um HTML diferente na seção de preço?"* — **sim, totalmente possível e é a solução certa.**
+ai_opinions
+  id, ai_name, company, quote, position
 
-Como vai funcionar no painel admin:
+courses
+  id, title, audience, duration, description, position
 
-- Cada seção "aprofundável" (preço, método, manifesto, depoimentos) tem **dois modos**:
-  - **Modo estruturado:** você preenche campos (título, bullets, valores) → o site renderiza com o design padrão
-  - **Modo HTML custom:** você cola um bloco de HTML/CSS próprio (aquele que você fez no Claude) → o site renderiza exatamente aquilo dentro do side-sheet, com sandbox de estilo (o CSS que você colar não vaza pro resto do site)
-- Suporte a **vídeo embedado** (YouTube/Vimeo), imagens, tabelas, botões — qualquer coisa que caiba em HTML
-- Para PDFs: upload do PDF + viewer embutido no side-sheet (ou botão de download)
+site_settings (linha única)
+  whatsapp, phone, address, cnpj, alvara, rt_name, rt_register, ...
 
-Resultado: numa landing você tem tabela de preço simples, noutra tem calculadora de depilação, noutra tem vídeo+texto. **Mesma engine, conteúdo radicalmente diferente por página.**
+user_roles  -- separado do profiles, conforme regra de segurança
+  id, user_id (fk auth.users), role ('admin')
+```
 
----
+**RLS**: leitura pública de páginas/blocos onde `status='published'` (ou via override quando logado como admin). Escrita só para `has_role(auth.uid(), 'admin')`. Pools globais (cases, faqs, etc) leitura pública, escrita admin.
 
-## 5. Autonomia — Lovable Cloud + painel admin `/admin`
+## 5. Sistema de Rascunho / Publicado
 
-**Banco de dados** (tabelas que você edita sozinho):
+Por simplicidade nesta rodada: cada `page` tem um `status` e um snapshot publicado embutido. Modelo:
 
-- `paginas` — slug, título, SEO, quais blocos exibir e em que ordem
-- `casos_clinicos` — foto antes, foto depois, área, idade, dosagem, notas, destaque (sim/não)
-- `faqs` — pergunta, resposta, tags, ordem
-- `precos` — área, toxina, valor, observação, vinculado a página
-- `depoimentos` — nome, texto, foto, vídeo opcional
-- `blocos_custom` — página + seção + HTML cru (para o slot do item 4)
-- `configuracoes` — CTAs globais, WhatsApp, telefones
+- Você edita → salva no `page_blocks` correntes (rascunho vivo).
+- Clica **Publicar** → copiamos snapshot dos blocos para o campo `published_snapshot` (jsonb) na linha `pages` + setamos `published_at`.
+- Site público lê do `published_snapshot`. Admin lê do estado vivo.
+- Botão **Reverter para versão publicada** desfaz mudanças não publicadas.
 
-**Painel `/admin**` (protegido por login):
+Vantagem: simples, sem tabela de versões. Quando você quiser histórico de versões (rodada futura), adicionamos tabela `page_versions` sem quebrar nada.
 
-- Lista de cada tabela com buscar/filtrar/ordenar
-- Formulário de criação/edição com upload de imagens (otimização automática) e campo rich-text ou HTML cru
-- Preview antes de publicar
-- Por página: checkboxes "manifesto visível? vídeo visível? depoimentos visível?" — você escolhe o que vai ao ar para cada landing
+## 6. Mídia (decisão híbrida que você pediu)
 
-**Segurança:** autenticação via Lovable Cloud, role `admin` em tabela separada (nunca no perfil), RLS ativado em tudo.
+Todo campo de imagem aceita **dois inputs**:
 
----
+- **Upload** → vai para Supabase Storage no bucket `media` (público), com otimização básica e biblioteca reutilizável.
+- **Cole o link** → URL externa (Google Drive público, Imgur, etc). O sistema valida o formato. Para Drive, fazemos auto-conversão do link `/file/d/ID/view` para o formato `uc?id=ID` que serve a imagem direto.
 
-## 6. Estética — refinamentos sobre o seu CSS
+Bandeira no admin mostra de onde veio cada imagem. Biblioteca central só guarda as que foram upload — links externos ficam só no bloco onde foram usados (não poluem a biblioteca).
 
-Mantenho fielmente: paleta (preto #0A0A0A, verde #0A2620, dourado #C9A961, creme #F5EEE1), Cormorant Garamond + Montserrat, medalha 30 Anos, régua dourada, itálico dourado nos títulos, grão sutil de fundo.
+Nesta rodada 2A construímos só upload simples por bloco + paste de URL. Biblioteca central com busca/galeria entra na 2C.
 
-Refinamentos propostos:
+## 7. Auth
 
-- **Transições entre seções:** alternar fundos (preto → verde escuro → creme → preto) criando ritmo cinematográfico
-- **Micro-animação nos números:** "30 anos", "+X pacientes" contam ao entrar na viewport
-- **Régua dourada animada** como divisor de seção (já tem `scaleX`, vou reaproveitar)
-- **Hover nos cards de caso:** zoom sutil + revelação do nome da área em overlay dourado
-- **Side-sheet:** ao abrir, fundo da página recebe blur leve + vinheta — sensação de "entrar numa pasta"
+- Login só por email/senha (nada de social, sem cadastro público).
+- Você cria seu usuário admin uma vez via Lovable Cloud Users.
+- Primeira vez que você logar, rodamos seed que insere `('seu-uuid', 'admin')` em `user_roles`. Antes disso: tela "Sem permissão".
+- Rota `/admin/*` protegida por guard que checa role. Sem role, redireciona para `/admin/login`.
+- Rota `/admin/login` pública.
 
----
+## 8. Telas do admin (enxutas, foco no essencial)
 
-## 7. SEO & E-E-A-T
+```text
+/admin/login                  Login email+senha
+/admin                        Dashboard simples: lista de páginas + status
+/admin/paginas                Lista de páginas (busca, filtro status)
+/admin/paginas/:slug          Editor da página ← coração do CRM
+/admin/casos                  CRUD do pool de casos clínicos
+/admin/faqs                   CRUD do pool de FAQs
+/admin/depoimentos            CRUD do pool de reviews
+/admin/ia-opinions            CRUD das citações de IAs
+/admin/cursos                 CRUD dos cursos
+/admin/configuracoes          site_settings (WhatsApp, RT, alvará, etc)
+```
 
-- Todo conteúdo renderizado em HTML no primeiro load (casos, FAQ, preços) — mesmo dentro de side-sheets
-- Schema.org: `MedicalClinic`, `MedicalProcedure`, `FAQPage`, `Review` — gerados automaticamente dos dados do banco
-- URLs limpas (`/m/botox/masculino`), meta por página editável no admin
-- `sitemap.xml` gerado dinamicamente a partir das páginas do banco
-- Cada caso clínico tem URL própria opcional (`/casos/[slug]`) caso você queira que rankeie individualmente no futuro
+### Editor da página (a tela mais importante)
 
----
+Layout em 3 colunas:
 
-## 8. Ordem de entrega (o que fica pronto na primeira rodada)
+```text
+┌──────────────┬──────────────────────────┬──────────────┐
+│ Lista de     │ Preview ao vivo          │ Painel do    │
+│ blocos       │ (iframe da landing       │ bloco        │
+│ (drag,       │  com query ?preview=1)   │ selecionado  │
+│ on/off,      │                          │ (campos)     │
+│ +Adicionar)  │                          │              │
+└──────────────┴──────────────────────────┴──────────────┘
+```
 
-**Rodada 1 — Fundação + landing Botox Masculino no ar:**
+- Esquerda: cada bloco vira um card com handle de arrastar, switch on/off, ícone do tipo, título resumido. Clicar seleciona.
+- Centro: iframe da própria landing em modo preview, scrolla até o bloco selecionado e o destaca com outline dourado.
+- Direita: formulário do bloco selecionado. Campos variam por tipo de bloco (definidos via configuração declarativa para facilitar adicionar tipos novos).
+- Topo: nome da página, status badge, botões **Salvar rascunho** / **Publicar** / **Reverter** / **Ver no site**.
 
-1. Design system (cores, fontes, componentes base no estilo do seu CSS)
-2. Landing completa com dados placeholder realistas
-3. Os 3 padrões de aprofundamento funcionando (inline, side-sheet, fullscreen)
-4. Mobile impecável + FAB WhatsApp + bottom-bar
-5. Lovable Cloud configurado, tabelas criadas, RLS ativa
+Mobile: as 3 colunas viram tabs (Blocos / Preview / Editar).
 
-**Rodada 2 (próximo prompt depois de aprovar a rodada 1):**
-6. Painel `/admin` completo com login + CRUD de todas as tabelas
-7. Slot de HTML custom nos side-sheets
-8. Migração do conteúdo placeholder para dados reais seus
-9. Schema.org + sitemap + SEO final
+## 9. Como adicionar/remover blocos numa página (responde sua pergunta direta)
 
-Assim você vê a landing viva primeiro, aprova a estética e a UX, e só depois entramos no painel.
+Exemplo: nova página "Bioestimulador 40+", você não quer Antes-e-Depois.
 
-AGORA eu so quero o visual da LP/site pagina mae ... NAO faz agora o sistema de alimentação eu prefiro AGORA fazer a pagina, ver, discutir, refinar e depois aprovar e DAI fazer o sistema de alimentação, banco de dados etc ... outra pessoa inclusive vai me ajudar se eu precisar aqui ... Pelo que entendi é isso a RODADA 1 correto ... Estamos aprovando UX UI essas "frescuras" para depois ir para essa gestao da pagina... Uma observação muito importante ... APESAR de FEIA a pagina modelo trazia coisas muito importantes, MAPA integrado ajuda o GBP, aqueles DOCs TLCE Contrato, Alvará etc ... importantíssimo nao abro mao nem que seja um link no roda pe ... A parte de Cursos e mentorias (para profissionais) aumenta muiito o EEAT é um estudo técnico e PODE aumentar a conversão pq quem chega la na parte final pode faltar 1 argumento de segurança para ele ... A parte da Profissional (eu achei horrivel em termos de usabilidade, quer dizer nem taaao horrivel) mas nao pode abrir mao de ter no mínimo uma fotinho pequena e algo sobre a Doutora RT e link para outras doutoras  e o negocio de esconder algo é muito importante pq ali eu consigo colocar como a Doutora pensa sobre o procedimento ... mas tem que ser inteligente ... A parte superior então do site é mais emocional, fotos AD, Card de cassos (dentro quero por fotos, nao posso ficar limitado ou NAO colocar) ... o site tem um erro grave ... FALA do CRBM como se fosse algo de autoridade eu nao acho ... Avaliações do gogole com tipo "plugin" que puxa do proprio goole (estrelinhas) fundamental e CABE uma sessão para isso e nao tem problema ele estar na dobra de autoridade e depois em uma sessão separada ... aquela sessaõ de diferença tecnica, numeros que orientam nossa atuação NAO precisa mesmo, isso é informação que cabe em algum lugar de repente num link se preciso no roda-pe (vai depender muito da competicao pelo procedimento) é algo que acrescentaria se depois e 2 meses o projeto parou de subir ... MAS olha caberia uma linha lá embaixo perto do mapa com botoes (quantos eu decidir em cada caso)  sobre isso que abre um PDF em OCR, não seria tão ruim assim, seria tipo: Nosso difetencial técnico ... Na parte da RT pode sim colocar acordeon como ta la para que eu defina quantos são e pq por cada pagina ... tipo pode ser que num procedimento eu queira 2 acordeons mas nunca muitos, ali é sobre especializações, criação de metódo (algo da RT) autoridade person ... TODO rodape tem alvará sanitário, CNPJ, RT (Dra. Daniele Florencio CRBM 8242 PR) endereço, CEP e coisas do tipo bem pequeno ... AQUELE anvisa ESQUECE nao tem nada a ver ... UMA ULTIMA coisa ... PRECISA achar uma forma de ter uma sessão: O que as IAs (talvez use difetenre) falam sobre nós ... Quero mostrar a opinião do claude, gemini, chatgpt, perplexity etc ... creio que caiba numa sessão com rolagem lateral ... Isso é para outras IAs saberem o que as IAs falam de nos sobre aquilo ... e agora voltamos ao prjeto ? 
+1. (rodada 2B) Clica **Duplicar** a partir de Botox Masculino → nasce com todos os 11 blocos.
+2. No bloco "Casos", desliga o switch (ou no bloco "Antes-e-depois" quando ele existir como tipo separado).
+3. O bloco fica no banco mas com `enabled=false` → o site não renderiza, e ele continua disponível caso você mude de ideia.
+4. Pode arrastar a ordem livremente. Pode duplicar um mesmo tipo de bloco se quiser dois acordeões da RT, por exemplo.
+5. Pode adicionar blocos extras de uma biblioteca (botão **+ Adicionar bloco** mostra os tipos disponíveis).
+
+Resultado: liberdade total de composição, sem nunca tocar em código.
+
+## 10. SEO e dados sensíveis
+
+- Cada página tem `meta_title` / `meta_description` editáveis, refletidos no `<head>` via `react-helmet-async` (instalar).
+- Schema.org `MedicalClinic` + `FAQPage` injetados a partir dos dados (entra completo na 2C, mas a estrutura JSON básica já fica nesta rodada).
+- Compliance no rodapé (CNPJ, alvará, RT) vem de `site_settings`, edita uma vez, vale para tudo.
+
+## 11. Stack técnico
+
+- Lovable Cloud (Supabase): Postgres + Auth + Storage.
+- Frontend: rotas novas em React Router, todas as telas admin com shadcn/ui (Form + Sonner + Dialog).
+- Drag-to-reorder: `@dnd-kit/core` + `@dnd-kit/sortable`.
+- Forms: `react-hook-form` + `zod` (já no projeto via shadcn).
+- Server state: TanStack Query (já instalado).
+- `react-helmet-async` para meta tags.
+- Renderização da landing: refator do `Index.tsx` para ler `pages.published_snapshot` por slug e mapear cada bloco do snapshot ao componente de render correspondente. A rota `/` aponta para slug fixo `botox-masculino`. Nas rodadas seguintes adicionamos `/p/:slug`.
+
+## 12. O que entrega esta rodada (checklist)
+
+1. Migration: cria todas as tabelas + RLS + enums + função `has_role`.
+2. Seed: copia o conteúdo atual de `src/data/landing.ts` para o banco como página `botox-masculino` publicada.
+3. Refator do `Index.tsx`: lê do banco, renderiza por blocos. Visualmente idêntico ao atual.
+4. Tela de login + guard de admin + role admin no banco.
+5. Lista de páginas no admin.
+6. Editor da página com 3 colunas, drag-to-reorder, on/off, formulários por tipo de bloco.
+7. CRUD do pool de casos, FAQs, reviews, IAs, cursos, configurações.
+8. Sistema rascunho/publicar/reverter funcionando.
+9. Upload de imagem (Storage) + paste de URL externa.
+
+## 13. O que NÃO entra nesta rodada (fica para 2B/2C)
+
+- Criar página nova / duplicar página
+- Slot HTML custom em qualquer bloco
+- IA bloco-a-bloco ("sugerir com IA")
+- Biblioteca central de mídia com galeria
+- Página `/p/:slug` para múltiplas landings
+- Sitemap dinâmico, schema.org completo, página individual de caso
+- Histórico de versões publicadas
+- 2º colaborador com role separada (sua decisão: admin único)
+
+## 14. Ordem de execução (transparência)
+
+Vou na ordem: migrations → seed → guard de auth → refator do Index para ler do banco (validar que site continua igual) → telas de listagem → editor de página → CRUDs dos pools → configurações → publicar/reverter. Após cada bloco grande, paro e mostro funcionando.
+
+Quando aprovar, começo pelas migrations e auth.
