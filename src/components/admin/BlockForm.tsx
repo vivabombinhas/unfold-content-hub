@@ -253,7 +253,7 @@ function FieldArea({ label, value, onChange, rows = 4 }: { label: string; value:
   );
 }
 
-function CtaField({ label, value, onChange }: { label: string; value: unknown; onChange: (v: { label: string; href?: string; opens_sheet?: boolean }) => void }) {
+function CtaField({ label, value, onChange }: { label: string; value: unknown; onChange: (v: { label?: string; href?: string; opens_sheet?: boolean }) => void }) {
   const v = obj(value) as { label?: string; href?: string; opens_sheet?: boolean };
   return (
     <div className="space-y-1.5">
