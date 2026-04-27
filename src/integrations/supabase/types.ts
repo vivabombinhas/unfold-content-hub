@@ -14,16 +14,419 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_opinions: {
+        Row: {
+          ai_name: string
+          company: string | null
+          created_at: string
+          id: string
+          position: number
+          quote: string
+          updated_at: string
+        }
+        Insert: {
+          ai_name: string
+          company?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          quote: string
+          updated_at?: string
+        }
+        Update: {
+          ai_name?: string
+          company?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          quote?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      case_page_overrides: {
+        Row: {
+          case_id: string
+          created_at: string
+          featured: boolean
+          hidden: boolean
+          id: string
+          page_id: string
+          position: number
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          featured?: boolean
+          hidden?: boolean
+          id?: string
+          page_id: string
+          position?: number
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          featured?: boolean
+          hidden?: boolean
+          id?: string
+          page_id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_page_overrides_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_page_overrides_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cases: {
+        Row: {
+          after_url: string | null
+          age: string | null
+          area: string
+          before_url: string | null
+          cover_url: string | null
+          created_at: string
+          dosage: string | null
+          duration: string | null
+          gallery: Json
+          highlight: boolean
+          id: string
+          notes: string | null
+          position: number
+          slug: string
+          toxin: string | null
+          updated_at: string
+        }
+        Insert: {
+          after_url?: string | null
+          age?: string | null
+          area: string
+          before_url?: string | null
+          cover_url?: string | null
+          created_at?: string
+          dosage?: string | null
+          duration?: string | null
+          gallery?: Json
+          highlight?: boolean
+          id?: string
+          notes?: string | null
+          position?: number
+          slug: string
+          toxin?: string | null
+          updated_at?: string
+        }
+        Update: {
+          after_url?: string | null
+          age?: string | null
+          area?: string
+          before_url?: string | null
+          cover_url?: string | null
+          created_at?: string
+          dosage?: string | null
+          duration?: string | null
+          gallery?: Json
+          highlight?: boolean
+          id?: string
+          notes?: string | null
+          position?: number
+          slug?: string
+          toxin?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          audience: string | null
+          created_at: string
+          description: string | null
+          duration: string | null
+          id: string
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          featured: boolean
+          id: string
+          position: number
+          question: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          featured?: boolean
+          id?: string
+          position?: number
+          question: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          featured?: boolean
+          id?: string
+          position?: number
+          question?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      page_blocks: {
+        Row: {
+          created_at: string
+          data: Json
+          enabled: boolean
+          html_content: string | null
+          id: string
+          mode: Database["public"]["Enums"]["block_mode"]
+          page_id: string
+          position: number
+          type: Database["public"]["Enums"]["block_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          enabled?: boolean
+          html_content?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["block_mode"]
+          page_id: string
+          position?: number
+          type: Database["public"]["Enums"]["block_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          enabled?: boolean
+          html_content?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["block_mode"]
+          page_id?: string
+          position?: number
+          type?: Database["public"]["Enums"]["block_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_blocks_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          created_at: string
+          id: string
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          published_snapshot: Json | null
+          slug: string
+          status: Database["public"]["Enums"]["page_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          published_snapshot?: Json | null
+          slug: string
+          status?: Database["public"]["Enums"]["page_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          published_snapshot?: Json | null
+          slug?: string
+          status?: Database["public"]["Enums"]["page_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          created_at: string
+          date_label: string | null
+          id: string
+          name: string
+          position: number
+          rating: number
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_label?: string | null
+          id?: string
+          name: string
+          position?: number
+          rating?: number
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_label?: string | null
+          id?: string
+          name?: string
+          position?: number
+          rating?: number
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          address: string | null
+          alvara: string | null
+          cep: string | null
+          cnpj: string | null
+          data: Json
+          google_maps_url: string | null
+          id: number
+          phone: string | null
+          rt_name: string | null
+          rt_register: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          alvara?: string | null
+          cep?: string | null
+          cnpj?: string | null
+          data?: Json
+          google_maps_url?: string | null
+          id?: number
+          phone?: string | null
+          rt_name?: string | null
+          rt_register?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          alvara?: string | null
+          cep?: string | null
+          cnpj?: string | null
+          data?: Json
+          google_maps_url?: string | null
+          id?: number
+          phone?: string | null
+          rt_name?: string | null
+          rt_register?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin"
+      block_mode: "structured" | "html"
+      block_type:
+        | "hero"
+        | "authority_strip"
+        | "manifesto_curto"
+        | "metodo"
+        | "casos"
+        | "preco_ancora"
+        | "depoimentos"
+        | "ai_opinions"
+        | "equipe_rt"
+        | "cursos"
+        | "faq"
+        | "cta_final"
+      page_status: "draft" | "published"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +553,24 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin"],
+      block_mode: ["structured", "html"],
+      block_type: [
+        "hero",
+        "authority_strip",
+        "manifesto_curto",
+        "metodo",
+        "casos",
+        "preco_ancora",
+        "depoimentos",
+        "ai_opinions",
+        "equipe_rt",
+        "cursos",
+        "faq",
+        "cta_final",
+      ],
+      page_status: ["draft", "published"],
+    },
   },
 } as const
