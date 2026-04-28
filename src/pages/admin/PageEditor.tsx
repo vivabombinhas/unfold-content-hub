@@ -454,7 +454,6 @@ export default function PageEditor() {
           <div className="h-full p-4">
             <div className="h-full border border-brand-gold/15 bg-brand-graphite/10 rounded overflow-hidden">
               <iframe
-                ref={iframeRef}
                 title="Preview"
                 src={previewSrc}
                 className="w-full h-full bg-white"
