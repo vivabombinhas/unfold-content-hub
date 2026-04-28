@@ -38,6 +38,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 
+type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
+const asJson = (v: unknown) => v as Json;
+
 type DraftBlock = Omit<PageBlockRow, "page_id"> & { _new?: boolean; _dirty?: boolean };
 
 const ALL_TYPES: BlockType[] = [
@@ -191,7 +194,7 @@ export default function PageEditor() {
           position: b.position,
           enabled: b.enabled,
           mode: b.mode,
-          data: b.data,
+          data: asJson(b.data),
           html_content: b.html_content,
         }));
       let insertedMap: Record<string, string> = {};
@@ -217,7 +220,7 @@ export default function PageEditor() {
             .update({
               position: b.position,
               enabled: b.enabled,
-              data: b.data,
+              data: asJson(b.data),
               mode: b.mode,
               html_content: b.html_content,
             })
@@ -278,7 +281,7 @@ export default function PageEditor() {
         .update({
           status: "published",
           published_at: new Date().toISOString(),
-          published_snapshot: snapshot,
+          published_snapshot: asJson(snapshot),
         })
         .eq("id", data.page.id);
       if (ue) throw ue;
@@ -300,7 +303,7 @@ export default function PageEditor() {
     }
     if (!confirm("Reverter para a última versão publicada? Alterações não salvas serão perdidas."))
       return;
-    const snap = data.page.published_snapshot as { blocks: PageBlockRow[] };
+    const snap = data.page.published_snapshot as unknown as { blocks: PageBlockRow[] };
     // Deleta blocos atuais e reinsere do snapshot
     const { error: de } = await supabase.from("page_blocks").delete().eq("page_id", data.page.id);
     if (de) {
@@ -313,7 +316,7 @@ export default function PageEditor() {
       position: b.position,
       enabled: b.enabled,
       mode: b.mode,
-      data: b.data,
+      data: asJson(b.data),
       html_content: b.html_content,
     }));
     if (reinserts.length) {
