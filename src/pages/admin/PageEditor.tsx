@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +116,27 @@ export default function PageEditor() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const selected = useMemo(() => blocks.find((b) => b.id === selectedId) ?? null, [blocks, selectedId]);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const previewSrc = useMemo(
+    () => (data?.page?.slug ? `/?preview=${data.page.slug}` : ""),
+    [data?.page?.slug],
+  );
+
+  // Atualiza apenas o hash do iframe quando muda o bloco selecionado — sem recarregar.
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || !selected?.type) return;
+    try {
+      const win = iframe.contentWindow;
+      if (!win) return;
+      // Troca o hash sem disparar reload; tenta scrollar até o elemento se existir
+      win.location.hash = selected.type;
+      const el = iframe.contentDocument?.getElementById(selected.type);
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch {
+      // cross-origin protection — ignora silenciosamente
+    }
+  }, [selected?.type]);
 
   function markDirty(id: string, patch: Partial<DraftBlock>) {
     setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch, _dirty: true } : b)));
@@ -447,8 +468,9 @@ export default function PageEditor() {
           <div className="h-full p-4">
             <div className="h-full border border-brand-gold/15 bg-brand-graphite/10 rounded overflow-hidden">
               <iframe
+                ref={iframeRef}
                 title="Preview"
-                src={`/?preview=${data.page.slug}#${selected?.type ?? ""}`}
+                src={previewSrc}
                 className="w-full h-full bg-white"
               />
             </div>
