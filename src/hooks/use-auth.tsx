@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,33 +16,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const currentUserIdRef = useRef<string | null>(null);
+  const hasCheckedAdminRef = useRef(false);
+  const adminCheckSeqRef = useRef(0);
 
   useEffect(() => {
     let mounted = true;
-    // 1) Listener FIRST, then getSession (per Lovable Cloud auth pattern).
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const syncSession = (sess: Session | null, defer = false) => {
       if (!mounted) return;
+      const nextUserId = sess?.user?.id ?? null;
+      const userChanged = currentUserIdRef.current !== nextUserId;
+
+      currentUserIdRef.current = nextUserId;
       setSession(sess);
-      if (sess?.user) {
-        setLoading(true);
-        // Defer role check to avoid deadlock inside the callback.
-        setTimeout(() => {
-          checkAdmin(sess.user.id).finally(() => mounted && setLoading(false));
-        }, 0);
-      } else {
+
+      if (!nextUserId) {
+        hasCheckedAdminRef.current = false;
         setIsAdmin(false);
         setLoading(false);
+        return;
       }
+
+      // Do not blank/unmount the admin UI for repeated auth broadcasts from the preview iframe
+      // (INITIAL_SESSION/SIGNED_IN/TOKEN_REFRESHED for the same user). Re-check silently instead.
+      if (userChanged || !hasCheckedAdminRef.current) setLoading(true);
+
+      const seq = ++adminCheckSeqRef.current;
+      const runCheck = () => {
+        checkAdmin(nextUserId)
+          .then(() => {
+            if (mounted && seq === adminCheckSeqRef.current) hasCheckedAdminRef.current = true;
+          })
+          .finally(() => {
+            if (mounted && seq === adminCheckSeqRef.current) setLoading(false);
+          });
+      };
+
+      if (defer) setTimeout(runCheck, 0);
+      else runCheck();
+    };
+
+    // 1) Listener FIRST, then getSession (per Lovable Cloud auth pattern).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+      // Defer role check to avoid deadlock inside the callback.
+      syncSession(sess, true);
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
-      if (!mounted) return;
-      setSession(sess);
-      if (sess?.user) {
-        checkAdmin(sess.user.id).finally(() => mounted && setLoading(false));
-      } else {
-        setLoading(false);
-      }
+      syncSession(sess);
     });
 
     return () => {
