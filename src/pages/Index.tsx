@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { BlockType } from "@/types/blocks";
 import {
   Star,
   Sparkles,
@@ -46,16 +48,352 @@ const Index = () => {
   const areas = ["Todos", ...Array.from(new Set(cases.map((c) => c.area)))];
   const filtered = caseFilter === "Todos" ? cases : cases.filter((c) => c.area === caseFilter);
 
+  // ========================================================
+  // Snapshot publicado: define ordem e quais blocos renderizar.
+  // Conteúdo visual permanece hardcoded (paridade pixel-perfect).
+  // Quando o snapshot está ausente, cai no fallback da ordem padrão.
+  // ========================================================
+  const DEFAULT_ORDER: BlockType[] = [
+    "hero",
+    "authority_strip",
+    "manifesto_curto",
+    "metodo",
+    "casos",
+    "preco_ancora",
+    "depoimentos",
+    "ai_opinions",
+    "equipe_rt",
+    "cursos",
+    "faq",
+    "cta_final",
+  ];
+  const [order, setOrder] = useState<BlockType[]>(DEFAULT_ORDER);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("pages")
+      .select("published_snapshot")
+      .eq("slug", "botox-masculino")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const blocks = (data?.published_snapshot as { blocks?: Array<{ type: BlockType; position: number; enabled: boolean }> } | null)?.blocks;
+        if (!Array.isArray(blocks) || blocks.length === 0) return;
+        const ordered = blocks
+          .filter((b) => b.enabled)
+          .sort((a, b) => a.position - b.position)
+          .map((b) => b.type)
+          .filter((t) => DEFAULT_ORDER.includes(t));
+        if (ordered.length > 0) setOrder(ordered);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const blockRenderers: Record<BlockType, () => JSX.Element | null> = useMemo(() => ({
+    hero: () => renderHero(),
+    authority_strip: () => <AuthorityStrip />,
+    manifesto_curto: () => renderManifesto(),
+    metodo: () => <MethodSection />,
+    casos: () => renderCasos(),
+    preco_ancora: () => renderPrecoAncora(),
+    depoimentos: () => <ReviewsSection />,
+    ai_opinions: () => <AISection />,
+    equipe_rt: () => renderEquipe(),
+    cursos: () => renderCursos(),
+    faq: () => renderFaq(),
+    cta_final: () => renderCtaFinal(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Renderers inline — cada um devolve o JSX da seção original.
+  function renderHero() {
+    return (
+      <section key="hero" className="relative overflow-hidden bg-brand-black">
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-50 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 50% at 80% 20%, hsl(41 49% 58% / 0.12), transparent 60%), radial-gradient(ellipse 60% 50% at 0% 100%, hsl(168 59% 9% / 0.6), transparent 60%)",
+          }}
+        />
+        <div className="container-editorial relative z-[2] grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-20 items-center pt-16 pb-20 md:pt-24 md:pb-28 lg:py-32">
+          <div className="reveal">
+            <span className="eyebrow">Botox masculino · Curitiba</span>
+            <h1 className="h-display-1 mt-6 text-balance">
+              Para parecer <em>descansado</em>,
+              <br className="hidden sm:block" /> não para parecer <em>outra pessoa</em>.
+            </h1>
+            <span className="gold-rule mt-7" />
+            <p className="mt-7 text-brand-text-soft text-lg leading-[1.7] max-w-xl text-pretty">
+              Protocolo de toxina botulínica com dosagem calibrada para a anatomia masculina. Sem aspecto congelado, sem perder a expressão que comunica autoridade. Avaliação individual, técnica documentada, resultado em 14 dias.
+            </p>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <GoldButton as="a" href="https://wa.me/5541999999999" withArrow size="lg">
+                <MessageCircle className="size-4" /> Agendar pelo WhatsApp
+              </GoldButton>
+              <GoldButton as="a" href="#avaliacao" variant="outline-light" size="lg" withArrow>
+                Avaliação clínica
+              </GoldButton>
+            </div>
+            <p className="mt-6 text-[11px] tracking-[0.2em] uppercase text-brand-text-muted">
+              Resposta em até 30 minutos · Atendimento confidencial
+            </p>
+          </div>
+          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none">
+            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative">
+              <img src={heroMale} alt="Retrato editorial de paciente masculino com resultado natural de Botox" className="w-full h-full object-cover" loading="eager" width={896} height={1120} />
+              <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
+            </div>
+            <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
+              <Medal size={130} floating className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]" />
+            </div>
+            <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-brand-gold">Caso documentado</p>
+                <p className="font-display italic text-xl text-brand-text-light mt-1">44 anos · 14 dias</p>
+              </div>
+              <button onClick={() => setOpenCase(featuredCases[0])} className="size-12 rounded-full bg-brand-gold text-brand-green grid place-items-center hover:scale-110 transition-transform" aria-label="Ver caso">
+                <ArrowUpRight className="size-5" strokeWidth={1.8} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  function renderManifesto() {
+    return (
+      <section key="manifesto_curto" className="bg-brand-black section-pad relative z-[2]">
+        <div className="container-editorial grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-20 items-start">
+          <div className="reveal">
+            <span className="eyebrow">Manifesto</span>
+            <span className="gold-rule mt-6 gold-rule-animated" style={{ width: 60 }} />
+          </div>
+          <div className="reveal">
+            <p className="font-display text-2xl md:text-3xl lg:text-[2rem] leading-[1.3] text-brand-text-light text-balance">
+              "Não tratamos o homem como uma versão masculina do protocolo feminino. <em>Anatomia diferente, dose diferente, vetor diferente.</em> Trinta anos depois, o que entregamos é coerência: a mesma cara, só sem a marca do cansaço."
+            </p>
+            <p className="mt-6 text-sm text-brand-text-muted uppercase tracking-[0.2em]">Dra. Daniele Florencio · RT</p>
+            <button onClick={() => setManifestoOpen(true)} className="mt-8 inline-flex items-center gap-3 text-brand-gold text-[11px] font-body font-semibold uppercase tracking-[0.2em] border-b border-brand-gold/40 pb-1 hover:border-brand-gold transition-colors group">
+              Ler manifesto completo
+              <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  function renderCasos() {
+    return (
+      <section key="casos" id="casos" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
+        <div className="container-editorial">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+            <div className="reveal">
+              <span className="eyebrow" style={{ color: "hsl(var(--gold-deep))" }}>Casos clínicos documentados</span>
+              <h2 className="h-display-2 mt-5 text-brand-text-dark text-balance max-w-2xl">
+                Resultados <em>reais</em>, dosagem registrada,<br className="hidden md:block" /> tempo medido.
+              </h2>
+            </div>
+            <button onClick={() => setLibraryOpen(true)} className="self-start inline-flex items-center gap-3 text-brand-green text-[11px] font-body font-semibold uppercase tracking-[0.2em] border-b border-brand-green/40 pb-1 hover:border-brand-green transition-colors group">
+              Ver biblioteca completa ({cases.length})
+              <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" strokeWidth={2} />
+            </button>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {featuredCases.map((c) => (
+              <CaseCard key={c.id} caseData={c} onClick={() => setOpenCase(c)} />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  function renderPrecoAncora() {
+    return (
+      <section key="preco_ancora" id="precos" className="bg-brand-green-2 section-pad relative z-[2]">
+        <div className="container-editorial max-w-3xl mx-auto text-center">
+          <span className="eyebrow mx-auto justify-center reveal">Investimento</span>
+          <h2 className="h-display-2 mt-5 reveal text-balance">A partir de <em>R$ 1.490</em></h2>
+          <span className="gold-rule mx-auto mt-7" />
+          <p className="mt-7 text-brand-text-soft text-lg leading-relaxed max-w-xl mx-auto reveal">
+            Inclui avaliação clínica completa, aplicação por responsável técnica, retorno de 14 dias e ajuste fino sem custo adicional.
+          </p>
+          <ul className="mt-8 grid sm:grid-cols-3 gap-4 text-sm text-brand-text-soft reveal">
+            {["Toxina premium importada", "Retorno em 14 dias incluso", "Plano de manutenção 6 meses"].map((b) => (
+              <li key={b} className="flex items-start gap-2 justify-center">
+                <CheckCircle2 className="size-4 text-brand-gold shrink-0 mt-0.5" strokeWidth={1.5} />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-10 flex flex-wrap gap-3 justify-center reveal">
+            <GoldButton onClick={() => setPriceOpen(true)} withArrow>Entender o preço em detalhe</GoldButton>
+            <GoldButton as="a" href="https://wa.me/5541999999999" variant="outline-light">Falar agora</GoldButton>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  function renderEquipe() {
+    return (
+      <section key="equipe_rt" id="equipe" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
+        <div className="container-editorial grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-16 items-center">
+          <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none">
+            <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2">
+              <img src={draRT} alt="Dra. Daniele Florencio, responsável técnica" className="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <span className="absolute bottom-4 left-4 right-4 bg-brand-green text-brand-text-light px-5 py-3 text-[10px] font-body uppercase tracking-[0.2em]">CRBM 8242 PR</span>
+          </div>
+          <div className="reveal">
+            <span className="eyebrow" style={{ color: "hsl(var(--gold-deep))" }}>Responsável técnica</span>
+            <h2 className="h-display-2 mt-5 text-brand-text-dark text-balance">Dra. Daniele <em>Florencio</em></h2>
+            <span className="gold-rule mt-7" />
+            <p className="mt-7 text-brand-text-dark/80 leading-[1.7]">
+              Biomédica esteta com mais de duas décadas dedicadas à harmonização facial. Desenvolveu, ao longo dos anos, um protocolo proprietário de aplicação de toxina botulínica em pacientes masculinos.
+            </p>
+            <div className="mt-7 space-y-1">
+              <InlineExpand tone="cream" question="Como a Dra. Daniele pensa o protocolo masculino">
+                <p>"O homem médio chega com franzimento de glabela mais marcado e pele mais espessa. Se eu replicar dose feminina, ele perde o movimento natural. O caminho é dose progressiva, registrada, com retorno em 14 dias para ajuste fino."</p>
+              </InlineExpand>
+              <InlineExpand tone="cream" question="Especializações e formação">
+                <ul className="space-y-2 list-none">
+                  <li>· Especialização em Harmonização Orofacial</li>
+                  <li>· Atualizações anuais em congressos internacionais</li>
+                  <li>· Mais de 10.000 procedimentos documentados</li>
+                  <li>· Mentora de profissionais em formação</li>
+                </ul>
+              </InlineExpand>
+            </div>
+            <button onClick={() => setDoctorOpen(true)} className="mt-8 inline-flex items-center gap-3 text-brand-green text-[11px] font-body font-semibold uppercase tracking-[0.2em] border-b border-brand-green/40 pb-1 hover:border-brand-green transition-colors group">
+              Conhecer a equipe completa
+              <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  function renderCursos() {
+    return (
+      <section key="cursos" id="cursos" className="bg-brand-bordeaux section-pad relative z-[2]">
+        <div className="container-editorial">
+          <div className="grid lg:grid-cols-[1fr_2fr] gap-10 lg:gap-16">
+            <div className="reveal">
+              <span className="eyebrow">Para profissionais</span>
+              <h2 className="h-display-2 mt-5 text-balance">Ensinamos o que <em>praticamos</em>.</h2>
+              <span className="gold-rule mt-6" />
+              <p className="mt-6 text-brand-text-soft leading-[1.7]">
+                Nossa metodologia é aberta para outros profissionais. Mentorias presenciais e cursos para quem quer dominar protocolos de injetáveis com base clínica sólida.
+              </p>
+              <p className="mt-4 text-brand-text-muted text-sm">
+                Acreditamos que o setor cresce quando os profissionais elevam o padrão técnico em conjunto.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {courses.map((c) => (
+                <article key={c.title} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
+                  <GraduationCap className="size-7 text-brand-gold" strokeWidth={1.3} />
+                  <h3 className="font-display text-xl mt-5 leading-snug">{c.title}</h3>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-brand-gold mt-3">{c.audience}</p>
+                  <p className="text-xs text-brand-text-muted mt-1">{c.duration}</p>
+                  <p className="mt-4 text-sm text-brand-text-soft leading-relaxed">{c.description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  function renderFaq() {
+    return (
+      <section key="faq" id="faq" className="bg-brand-black section-pad relative z-[2]">
+        <div className="container-editorial max-w-4xl mx-auto">
+          <div className="text-center reveal">
+            <span className="eyebrow mx-auto justify-center">Dúvidas frequentes</span>
+            <h2 className="h-display-2 mt-5 text-balance">O que pacientes perguntam <em>antes</em> de agendar.</h2>
+            <span className="gold-rule mx-auto mt-7" />
+          </div>
+          <div className="mt-14">
+            {featuredFaqs.map((f) => (
+              <InlineExpand key={f.q} question={f.q}>
+                <p>{f.a}</p>
+              </InlineExpand>
+            ))}
+            <div className={cn("transition-all duration-700 overflow-hidden", showAllFaqs ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0")} aria-hidden={!showAllFaqs}>
+              {restFaqs.map((f) => (
+                <InlineExpand key={f.q} question={f.q}>
+                  <p>{f.a}</p>
+                </InlineExpand>
+              ))}
+            </div>
+          </div>
+          {restFaqs.length > 0 && (
+            <div className="text-center mt-10">
+              <button onClick={() => setShowAllFaqs((v) => !v)} className="inline-flex items-center gap-3 text-brand-gold text-[11px] font-body font-semibold uppercase tracking-[0.2em] border-b border-brand-gold/40 pb-1 hover:border-brand-gold transition-colors">
+                {showAllFaqs ? "Recolher" : `Ver todas as ${faqs.length} perguntas`}
+                <ArrowRight className={cn("size-3.5 transition-transform", showAllFaqs && "rotate-90")} strokeWidth={2} />
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  function renderCtaFinal() {
+    return (
+      <section key="cta_final" id="avaliacao" className="bg-brand-green section-pad relative z-[2] overflow-hidden">
+        <div aria-hidden className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 100%, hsl(41 49% 58% / 0.2), transparent 70%)" }} />
+        <div className="container-editorial relative z-[2] max-w-3xl mx-auto text-center">
+          <Medal size={120} floating className="mx-auto" />
+          <h2 className="h-display-1 mt-10 text-balance">
+            Trinta anos no <em>Batel</em>.<br />
+            <span className="text-brand-text-soft">Quatorze dias até o seu resultado.</span>
+          </h2>
+          <span className="gold-rule mx-auto mt-8" />
+          <p className="mt-7 text-brand-text-soft text-lg leading-relaxed">
+            Avaliação clínica individual, sem compromisso, com a responsável técnica. Você sai com plano e orçamento.
+          </p>
+          <div className="mt-10 flex flex-wrap gap-3 justify-center">
+            <GoldButton as="a" href="https://wa.me/5541999999999" size="lg" withArrow>
+              <MessageCircle className="size-4" /> Agendar pelo WhatsApp
+            </GoldButton>
+            <GoldButton as="a" href="tel:+554199999999" size="lg" variant="outline-light">
+              <Phone className="size-4" /> (41) 9999-9999
+            </GoldButton>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <div className="bg-brand-black text-brand-text-light min-h-screen">
       <Header />
 
       {/* ========================================================
-          HERO
-          Editorial split — copy esquerda, retrato direita,
-          medalha flutuante. Fundo preto profundo com vinheta dourada.
+          BLOCOS DA PÁGINA — ordem e visibilidade vêm do snapshot
+          publicado no banco (admin → published_snapshot).
           ======================================================== */}
-      <section className="relative overflow-hidden bg-brand-black">
+      {order.map((type) => {
+        const renderer = blockRenderers[type];
+        return renderer ? <div key={type}>{renderer()}</div> : null;
+      })}
+
+      {/* Mapa/Contato — bloco fixo do site, fora do editor por enquanto */}
+      <section id="contato" className="bg-brand-black relative z-[2]">
         <div
           aria-hidden
           className="absolute inset-0 opacity-50 pointer-events-none"
