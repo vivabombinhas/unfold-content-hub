@@ -18,27 +18,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
     // 1) Listener FIRST, then getSession (per Lovable Cloud auth pattern).
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (!mounted) return;
       setSession(sess);
       if (sess?.user) {
+        setLoading(true);
         // Defer role check to avoid deadlock inside the callback.
-        setTimeout(() => checkAdmin(sess.user.id), 0);
+        setTimeout(() => {
+          checkAdmin(sess.user.id).finally(() => mounted && setLoading(false));
+        }, 0);
       } else {
         setIsAdmin(false);
+        setLoading(false);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
+      if (!mounted) return;
       setSession(sess);
       if (sess?.user) {
-        checkAdmin(sess.user.id).finally(() => setLoading(false));
+        checkAdmin(sess.user.id).finally(() => mounted && setLoading(false));
       } else {
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function checkAdmin(userId: string) {
