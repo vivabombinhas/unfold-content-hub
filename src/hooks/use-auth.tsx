@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const currentUserIdRef = useRef<string | null>(null);
   const hasCheckedAdminRef = useRef(false);
   const adminCheckSeqRef = useRef(0);
+  const initialLoadDoneRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -28,18 +29,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userChanged = currentUserIdRef.current !== nextUserId;
 
       currentUserIdRef.current = nextUserId;
-      setSession(sess);
+      // Avoid re-creating the session reference on every BroadcastChannel echo
+      // (TOKEN_REFRESHED, repeated INITIAL_SESSION from preview iframe) — only
+      // update when the user actually changes. This prevents downstream consumers
+      // (AdminLayout/PageEditor/iframe) from remounting in a loop.
+      setSession((prev) => {
+        if (!userChanged && prev?.user?.id === nextUserId) return prev;
+        return sess;
+      });
 
       if (!nextUserId) {
         hasCheckedAdminRef.current = false;
         setIsAdmin(false);
         setLoading(false);
+        initialLoadDoneRef.current = true;
         return;
       }
 
-      // Do not blank/unmount the admin UI for repeated auth broadcasts from the preview iframe
-      // (INITIAL_SESSION/SIGNED_IN/TOKEN_REFRESHED for the same user). Re-check silently instead.
-      if (userChanged || !hasCheckedAdminRef.current) setLoading(true);
+      // Only show the loading screen on the very first auth resolution.
+      // Subsequent broadcasts (TOKEN_REFRESHED, iframe echoes) must NEVER flip
+      // loading back to true, otherwise AdminLayout unmounts the editor and the
+      // preview iframe gets destroyed/recreated → visible flashing loop.
+      if (!initialLoadDoneRef.current && (userChanged || !hasCheckedAdminRef.current)) {
+        setLoading(true);
+      }
+
+      // If the user didn't change and we already verified admin once, skip the re-check entirely.
+      if (!userChanged && hasCheckedAdminRef.current) {
+        setLoading(false);
+        initialLoadDoneRef.current = true;
+        return;
+      }
 
       const seq = ++adminCheckSeqRef.current;
       const runCheck = () => {
@@ -48,7 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (mounted && seq === adminCheckSeqRef.current) hasCheckedAdminRef.current = true;
           })
           .finally(() => {
-            if (mounted && seq === adminCheckSeqRef.current) setLoading(false);
+            if (mounted && seq === adminCheckSeqRef.current) {
+              setLoading(false);
+              initialLoadDoneRef.current = true;
+            }
           });
       };
 
