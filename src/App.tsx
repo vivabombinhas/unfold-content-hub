@@ -11,6 +11,7 @@ import AdminLayout from "./pages/admin/AdminLayout.tsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
 import PagesList from "./pages/admin/PagesList.tsx";
 import PageEditor from "./pages/admin/PageEditor.tsx";
+import NewPageFromTopic from "./pages/admin/NewPageFromTopic.tsx";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/admin" element={<AuthProvider><AdminLayout /></AuthProvider>}>
             <Route index element={<AdminDashboard />} />
             <Route path="paginas" element={<PagesList />} />
+            <Route path="paginas/nova" element={<NewPageFromTopic />} />
             <Route path="paginas/:slug" element={<PageEditor />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
