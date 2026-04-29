@@ -36,7 +36,6 @@ interface PageRow {
 }
 
 export default function PublicPage() {
-  useReveal();
   const { slug = "" } = useParams();
   const [params] = useSearchParams();
   const previewMode = params.get("preview") === "1";
@@ -84,6 +83,9 @@ export default function PublicPage() {
     () => (data?.blocks ?? []).slice().sort((a, b) => a.position - b.position),
     [data?.blocks],
   );
+
+  // Run reveal observer AFTER blocks are in the DOM.
+  useReveal(blocks.length);
 
   if (isLoading) {
     return (
