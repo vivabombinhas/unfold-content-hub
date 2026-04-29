@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { BlockType } from "@/types/blocks";
 import {
@@ -33,6 +34,13 @@ import draRT from "@/assets/dra-rt.jpg";
 import clinicInterior from "@/assets/clinic-interior.jpg";
 
 const Index = () => {
+  // Compat: links antigos no formato "/?preview=<slug>" agora redirecionam
+  // para a rota dinâmica "/p/<slug>?preview=1".
+  const [searchParams] = useSearchParams();
+  const legacyPreview = searchParams.get("preview");
+  if (legacyPreview && legacyPreview !== "1") {
+    return <Navigate to={`/p/${legacyPreview}?preview=1`} replace />;
+  }
   useReveal();
   const [manifestoOpen, setManifestoOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
