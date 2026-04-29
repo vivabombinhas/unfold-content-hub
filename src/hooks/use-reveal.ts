@@ -3,8 +3,11 @@ import { useEffect, useRef } from "react";
 /**
  * Adds `is-visible` class to elements with `.reveal` or `.gold-rule-animated`
  * once they enter the viewport. Triggers smooth editorial entrance.
+ *
+ * Pass a dependency (e.g. a query result) to re-observe when content arrives
+ * after the initial render.
  */
-export const useReveal = () => {
+export const useReveal = (dep?: unknown) => {
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
@@ -23,5 +26,6 @@ export const useReveal = () => {
     );
     els.forEach((el) => observerRef.current?.observe(el));
     return () => observerRef.current?.disconnect();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dep]);
 };

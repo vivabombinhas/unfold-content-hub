@@ -40,6 +40,14 @@ type BlockData = Record<string, unknown>;
 function s(v: unknown, fb = ""): string {
   return typeof v === "string" && v.trim() ? v : fb;
 }
+/** Retorna a primeira string não-vazia da lista, senão o fallback. Permite suportar
+ * múltiplos schemas (ex.: `title_html` antigo + `title` novo da IA). */
+function firstS(values: unknown[], fb = ""): string {
+  for (const v of values) {
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return fb;
+}
 function arr<T = unknown>(v: unknown): T[] {
   return Array.isArray(v) ? (v as T[]) : [];
 }
@@ -101,13 +109,17 @@ export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData
    ============================================================ */
 function HeroBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Estética Batel · Curitiba");
-  const titleHtml = s(data.title_html, "Tratamento <em>personalizado</em>.");
-  const paragraph = s(data.paragraph);
+  const titleHtml = firstS([data.title_html, data.title], "Tratamento <em>personalizado</em>.");
+  const paragraph = firstS([data.paragraph, data.subtitle, data.description]);
   const imageUrl = s(data.image_url);
   const captionTop = s(data.caption_top);
   const captionBottom = s(data.caption_bottom);
   const footnote = s(data.footnote, "Resposta em até 30 minutos · Atendimento confidencial");
-  const ctaPrimary = readCta(data.cta_primary, { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" });
+  // Suporta tanto cta_primary={label,href} quanto cta_label/cta_href soltos.
+  const ctaPrimary = readCta(
+    data.cta_primary ?? { label: data.cta_label, href: data.cta_href },
+    { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" },
+  );
   const ctaSecondary = readCta(data.cta_secondary, { label: "Avaliação clínica", href: "#avaliacao" });
 
   return (
@@ -227,9 +239,9 @@ function Stat({ label, value, suffix, innerRef, fmt }: { label: string; value: n
 function ManifestoBlock({ data }: { data: BlockData }) {
   const [open, setOpen] = useState(false);
   const eyebrow = s(data.eyebrow, "Manifesto");
-  const quoteHtml = s(data.quote_html);
+  const quoteHtml = firstS([data.quote_html, data.title, data.body]);
   const author = s(data.author);
-  const longText = s(data.long_text);
+  const longText = firstS([data.long_text, data.body]);
   const ctaLabel = s(data.cta_label, "Ler manifesto completo");
 
   return (
@@ -276,8 +288,8 @@ function ManifestoBlock({ data }: { data: BlockData }) {
    ============================================================ */
 function MetodoBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Método");
-  const titleHtml = s(data.title_html, "Três passos. <em>Documentados.</em>");
-  const steps = arr<{ title?: string; summary?: string; detail?: string; n?: number | string }>(data.steps);
+  const titleHtml = firstS([data.title_html, data.title], "Três passos. <em>Documentados.</em>");
+  const steps = arr<{ title?: string; summary?: string; desc?: string; description?: string; detail?: string; n?: number | string }>(data.steps);
   const icons = [ShieldCheck, Sparkles, Award, ShieldCheck];
   return (
     <section id="procedimentos" className="bg-brand-graphite section-pad relative z-[2]">
@@ -298,7 +310,11 @@ function MetodoBlock({ data }: { data: BlockData }) {
                   <Icon className="size-6 text-brand-gold/70" strokeWidth={1.3} />
                 </div>
                 <h3 className="font-display text-2xl mt-5 leading-snug">{step.title}</h3>
-                {step.summary && <p className="mt-3 text-brand-text-soft text-[15px] leading-relaxed">{step.summary}</p>}
+                {(step.summary || step.desc || step.description) && (
+                  <p className="mt-3 text-brand-text-soft text-[15px] leading-relaxed">
+                    {step.summary || step.desc || step.description}
+                  </p>
+                )}
                 {step.detail && (
                   <div className="mt-5 -mx-2">
                     <InlineExpand tone="dark" question="Como funciona na prática">
@@ -321,8 +337,10 @@ function MetodoBlock({ data }: { data: BlockData }) {
 function CasosBlock({ data }: { data: BlockData }) {
   const [openCase, setOpenCase] = useState<ClinicalCase | null>(null);
   const eyebrow = s(data.eyebrow, "Casos clínicos documentados");
-  const titleHtml = s(data.title_html, "Resultados <em>reais</em>, dosagem registrada, tempo medido.");
-  const showCount = typeof data.show_count === "number" ? data.show_count : 6;
+  const titleHtml = firstS([data.title_html, data.title, data.subtitle], "Resultados <em>reais</em>, dosagem registrada, tempo medido.");
+  const showCount = typeof data.show_count === "number"
+    ? data.show_count
+    : typeof data.limit === "number" ? data.limit : 6;
   const areaFilter = s(data.area_filter).toLowerCase();
 
   // Try to filter by anatomical area; if no match, fall back to highlight pool.
@@ -389,8 +407,11 @@ function CasosBlock({ data }: { data: BlockData }) {
 function PrecoBlock({ data }: { data: BlockData }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const eyebrow = s(data.eyebrow, "Investimento");
-  const titleHtml = s(data.title_html, "A partir de <em>R$ 1.490</em>");
-  const description = s(data.description);
+  const titleHtml = firstS(
+    [data.title_html, data.title, data.price_label],
+    "A partir de <em>R$ 1.490</em>",
+  );
+  const description = firstS([data.description, data.note, data.subtitle]);
   const bullets = arr<string>(data.bullets);
   const ctaPrimary = readCta(data.cta_primary, { label: "Entender o preço em detalhe", href: "#" });
   const ctaSecondary = readCta(data.cta_secondary, { label: "Falar agora", href: "https://wa.me/5541999999999" });
@@ -441,7 +462,7 @@ function PrecoBlock({ data }: { data: BlockData }) {
    ============================================================ */
 function DepoimentosBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Reputação · Google");
-  const titleHtml = s(data.title_html, "<em>4,9</em> de 5 · centenas de avaliações públicas.");
+  const titleHtml = firstS([data.title_html, data.title, data.subtitle], "<em>4,9</em> de 5 · centenas de avaliações públicas.");
   const showCount = typeof data.show_count === "number" ? data.show_count : 5;
   const list = reviews.slice(0, showCount);
   return (
@@ -486,7 +507,7 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
    ============================================================ */
 function AIOpinionsBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Reputação digital · LLMs");
-  const titleHtml = s(data.title_html, "O que as principais <em>inteligências artificiais</em> dizem sobre nós.");
+  const titleHtml = firstS([data.title_html, data.title], "O que as principais <em>inteligências artificiais</em> dizem sobre nós.");
   const subtitle = s(data.subtitle, "Quando ChatGPT, Claude, Gemini, Perplexity e Grok são consultadas sobre clínicas de estética em Curitiba, este é o consenso.");
   return (
     <section className="bg-brand-cream text-brand-text-dark section-pad relative z-[2] overflow-hidden">
@@ -523,10 +544,10 @@ function AIOpinionsBlock({ data }: { data: BlockData }) {
    ============================================================ */
 function EquipeBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Responsável técnica");
-  const titleHtml = s(data.title_html, "Dra. Daniele <em>Florencio</em>");
-  const registerLabel = s(data.register_label, "CRBM 8242 PR");
+  const titleHtml = firstS([data.title_html, data.title, data.name], "Dra. Daniele <em>Florencio</em>");
+  const registerLabel = firstS([data.register_label, data.register], "CRBM 8242 PR");
   const imageUrl = s(data.image_url);
-  const bio = s(data.bio);
+  const bio = firstS([data.bio, data.description]);
   const accordions = arr<{ question?: string; answer?: string }>(data.accordions);
   return (
     <section id="equipe" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
@@ -564,8 +585,8 @@ function EquipeBlock({ data }: { data: BlockData }) {
    ============================================================ */
 function CursosBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Para profissionais");
-  const titleHtml = s(data.title_html, "Ensinamos o que <em>praticamos</em>.");
-  const intro = s(data.intro);
+  const titleHtml = firstS([data.title_html, data.title], "Ensinamos o que <em>praticamos</em>.");
+  const intro = firstS([data.intro, data.subtitle, data.description]);
   const footnote = s(data.footnote);
   return (
     <section id="cursos" className="bg-brand-bordeaux section-pad relative z-[2]">
@@ -600,8 +621,9 @@ function CursosBlock({ data }: { data: BlockData }) {
    ============================================================ */
 function FaqBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Dúvidas frequentes");
-  const titleHtml = s(data.title_html, "O que pacientes perguntam <em>antes</em> de agendar.");
-  const items = arr<{ question?: string; answer?: string }>(data.items);
+  const titleHtml = firstS([data.title_html, data.title], "O que pacientes perguntam <em>antes</em> de agendar.");
+  // Aceita items[] ou questions[] (variação do schema).
+  const items = arr<{ question?: string; answer?: string }>(data.items ?? data.questions);
   if (items.length === 0) return null;
   return (
     <section id="faq" className="bg-brand-black section-pad relative z-[2]">
@@ -627,8 +649,8 @@ function FaqBlock({ data }: { data: BlockData }) {
    CTA FINAL
    ============================================================ */
 function CtaFinalBlock({ data }: { data: BlockData }) {
-  const titleHtml = s(data.title_html, "Trinta anos no <em>Batel</em>.");
-  const paragraph = s(data.paragraph, "Avaliação clínica individual, sem compromisso, com a responsável técnica.");
+  const titleHtml = firstS([data.title_html, data.title], "Trinta anos no <em>Batel</em>.");
+  const paragraph = firstS([data.paragraph, data.subtitle, data.body], "Avaliação clínica individual, sem compromisso, com a responsável técnica.");
   const ctaPrimary = readCta(data.cta_primary, { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" });
   const ctaSecondary = readCta(data.cta_secondary, { label: "(41) 9999-9999", href: "tel:+554199999999" });
   return (
