@@ -109,7 +109,7 @@ export default function PublicPage() {
 
   return (
     <div className="bg-brand-black text-brand-text-light min-h-screen">
-      <Header />
+      <Header breadcrumbCurrent={data.page.title} />
 
       {previewMode && data.page.status !== "published" && (
         <div className="bg-brand-bordeaux/30 text-brand-text-light text-center text-xs uppercase tracking-[0.22em] py-2 border-b border-brand-bordeaux/40">
