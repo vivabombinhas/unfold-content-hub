@@ -29,6 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userChanged = currentUserIdRef.current !== nextUserId;
 
       currentUserIdRef.current = nextUserId;
+      if (userChanged) {
+        hasCheckedAdminRef.current = false;
+        setIsAdmin(false);
+      }
       // Avoid re-creating the session reference on every BroadcastChannel echo
       // (TOKEN_REFRESHED, repeated INITIAL_SESSION from preview iframe) — only
       // update when the user actually changes. This prevents downstream consumers
@@ -46,11 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Only show the loading screen on the very first auth resolution.
-      // Subsequent broadcasts (TOKEN_REFRESHED, iframe echoes) must NEVER flip
-      // loading back to true, otherwise AdminLayout unmounts the editor and the
-      // preview iframe gets destroyed/recreated → visible flashing loop.
-      if (!initialLoadDoneRef.current && (userChanged || !hasCheckedAdminRef.current)) {
+      // Show loading whenever a role check is genuinely pending. Repeated auth
+      // broadcasts for an already-checked user are skipped below, so this avoids
+      // false "Sem permissão" screens without reintroducing iframe remount loops.
+      if (userChanged || !hasCheckedAdminRef.current) {
         setLoading(true);
       }
 
@@ -102,8 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
-    // eslint-disable-next-line no-console
-    console.log("[auth] checkAdmin", { userId, data, error });
     setIsAdmin(!error && !!data);
   }
 
