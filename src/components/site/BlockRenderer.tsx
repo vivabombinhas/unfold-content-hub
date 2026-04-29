@@ -378,7 +378,7 @@ function CasosBlock({ data }: { data: BlockData }) {
           </div>
         </div>
       </section>
-      <CaseModal openCase={openCase} onClose={() => setOpenCase(null)} />
+      <CaseModal caseData={openCase} onClose={() => setOpenCase(null)} />
     </>
   );
 }
