@@ -120,7 +120,7 @@ export default function PageEditor() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const selected = useMemo(() => blocks.find((b) => b.id === selectedId) ?? null, [blocks, selectedId]);
   const previewSrc = useMemo(
-    () => (data?.page?.slug ? `/?preview=${data.page.slug}` : ""),
+    () => (data?.page?.slug ? `/p/${data.page.slug}?preview=1` : ""),
     [data?.page?.slug],
   );
 
@@ -379,8 +379,13 @@ export default function PageEditor() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" asChild>
-            <a href={`/?preview=${data.page.slug}`} target="_blank" rel="noreferrer">
-              <ExternalLink className="size-3.5 mr-1.5" /> Ver site
+            <a
+              href={data.page.status === "published" ? `/p/${data.page.slug}` : `/p/${data.page.slug}?preview=1`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <ExternalLink className="size-3.5 mr-1.5" />
+              {data.page.status === "published" ? "Ver publicada" : "Ver rascunho"}
             </a>
           </Button>
           <Button variant="ghost" size="sm" onClick={handleRevert}>
