@@ -355,13 +355,19 @@ Gere os blocos. Para FAQs, derive das dúvidas reais da pesquisa.`;
         case "cursos": {
           const base = (templateMap.get(type) as Record<string, unknown>) || {};
           const h = headers[type] || {};
-          data = {
+          const merged: Record<string, unknown> = {
             ...base,
             ...(h.eyebrow ? { eyebrow: h.eyebrow } : {}),
             ...(h.title_html ? { title_html: h.title_html } : {}),
             ...(type === "ai_opinions" && h.subtitle ? { subtitle: h.subtitle } : {}),
             ...(type === "cursos" && h.intro ? { intro: h.intro } : {}),
           };
+          // Tag the "casos" block with the anatomical area so the renderer can
+          // filter the global pool when it's wired to the database.
+          if (type === "casos" && research?.area_anatomica) {
+            merged.area_filter = String(research.area_anatomica);
+          }
+          data = merged;
           break;
         }
       }
@@ -388,56 +394,6 @@ Gere os blocos. Para FAQs, derive das dúvidas reais da pesquisa.`;
       // rollback page
       await admin.from("pages").delete().eq("id", newPage.id);
       throw blocksErr;
-    }
-
-    // Filter cases by anatomical area (when research provided one).
-    // We match cases.area against simple keyword aliases derived from area_anatomica,
-    // and write case_page_overrides so this page shows only relevant cases.
-    try {
-      const area = String(research?.area_anatomica || "").toLowerCase();
-      if (area) {
-        const aliasMap: Record<string, string[]> = {
-          labios: ["labios", "lábios", "labio", "boca", "perioral"],
-          terco_superior: ["terco superior", "terço superior", "fronte", "testa", "glabela", "olhos"],
-          terco_medio: ["terco medio", "terço médio", "malar", "ma\u00e7\u00e3", "olheiras"],
-          mandibula: ["mandibula", "mandíbula", "queixo", "mento", "linha mandibular"],
-          pescoco: ["pescoco", "pescoço", "papada"],
-          corpo: ["corpo", "abdomen", "gluteo", "glúteo"],
-          face: ["face", "rosto"],
-        };
-        const aliases = aliasMap[area] || [area.replace(/_/g, " ")];
-
-        const { data: allCases } = await admin.from("cases").select("id,area").limit(500);
-        const matching = (allCases || []).filter((c) => {
-          const ca = String(c.area || "").toLowerCase();
-          return aliases.some((al) => ca.includes(al));
-        });
-
-        if (matching.length > 0) {
-          const overrides = matching.slice(0, 12).map((c, idx) => ({
-            page_id: newPage.id,
-            case_id: c.id,
-            position: idx,
-            featured: idx < 3,
-            hidden: false,
-          }));
-          await admin.from("case_page_overrides").insert(overrides);
-        } else {
-          // No match: hide all template cases for this page so we don't show
-          // the wrong anatomical area. Admin can curate manually later.
-          const overrides = (allCases || []).slice(0, 50).map((c) => ({
-            page_id: newPage.id,
-            case_id: c.id,
-            position: 0,
-            featured: false,
-            hidden: true,
-          }));
-          if (overrides.length > 0) await admin.from("case_page_overrides").insert(overrides);
-        }
-      }
-    } catch (overrideErr) {
-      // Non-fatal: page is already created. Log and continue.
-      console.error("case override seed error", overrideErr);
     }
 
     return new Response(
