@@ -1,0 +1,653 @@
+/**
+ * BlockRenderer — renderiza um page_block usando o `data` vindo do snapshot.
+ *
+ * Estratégia:
+ * - Blocos de TEXTO (hero, manifesto_curto, metodo, preco_ancora, equipe_rt,
+ *   faq, cta_final): conteúdo 100% do snapshot.
+ * - Blocos COLETIVOS (authority_strip, casos, depoimentos, ai_opinions,
+ *   cursos): título/eyebrow vêm do snapshot, cards continuam do pool fixo
+ *   em src/data/landing.ts (até a rodada onde ligamos as tabelas pool).
+ *
+ * Mantém paridade visual com src/pages/Index.tsx (mesmas classes Tailwind,
+ * mesmos componentes site/*).
+ */
+import {
+  ArrowRight,
+  ArrowUpRight,
+  CheckCircle2,
+  GraduationCap,
+  MessageCircle,
+  Phone,
+  Quote,
+  Sparkles,
+  ShieldCheck,
+  Award,
+  Star,
+} from "lucide-react";
+import { useState } from "react";
+import { GoldButton } from "@/components/site/GoldButton";
+import { Medal } from "@/components/site/Medal";
+import { InlineExpand } from "@/components/site/InlineExpand";
+import { CaseModal } from "@/components/site/CaseModal";
+import { SideSheet } from "@/components/site/SideSheet";
+import { useCountUp } from "@/hooks/use-count-up";
+import { cases, reviews, aiOpinions, courses, type ClinicalCase } from "@/data/landing";
+import { cn } from "@/lib/utils";
+import type { BlockType } from "@/types/blocks";
+
+type BlockData = Record<string, unknown>;
+
+function s(v: unknown, fb = ""): string {
+  return typeof v === "string" && v.trim() ? v : fb;
+}
+function arr<T = unknown>(v: unknown): T[] {
+  return Array.isArray(v) ? (v as T[]) : [];
+}
+function obj(v: unknown): Record<string, unknown> {
+  return typeof v === "object" && v !== null ? (v as Record<string, unknown>) : {};
+}
+
+interface CtaShape {
+  label?: string;
+  href?: string;
+  opens_sheet?: boolean;
+}
+
+function readCta(v: unknown, fb: { label: string; href: string }): { label: string; href: string; opens_sheet?: boolean } {
+  const c = obj(v) as CtaShape;
+  return {
+    label: s(c.label, fb.label),
+    href: s(c.href, fb.href),
+    opens_sheet: !!c.opens_sheet,
+  };
+}
+
+/* ============================================================
+   Public entry: pick the right renderer for a block type
+   ============================================================ */
+export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData }) {
+  switch (type) {
+    case "hero":
+      return <HeroBlock data={data} />;
+    case "authority_strip":
+      return <AuthorityBlock data={data} />;
+    case "manifesto_curto":
+      return <ManifestoBlock data={data} />;
+    case "metodo":
+      return <MetodoBlock data={data} />;
+    case "casos":
+      return <CasosBlock data={data} />;
+    case "preco_ancora":
+      return <PrecoBlock data={data} />;
+    case "depoimentos":
+      return <DepoimentosBlock data={data} />;
+    case "ai_opinions":
+      return <AIOpinionsBlock data={data} />;
+    case "equipe_rt":
+      return <EquipeBlock data={data} />;
+    case "cursos":
+      return <CursosBlock data={data} />;
+    case "faq":
+      return <FaqBlock data={data} />;
+    case "cta_final":
+      return <CtaFinalBlock data={data} />;
+    default:
+      return null;
+  }
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+function HeroBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Estética Batel · Curitiba");
+  const titleHtml = s(data.title_html, "Tratamento <em>personalizado</em>.");
+  const paragraph = s(data.paragraph);
+  const imageUrl = s(data.image_url);
+  const captionTop = s(data.caption_top);
+  const captionBottom = s(data.caption_bottom);
+  const footnote = s(data.footnote, "Resposta em até 30 minutos · Atendimento confidencial");
+  const ctaPrimary = readCta(data.cta_primary, { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" });
+  const ctaSecondary = readCta(data.cta_secondary, { label: "Avaliação clínica", href: "#avaliacao" });
+
+  return (
+    <section className="relative overflow-hidden bg-brand-black">
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-50 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 50% at 80% 20%, hsl(41 49% 58% / 0.12), transparent 60%), radial-gradient(ellipse 60% 50% at 0% 100%, hsl(168 59% 9% / 0.6), transparent 60%)",
+        }}
+      />
+      <div className="container-editorial relative z-[2] grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-20 items-center pt-16 pb-20 md:pt-24 md:pb-28 lg:py-32">
+        <div className="reveal">
+          <span className="eyebrow">{eyebrow}</span>
+          <h1 className="h-display-1 mt-6 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule mt-7" />
+          {paragraph && (
+            <p className="mt-7 text-brand-text-soft text-lg leading-[1.7] max-w-xl text-pretty">{paragraph}</p>
+          )}
+          <div className="mt-10 flex flex-wrap gap-3">
+            <GoldButton as="a" href={ctaPrimary.href} withArrow size="lg">
+              <MessageCircle className="size-4" /> {ctaPrimary.label}
+            </GoldButton>
+            <GoldButton as="a" href={ctaSecondary.href} variant="outline-light" size="lg" withArrow>
+              {ctaSecondary.label}
+            </GoldButton>
+          </div>
+          {footnote && (
+            <p className="mt-6 text-[11px] tracking-[0.2em] uppercase text-brand-text-muted">{footnote}</p>
+          )}
+        </div>
+        {imageUrl && (
+          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none">
+            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative">
+              <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover" loading="eager" />
+              <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
+            </div>
+            <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
+              <Medal size={130} floating className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]" />
+            </div>
+            {(captionTop || captionBottom) && (
+              <div className="absolute bottom-5 left-5 right-5">
+                {captionTop && <p className="text-[10px] uppercase tracking-[0.22em] text-brand-gold">{captionTop}</p>}
+                {captionBottom && <p className="font-display italic text-xl text-brand-text-light mt-1">{captionBottom}</p>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AUTHORITY STRIP — header dinâmico, números do pool fixo
+   ============================================================ */
+function AuthorityBlock({ data }: { data: BlockData }) {
+  const items = arr<{ label?: string; value?: string }>(data.items);
+  const years = useCountUp(30);
+  const patients = useCountUp(10000);
+  const procedures = useCountUp(95);
+  // If admin curated `items`, render them; else fall back to the original 4 stats.
+  if (items.length > 0) {
+    return (
+      <section className="bg-brand-green-2 border-y border-brand-gold/15 relative z-[2]">
+        <div className="container-editorial py-10 md:py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 items-center">
+            {items.slice(0, 4).map((it, i) => (
+              <div key={i} className="text-center">
+                <span className="font-display text-4xl md:text-5xl text-brand-gold">{it.value}</span>
+                <p className="text-[10px] uppercase tracking-[0.22em] text-brand-text-muted mt-2">{it.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <section className="bg-brand-green-2 border-y border-brand-gold/15 relative z-[2]">
+      <div className="container-editorial py-10 md:py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 items-center">
+          <Stat label="Anos no Batel" value={years.val} suffix="+" innerRef={years.ref} />
+          <Stat label="Pacientes" value={patients.val} suffix="+" innerRef={patients.ref} fmt />
+          <Stat label="Aprovação Google" value={procedures.val} suffix="%" innerRef={procedures.ref} />
+          <div className="flex items-center justify-center gap-2 text-brand-text-soft">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="size-4 fill-brand-gold text-brand-gold" />
+              ))}
+            </div>
+            <span className="text-[11px] uppercase tracking-[0.18em]">4.9 · Google</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Stat({ label, value, suffix, innerRef, fmt }: { label: string; value: number; suffix?: string; innerRef: React.RefObject<HTMLSpanElement>; fmt?: boolean }) {
+  const display = fmt ? value.toLocaleString("pt-BR") : value;
+  return (
+    <div className="text-center">
+      <span ref={innerRef} className="font-display text-4xl md:text-5xl text-brand-gold">
+        {display}
+        {suffix}
+      </span>
+      <p className="text-[10px] uppercase tracking-[0.22em] text-brand-text-muted mt-2">{label}</p>
+    </div>
+  );
+}
+
+/* ============================================================
+   MANIFESTO
+   ============================================================ */
+function ManifestoBlock({ data }: { data: BlockData }) {
+  const [open, setOpen] = useState(false);
+  const eyebrow = s(data.eyebrow, "Manifesto");
+  const quoteHtml = s(data.quote_html);
+  const author = s(data.author);
+  const longText = s(data.long_text);
+  const ctaLabel = s(data.cta_label, "Ler manifesto completo");
+
+  return (
+    <>
+      <section className="bg-brand-black section-pad relative z-[2]">
+        <div className="container-editorial grid lg:grid-cols-[1fr_1.4fr] gap-10 lg:gap-20 items-start">
+          <div className="reveal">
+            <span className="eyebrow">{eyebrow}</span>
+            <span className="gold-rule mt-6 gold-rule-animated" style={{ width: 60 }} />
+          </div>
+          <div className="reveal">
+            {quoteHtml && (
+              <p
+                className="font-display text-2xl md:text-3xl lg:text-[2rem] leading-[1.3] text-brand-text-light text-balance"
+                dangerouslySetInnerHTML={{ __html: quoteHtml }}
+              />
+            )}
+            {author && (
+              <p className="mt-6 text-sm text-brand-text-muted uppercase tracking-[0.2em]">{author}</p>
+            )}
+            {longText && (
+              <button
+                onClick={() => setOpen(true)}
+                className="mt-8 inline-flex items-center gap-3 text-brand-gold text-[11px] font-body font-semibold uppercase tracking-[0.2em] border-b border-brand-gold/40 pb-1 hover:border-brand-gold transition-colors group"
+              >
+                {ctaLabel}
+                <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" strokeWidth={2} />
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+      {longText && (
+        <SideSheet open={open} onClose={() => setOpen(false)} eyebrow={eyebrow} title={ctaLabel} width="lg">
+          <div className="space-y-6 font-display text-xl leading-[1.5] text-brand-text-light" dangerouslySetInnerHTML={{ __html: longText }} />
+        </SideSheet>
+      )}
+    </>
+  );
+}
+
+/* ============================================================
+   MÉTODO
+   ============================================================ */
+function MetodoBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Método");
+  const titleHtml = s(data.title_html, "Três passos. <em>Documentados.</em>");
+  const steps = arr<{ title?: string; summary?: string; detail?: string; n?: number | string }>(data.steps);
+  const icons = [ShieldCheck, Sparkles, Award, ShieldCheck];
+  return (
+    <section id="procedimentos" className="bg-brand-graphite section-pad relative z-[2]">
+      <div className="container-editorial">
+        <div className="text-center reveal max-w-2xl mx-auto">
+          <span className="eyebrow mx-auto justify-center">{eyebrow}</span>
+          <h2 className="h-display-2 mt-5 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule mx-auto mt-7" />
+        </div>
+        <div className={cn("mt-14 grid gap-5", steps.length <= 3 ? "md:grid-cols-3" : "md:grid-cols-4")}>
+          {steps.map((step, i) => {
+            const Icon = icons[i % icons.length];
+            const n = String(step.n ?? i + 1).padStart(2, "0");
+            return (
+              <article key={i} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <span className="font-display italic text-brand-gold text-2xl">{n}</span>
+                  <Icon className="size-6 text-brand-gold/70" strokeWidth={1.3} />
+                </div>
+                <h3 className="font-display text-2xl mt-5 leading-snug">{step.title}</h3>
+                {step.summary && <p className="mt-3 text-brand-text-soft text-[15px] leading-relaxed">{step.summary}</p>}
+                {step.detail && (
+                  <div className="mt-5 -mx-2">
+                    <InlineExpand tone="dark" question="Como funciona na prática">
+                      <p>{step.detail}</p>
+                    </InlineExpand>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   CASOS — header dinâmico; cards do pool fixo (filtrado por area_filter quando possível)
+   ============================================================ */
+function CasosBlock({ data }: { data: BlockData }) {
+  const [openCase, setOpenCase] = useState<ClinicalCase | null>(null);
+  const eyebrow = s(data.eyebrow, "Casos clínicos documentados");
+  const titleHtml = s(data.title_html, "Resultados <em>reais</em>, dosagem registrada, tempo medido.");
+  const showCount = typeof data.show_count === "number" ? data.show_count : 6;
+  const areaFilter = s(data.area_filter).toLowerCase();
+
+  // Try to filter by anatomical area; if no match, fall back to highlight pool.
+  let pool = cases.filter((c) => c.highlight);
+  if (areaFilter) {
+    const aliases: Record<string, string[]> = {
+      labios: ["lábio", "labio", "boca", "perioral"],
+      terco_superior: ["frontal", "glabela", "testa", "olh"],
+      terco_medio: ["malar", "olheir"],
+      mandibula: ["mandíb", "queixo", "masseter"],
+      pescoco: ["pescoço", "papada"],
+      face: ["face", "rosto"],
+      corpo: ["corpo", "abdome", "glúteo"],
+    };
+    const al = aliases[areaFilter] || [areaFilter.replace(/_/g, " ")];
+    const matched = cases.filter((c) => al.some((a) => c.area.toLowerCase().includes(a)));
+    if (matched.length > 0) pool = matched;
+  }
+  const featured = pool.slice(0, showCount);
+
+  if (featured.length === 0) return null;
+
+  return (
+    <>
+      <section id="casos" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
+        <div className="container-editorial">
+          <div className="reveal mb-12">
+            <span className="eyebrow" style={{ color: "hsl(var(--gold-deep))" }}>{eyebrow}</span>
+            <h2 className="h-display-2 mt-5 text-brand-text-dark text-balance max-w-2xl" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {featured.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setOpenCase(c)}
+                className="reveal group relative text-left overflow-hidden bg-brand-cream-2"
+              >
+                <div className="aspect-[4/5] overflow-hidden">
+                  <img src={c.cover} alt={`${c.area} — ${c.age}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]" />
+                </div>
+                <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 45%, hsl(0 0% 0% / 0.65) 100%)" }} />
+                <div className="absolute inset-x-0 bottom-0 p-5 md:p-6 flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-brand-gold">{c.age}</p>
+                    <h3 className="font-display text-2xl text-brand-text-light leading-tight mt-1">{c.area}</h3>
+                  </div>
+                  <span className="size-11 rounded-full bg-brand-gold text-brand-green grid place-items-center transition-transform duration-500 group-hover:rotate-45">
+                    <ArrowUpRight className="size-5" strokeWidth={1.8} />
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+      <CaseModal caseData={openCase} onClose={() => setOpenCase(null)} />
+    </>
+  );
+}
+
+/* ============================================================
+   PREÇO ÂNCORA
+   ============================================================ */
+function PrecoBlock({ data }: { data: BlockData }) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const eyebrow = s(data.eyebrow, "Investimento");
+  const titleHtml = s(data.title_html, "A partir de <em>R$ 1.490</em>");
+  const description = s(data.description);
+  const bullets = arr<string>(data.bullets);
+  const ctaPrimary = readCta(data.cta_primary, { label: "Entender o preço em detalhe", href: "#" });
+  const ctaSecondary = readCta(data.cta_secondary, { label: "Falar agora", href: "https://wa.me/5541999999999" });
+  const sheetTitle = s(data.sheet_title, "Como compomos o preço");
+  const sheetHtml = s(data.sheet_html);
+
+  return (
+    <>
+      <section id="precos" className="bg-brand-green-2 section-pad relative z-[2]">
+        <div className="container-editorial max-w-3xl mx-auto text-center">
+          <span className="eyebrow mx-auto justify-center reveal">{eyebrow}</span>
+          <h2 className="h-display-2 mt-5 reveal text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule mx-auto mt-7" />
+          {description && (
+            <p className="mt-7 text-brand-text-soft text-lg leading-relaxed max-w-xl mx-auto reveal">{description}</p>
+          )}
+          {bullets.length > 0 && (
+            <ul className="mt-8 grid sm:grid-cols-3 gap-4 text-sm text-brand-text-soft reveal">
+              {bullets.map((b) => (
+                <li key={b} className="flex items-start gap-2 justify-center">
+                  <CheckCircle2 className="size-4 text-brand-gold shrink-0 mt-0.5" strokeWidth={1.5} />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-10 flex flex-wrap gap-3 justify-center reveal">
+            {sheetHtml ? (
+              <GoldButton onClick={() => setSheetOpen(true)} withArrow>{ctaPrimary.label}</GoldButton>
+            ) : (
+              <GoldButton as="a" href={ctaPrimary.href} withArrow>{ctaPrimary.label}</GoldButton>
+            )}
+            <GoldButton as="a" href={ctaSecondary.href} variant="outline-light">{ctaSecondary.label}</GoldButton>
+          </div>
+        </div>
+      </section>
+      {sheetHtml && (
+        <SideSheet open={sheetOpen} onClose={() => setSheetOpen(false)} eyebrow={eyebrow} title={sheetTitle} width="lg" tone="dark">
+          <div className="space-y-6 text-brand-text-soft leading-relaxed" dangerouslySetInnerHTML={{ __html: sheetHtml }} />
+        </SideSheet>
+      )}
+    </>
+  );
+}
+
+/* ============================================================
+   DEPOIMENTOS — header dinâmico, cards do pool fixo
+   ============================================================ */
+function DepoimentosBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Reputação · Google");
+  const titleHtml = s(data.title_html, "<em>4,9</em> de 5 · centenas de avaliações públicas.");
+  const showCount = typeof data.show_count === "number" ? data.show_count : 5;
+  const list = reviews.slice(0, showCount);
+  return (
+    <section className="bg-brand-black section-pad relative z-[2] overflow-hidden">
+      <div className="container-editorial">
+        <div className="flex items-end justify-between gap-6 flex-wrap mb-10">
+          <div className="reveal">
+            <span className="eyebrow">{eyebrow}</span>
+            <h2 className="h-display-2 mt-5 text-balance max-w-2xl" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          </div>
+          <a href="https://www.google.com/search?q=Clínica+Estética+Batel+Curitiba" target="_blank" rel="noopener" className="inline-flex items-center gap-3 text-brand-gold text-[11px] font-body font-semibold uppercase tracking-[0.2em] border-b border-brand-gold/40 pb-1 hover:border-brand-gold transition-colors group">
+            Ver no Google
+            <ArrowUpRight className="size-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" strokeWidth={2} />
+          </a>
+        </div>
+      </div>
+      <div className="overflow-x-auto scrollbar-hide pb-6">
+        <div className="flex gap-5 px-[max(20px,5vw)] snap-x snap-mandatory">
+          {list.map((r) => (
+            <article key={r.name} className="snap-start shrink-0 w-[88vw] sm:w-[420px] bg-brand-graphite border border-brand-gold/15 p-7 flex flex-col">
+              <div className="flex items-center justify-between">
+                <div className="flex">
+                  {[...Array(r.rating)].map((_, i) => (
+                    <Star key={i} className="size-3.5 fill-brand-gold text-brand-gold" />
+                  ))}
+                </div>
+                <span className="text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">{r.date}</span>
+              </div>
+              <Quote className="size-7 text-brand-gold/40 mt-5" strokeWidth={1} />
+              <p className="mt-3 text-brand-text-soft leading-relaxed text-[15px]">{r.text}</p>
+              <p className="mt-6 pt-5 border-t border-brand-gold/15 text-[11px] uppercase tracking-[0.18em] text-brand-text-light">{r.name}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   AI OPINIONS — header dinâmico, cards do pool fixo
+   ============================================================ */
+function AIOpinionsBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Reputação digital · LLMs");
+  const titleHtml = s(data.title_html, "O que as principais <em>inteligências artificiais</em> dizem sobre nós.");
+  const subtitle = s(data.subtitle, "Quando ChatGPT, Claude, Gemini, Perplexity e Grok são consultadas sobre clínicas de estética em Curitiba, este é o consenso.");
+  return (
+    <section className="bg-brand-cream text-brand-text-dark section-pad relative z-[2] overflow-hidden">
+      <div className="container-editorial">
+        <div className="reveal max-w-2xl mb-12">
+          <span className="eyebrow" style={{ color: "hsl(var(--gold-deep))" }}>{eyebrow}</span>
+          <h2 className="h-display-2 mt-5 text-brand-text-dark text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule mt-7" />
+          {subtitle && <p className="mt-6 text-brand-text-dark/70 leading-relaxed">{subtitle}</p>}
+        </div>
+      </div>
+      <div className="overflow-x-auto scrollbar-hide pb-6">
+        <div className="flex gap-5 px-[max(20px,5vw)] snap-x snap-mandatory">
+          {aiOpinions.map((o) => (
+            <article key={o.ai} className="snap-start shrink-0 w-[88vw] sm:w-[460px] bg-brand-text-dark text-brand-text-light p-8 md:p-9 border border-brand-gold/30 flex flex-col">
+              <div className="flex items-center justify-between">
+                <span className="font-display text-3xl text-brand-gold">{o.ai}</span>
+                <span className="text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">{o.company}</span>
+              </div>
+              <span className="gold-rule mt-5" />
+              <Quote className="size-7 text-brand-gold/40 mt-6" strokeWidth={1} />
+              <p className="mt-3 text-brand-text-soft leading-[1.7] text-[15px] flex-1">"{o.quote}"</p>
+              <p className="mt-7 text-[10px] uppercase tracking-[0.22em] text-brand-text-muted">Consulta direta · 2025</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   EQUIPE RT
+   ============================================================ */
+function EquipeBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Responsável técnica");
+  const titleHtml = s(data.title_html, "Dra. Daniele <em>Florencio</em>");
+  const registerLabel = s(data.register_label, "CRBM 8242 PR");
+  const imageUrl = s(data.image_url);
+  const bio = s(data.bio);
+  const accordions = arr<{ question?: string; answer?: string }>(data.accordions);
+  return (
+    <section id="equipe" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
+      <div className="container-editorial grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-16 items-center">
+        {imageUrl && (
+          <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none">
+            <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2">
+              <img src={imageUrl} alt={titleHtml.replace(/<[^>]+>/g, "")} className="w-full h-full object-cover" loading="lazy" />
+            </div>
+            <span className="absolute bottom-4 left-4 right-4 bg-brand-green text-brand-text-light px-5 py-3 text-[10px] font-body uppercase tracking-[0.2em]">{registerLabel}</span>
+          </div>
+        )}
+        <div className="reveal">
+          <span className="eyebrow" style={{ color: "hsl(var(--gold-deep))" }}>{eyebrow}</span>
+          <h2 className="h-display-2 mt-5 text-brand-text-dark text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule mt-7" />
+          {bio && <p className="mt-7 text-brand-text-dark/80 leading-[1.7]">{bio}</p>}
+          {accordions.length > 0 && (
+            <div className="mt-7 space-y-1">
+              {accordions.map((a, i) => (
+                <InlineExpand key={i} tone="cream" question={s(a.question)}>
+                  <p>{s(a.answer)}</p>
+                </InlineExpand>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   CURSOS — header dinâmico, cards do pool fixo
+   ============================================================ */
+function CursosBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Para profissionais");
+  const titleHtml = s(data.title_html, "Ensinamos o que <em>praticamos</em>.");
+  const intro = s(data.intro);
+  const footnote = s(data.footnote);
+  return (
+    <section id="cursos" className="bg-brand-bordeaux section-pad relative z-[2]">
+      <div className="container-editorial">
+        <div className="grid lg:grid-cols-[1fr_2fr] gap-10 lg:gap-16">
+          <div className="reveal">
+            <span className="eyebrow">{eyebrow}</span>
+            <h2 className="h-display-2 mt-5 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+            <span className="gold-rule mt-6" />
+            {intro && <p className="mt-6 text-brand-text-soft leading-[1.7]">{intro}</p>}
+            {footnote && <p className="mt-4 text-brand-text-muted text-sm">{footnote}</p>}
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {courses.map((c) => (
+              <article key={c.title} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
+                <GraduationCap className="size-7 text-brand-gold" strokeWidth={1.3} />
+                <h3 className="font-display text-xl mt-5 leading-snug">{c.title}</h3>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-brand-gold mt-3">{c.audience}</p>
+                <p className="text-xs text-brand-text-muted mt-1">{c.duration}</p>
+                <p className="mt-4 text-sm text-brand-text-soft leading-relaxed">{c.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   FAQ — perguntas vêm do data (block.data.items[]); fallback ao pool global.
+   ============================================================ */
+function FaqBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Dúvidas frequentes");
+  const titleHtml = s(data.title_html, "O que pacientes perguntam <em>antes</em> de agendar.");
+  const items = arr<{ question?: string; answer?: string }>(data.items);
+  if (items.length === 0) return null;
+  return (
+    <section id="faq" className="bg-brand-black section-pad relative z-[2]">
+      <div className="container-editorial max-w-4xl mx-auto">
+        <div className="text-center reveal">
+          <span className="eyebrow mx-auto justify-center">{eyebrow}</span>
+          <h2 className="h-display-2 mt-5 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule mx-auto mt-7" />
+        </div>
+        <div className="mt-14">
+          {items.map((f, i) => (
+            <InlineExpand key={i} question={s(f.question)}>
+              <p>{s(f.answer)}</p>
+            </InlineExpand>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   CTA FINAL
+   ============================================================ */
+function CtaFinalBlock({ data }: { data: BlockData }) {
+  const titleHtml = s(data.title_html, "Trinta anos no <em>Batel</em>.");
+  const paragraph = s(data.paragraph, "Avaliação clínica individual, sem compromisso, com a responsável técnica.");
+  const ctaPrimary = readCta(data.cta_primary, { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" });
+  const ctaSecondary = readCta(data.cta_secondary, { label: "(41) 9999-9999", href: "tel:+554199999999" });
+  return (
+    <section id="avaliacao" className="bg-brand-green section-pad relative z-[2] overflow-hidden">
+      <div aria-hidden className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 100%, hsl(41 49% 58% / 0.2), transparent 70%)" }} />
+      <div className="container-editorial relative z-[2] max-w-3xl mx-auto text-center">
+        <Medal size={120} floating className="mx-auto" />
+        <h2 className="h-display-1 mt-10 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+        <span className="gold-rule mx-auto mt-8" />
+        <p className="mt-7 text-brand-text-soft text-lg leading-relaxed">{paragraph}</p>
+        <div className="mt-10 flex flex-wrap gap-3 justify-center">
+          <GoldButton as="a" href={ctaPrimary.href} size="lg" withArrow>
+            <MessageCircle className="size-4" /> {ctaPrimary.label}
+          </GoldButton>
+          <GoldButton as="a" href={ctaSecondary.href} size="lg" variant="outline-light">
+            <Phone className="size-4" /> {ctaSecondary.label}
+          </GoldButton>
+        </div>
+      </div>
+    </section>
+  );
+}
