@@ -476,6 +476,7 @@ export default function PageEditor() {
                 type={selected.type}
                 data={selected.data}
                 onChange={(next) => markDirty(selected.id, { data: next })}
+                pageTitle={pageMeta.title}
               />
             ) : (
               <div className="space-y-4">
