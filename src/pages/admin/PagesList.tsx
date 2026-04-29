@@ -62,14 +62,15 @@ export default function PagesList() {
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
-                      <Link
-                        to={`/?preview=${p.slug}`}
+                      <a
+                        href={p.status === "published" ? `/p/${p.slug}` : `/p/${p.slug}?preview=1`}
                         target="_blank"
+                        rel="noreferrer"
                         className="text-brand-text-muted hover:text-brand-gold"
-                        title="Ver no site"
+                        title={p.status === "published" ? "Ver página publicada" : "Ver rascunho"}
                       >
                         <ExternalLink className="size-4" />
-                      </Link>
+                      </a>
                       <Link
                         to={`/admin/paginas/${p.slug}`}
                         className="text-brand-gold hover:underline inline-flex items-center gap-1.5 text-xs"
