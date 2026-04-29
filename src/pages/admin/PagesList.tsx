@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Pencil } from "lucide-react";
+import { ExternalLink, Pencil, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function PagesList() {
   const { data: pages, isLoading } = useQuery({
@@ -22,11 +23,14 @@ export default function PagesList() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-display text-3xl text-brand-text-light">Páginas</h1>
-          <p className="text-sm text-brand-text-muted mt-1">Edite o conteúdo de cada landing.</p>
+          <p className="text-sm text-brand-text-muted mt-1">Crie e edite landings. A IA gera o rascunho a partir de um tema.</p>
         </div>
-        <span className="text-xs text-brand-text-muted">
-          Criar páginas novas chega na próxima rodada (2B).
-        </span>
+        <Button asChild className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90">
+          <Link to="/admin/paginas/nova">
+            <Sparkles className="size-4" />
+            Nova página por tema
+          </Link>
+        </Button>
       </div>
 
       {isLoading ? (
