@@ -102,6 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
+    // eslint-disable-next-line no-console
+    console.log("[auth] checkAdmin", { userId, data, error });
     setIsAdmin(!error && !!data);
   }
 
