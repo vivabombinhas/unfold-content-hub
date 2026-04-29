@@ -130,8 +130,24 @@ const generatePageSchema = {
             additionalProperties: false,
           },
         },
+        // Headers para os blocos "coletivos" (conteúdo vem do pool global, mas o
+        // título/eyebrow do bloco precisa falar do tema atual, não de Botox).
+        collective_headers: {
+          type: "object",
+          description: "Eyebrow + título de cada bloco coletivo, adaptados ao tema.",
+          properties: {
+            authority_strip: { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
+            casos:           { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
+            depoimentos:     { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
+            ai_opinions:     { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, subtitle: { type: "string" } }, required: ["eyebrow", "title_html", "subtitle"], additionalProperties: false },
+            equipe_rt:       { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
+            cursos:          { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, intro: { type: "string" } }, required: ["eyebrow", "title_html", "intro"], additionalProperties: false },
+          },
+          required: ["authority_strip", "casos", "depoimentos", "ai_opinions", "equipe_rt", "cursos"],
+          additionalProperties: false,
+        },
       },
-      required: ["hero", "manifesto_curto", "metodo", "preco_ancora", "cta_final", "faq_items"],
+      required: ["hero", "manifesto_curto", "metodo", "preco_ancora", "cta_final", "faq_items", "collective_headers"],
       additionalProperties: false,
     },
   },
@@ -306,6 +322,7 @@ Gere os blocos. Para FAQs, derive das dúvidas reais da pesquisa.`;
 
     const newBlocks: Array<{ type: string; position: number; data: unknown; mode: string; enabled: boolean }> = [];
     let pos = 1;
+    const headers = (generated.blocks.collective_headers || {}) as Record<string, { eyebrow?: string; title_html?: string; subtitle?: string; intro?: string }>;
     for (const type of BLOCK_ORDER) {
       let data: unknown;
       switch (type) {
@@ -327,15 +344,32 @@ Gere os blocos. Para FAQs, derive das dúvidas reais da pesquisa.`;
         case "faq":
           data = { title: "Perguntas frequentes", items: generated.blocks.faq_items };
           break;
-        // Collection blocks: keep template structure (titles + subtitles), content is pulled from pool tables
+        // Collection blocks: AI generates the header (eyebrow + title), but the
+        // visual structure / extra fields come from the template so we keep the
+        // editorial cadence of the modelo Botox.
         case "authority_strip":
         case "casos":
         case "depoimentos":
         case "ai_opinions":
         case "equipe_rt":
-        case "cursos":
-          data = templateMap.get(type) || {};
+        case "cursos": {
+          const base = (templateMap.get(type) as Record<string, unknown>) || {};
+          const h = headers[type] || {};
+          const merged: Record<string, unknown> = {
+            ...base,
+            ...(h.eyebrow ? { eyebrow: h.eyebrow } : {}),
+            ...(h.title_html ? { title_html: h.title_html } : {}),
+            ...(type === "ai_opinions" && h.subtitle ? { subtitle: h.subtitle } : {}),
+            ...(type === "cursos" && h.intro ? { intro: h.intro } : {}),
+          };
+          // Tag the "casos" block with the anatomical area so the renderer can
+          // filter the global pool when it's wired to the database.
+          if (type === "casos" && research?.area_anatomica) {
+            merged.area_filter = String(research.area_anatomica);
+          }
+          data = merged;
           break;
+        }
       }
       newBlocks.push({ type, position: pos++, data, mode: "structured", enabled: true });
     }
