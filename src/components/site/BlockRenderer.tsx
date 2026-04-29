@@ -31,7 +31,8 @@ import { InlineExpand } from "@/components/site/InlineExpand";
 import { CaseModal } from "@/components/site/CaseModal";
 import { SideSheet } from "@/components/site/SideSheet";
 import { useCountUp } from "@/hooks/use-count-up";
-import { cases, reviews, aiOpinions, courses, type ClinicalCase } from "@/data/landing";
+import { type ClinicalCase } from "@/data/landing";
+import { usePools, type PoolCase } from "@/hooks/use-pools";
 import { cn } from "@/lib/utils";
 import type { BlockType } from "@/types/blocks";
 
@@ -67,6 +68,23 @@ function readCta(v: unknown, fb: { label: string; href: string }): { label: stri
     label: s(c.label, fb.label),
     href: s(c.href, fb.href),
     opens_sheet: !!c.opens_sheet,
+  };
+}
+
+/** Converte um PoolCase (banco) no shape que CaseModal espera. */
+function toClinicalCase(c: PoolCase): ClinicalCase {
+  return {
+    id: c.id,
+    area: c.area,
+    age: c.age ?? "",
+    cover: c.cover_url ?? "",
+    gallery: (c.gallery ?? []).map((g) => ({ src: g.src ?? "", caption: g.caption })),
+    beforeAfter: c.before_url && c.after_url ? { before: c.before_url, after: c.after_url } : undefined,
+    highlight: c.highlight,
+    notes: c.notes ?? "",
+    dosage: c.dosage ?? "",
+    duration: c.duration ?? "",
+    toxin: c.toxin ?? "",
   };
 }
 
@@ -335,6 +353,7 @@ function MetodoBlock({ data }: { data: BlockData }) {
    CASOS — header dinâmico; cards do pool fixo (filtrado por area_filter quando possível)
    ============================================================ */
 function CasosBlock({ data }: { data: BlockData }) {
+  const { cases: pool } = usePools();
   const [openCase, setOpenCase] = useState<ClinicalCase | null>(null);
   const eyebrow = s(data.eyebrow, "Casos clínicos documentados");
   const titleHtml = firstS([data.title_html, data.title, data.subtitle], "Resultados <em>reais</em>, dosagem registrada, tempo medido.");
@@ -343,8 +362,9 @@ function CasosBlock({ data }: { data: BlockData }) {
     : typeof data.limit === "number" ? data.limit : 6;
   const areaFilter = s(data.area_filter).toLowerCase();
 
-  // Try to filter by anatomical area; if no match, fall back to highlight pool.
-  let pool = cases.filter((c) => c.highlight);
+  // Pool vem do banco; se vazio, bloco não renderiza.
+  let filtered = pool.filter((c) => c.highlight);
+  if (filtered.length === 0) filtered = pool;
   if (areaFilter) {
     const aliases: Record<string, string[]> = {
       labios: ["lábio", "labio", "boca", "perioral"],
@@ -356,10 +376,10 @@ function CasosBlock({ data }: { data: BlockData }) {
       corpo: ["corpo", "abdome", "glúteo"],
     };
     const al = aliases[areaFilter] || [areaFilter.replace(/_/g, " ")];
-    const matched = cases.filter((c) => al.some((a) => c.area.toLowerCase().includes(a)));
-    if (matched.length > 0) pool = matched;
+    const matched = pool.filter((c) => al.some((a) => c.area.toLowerCase().includes(a)));
+    if (matched.length > 0) filtered = matched;
   }
-  const featured = pool.slice(0, showCount);
+  const featured = filtered.slice(0, showCount).map(toClinicalCase);
 
   if (featured.length === 0) return null;
 
@@ -461,10 +481,12 @@ function PrecoBlock({ data }: { data: BlockData }) {
    DEPOIMENTOS — header dinâmico, cards do pool fixo
    ============================================================ */
 function DepoimentosBlock({ data }: { data: BlockData }) {
+  const { reviews } = usePools();
   const eyebrow = s(data.eyebrow, "Reputação · Google");
   const titleHtml = firstS([data.title_html, data.title, data.subtitle], "<em>4,9</em> de 5 · centenas de avaliações públicas.");
   const showCount = typeof data.show_count === "number" ? data.show_count : 5;
   const list = reviews.slice(0, showCount);
+  if (list.length === 0) return null;
   return (
     <section className="bg-brand-black section-pad relative z-[2] overflow-hidden">
       <div className="container-editorial">
@@ -482,14 +504,14 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
       <div className="overflow-x-auto scrollbar-hide pb-6">
         <div className="flex gap-5 px-[max(20px,5vw)] snap-x snap-mandatory">
           {list.map((r) => (
-            <article key={r.name} className="snap-start shrink-0 w-[88vw] sm:w-[420px] bg-brand-graphite border border-brand-gold/15 p-7 flex flex-col">
+            <article key={r.id} className="snap-start shrink-0 w-[88vw] sm:w-[420px] bg-brand-graphite border border-brand-gold/15 p-7 flex flex-col">
               <div className="flex items-center justify-between">
                 <div className="flex">
                   {[...Array(r.rating)].map((_, i) => (
                     <Star key={i} className="size-3.5 fill-brand-gold text-brand-gold" />
                   ))}
                 </div>
-                <span className="text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">{r.date}</span>
+                <span className="text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">{r.date_label}</span>
               </div>
               <Quote className="size-7 text-brand-gold/40 mt-5" strokeWidth={1} />
               <p className="mt-3 text-brand-text-soft leading-relaxed text-[15px]">{r.text}</p>
@@ -506,9 +528,11 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
    AI OPINIONS — header dinâmico, cards do pool fixo
    ============================================================ */
 function AIOpinionsBlock({ data }: { data: BlockData }) {
+  const { aiOpinions } = usePools();
   const eyebrow = s(data.eyebrow, "Reputação digital · LLMs");
   const titleHtml = firstS([data.title_html, data.title], "O que as principais <em>inteligências artificiais</em> dizem sobre nós.");
   const subtitle = s(data.subtitle, "Quando ChatGPT, Claude, Gemini, Perplexity e Grok são consultadas sobre clínicas de estética em Curitiba, este é o consenso.");
+  if (aiOpinions.length === 0) return null;
   return (
     <section className="bg-brand-cream text-brand-text-dark section-pad relative z-[2] overflow-hidden">
       <div className="container-editorial">
@@ -522,9 +546,9 @@ function AIOpinionsBlock({ data }: { data: BlockData }) {
       <div className="overflow-x-auto scrollbar-hide pb-6">
         <div className="flex gap-5 px-[max(20px,5vw)] snap-x snap-mandatory">
           {aiOpinions.map((o) => (
-            <article key={o.ai} className="snap-start shrink-0 w-[88vw] sm:w-[460px] bg-brand-text-dark text-brand-text-light p-8 md:p-9 border border-brand-gold/30 flex flex-col">
+            <article key={o.id} className="snap-start shrink-0 w-[88vw] sm:w-[460px] bg-brand-text-dark text-brand-text-light p-8 md:p-9 border border-brand-gold/30 flex flex-col">
               <div className="flex items-center justify-between">
-                <span className="font-display text-3xl text-brand-gold">{o.ai}</span>
+                <span className="font-display text-3xl text-brand-gold">{o.ai_name}</span>
                 <span className="text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">{o.company}</span>
               </div>
               <span className="gold-rule mt-5" />
@@ -584,10 +608,12 @@ function EquipeBlock({ data }: { data: BlockData }) {
    CURSOS — header dinâmico, cards do pool fixo
    ============================================================ */
 function CursosBlock({ data }: { data: BlockData }) {
+  const { courses } = usePools();
   const eyebrow = s(data.eyebrow, "Para profissionais");
   const titleHtml = firstS([data.title_html, data.title], "Ensinamos o que <em>praticamos</em>.");
   const intro = firstS([data.intro, data.subtitle, data.description]);
   const footnote = s(data.footnote);
+  if (courses.length === 0) return null;
   return (
     <section id="cursos" className="bg-brand-bordeaux section-pad relative z-[2]">
       <div className="container-editorial">
@@ -601,7 +627,7 @@ function CursosBlock({ data }: { data: BlockData }) {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {courses.map((c) => (
-              <article key={c.title} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
+              <article key={c.id} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
                 <GraduationCap className="size-7 text-brand-gold" strokeWidth={1.3} />
                 <h3 className="font-display text-xl mt-5 leading-snug">{c.title}</h3>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-brand-gold mt-3">{c.audience}</p>
@@ -620,10 +646,15 @@ function CursosBlock({ data }: { data: BlockData }) {
    FAQ — perguntas vêm do data (block.data.items[]); fallback ao pool global.
    ============================================================ */
 function FaqBlock({ data }: { data: BlockData }) {
+  const { faqs } = usePools();
   const eyebrow = s(data.eyebrow, "Dúvidas frequentes");
   const titleHtml = firstS([data.title_html, data.title], "O que pacientes perguntam <em>antes</em> de agendar.");
-  // Aceita items[] ou questions[] (variação do schema).
-  const items = arr<{ question?: string; answer?: string }>(data.items ?? data.questions);
+  // Aceita items[]/questions[] do bloco; senão cai nos FAQs em destaque do banco.
+  let items = arr<{ question?: string; answer?: string }>(data.items ?? data.questions);
+  if (items.length === 0) {
+    items = faqs.filter((f) => f.featured).map((f) => ({ question: f.question, answer: f.answer }));
+    if (items.length === 0) items = faqs.map((f) => ({ question: f.question, answer: f.answer }));
+  }
   if (items.length === 0) return null;
   return (
     <section id="faq" className="bg-brand-black section-pad relative z-[2]">

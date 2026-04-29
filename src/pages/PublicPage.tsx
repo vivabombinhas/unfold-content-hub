@@ -7,6 +7,7 @@ import { Footer } from "@/components/site/Footer";
 import { FloatingCTA } from "@/components/site/FloatingCTA";
 import { BlockRenderer } from "@/components/site/BlockRenderer";
 import { useReveal } from "@/hooks/use-reveal";
+import { PoolsProvider, usePoolsQuery } from "@/hooks/use-pools";
 import type { BlockType } from "@/types/blocks";
 
 /**
@@ -63,6 +64,9 @@ export default function PublicPage() {
     },
   });
 
+  const poolsQuery = usePoolsQuery();
+  const pools = poolsQuery.data ?? { cases: [], reviews: [], aiOpinions: [], courses: [], faqs: [] };
+
   // SEO: set <title> and meta description as soon as we have the page.
   useEffect(() => {
     if (!data?.page) return;
@@ -84,8 +88,8 @@ export default function PublicPage() {
     [data?.blocks],
   );
 
-  // Run reveal observer AFTER blocks are in the DOM.
-  useReveal(blocks.length);
+  // Run reveal observer AFTER blocks AND pools are in the DOM.
+  useReveal(`${blocks.length}-${poolsQuery.dataUpdatedAt}`);
 
   if (isLoading) {
     return (
@@ -119,9 +123,11 @@ export default function PublicPage() {
         </div>
       )}
 
-      {blocks.map((b) => (
-        <BlockRenderer key={b.id} type={b.type} data={b.data || {}} />
-      ))}
+      <PoolsProvider value={pools}>
+        {blocks.map((b) => (
+          <BlockRenderer key={b.id} type={b.type} data={b.data || {}} />
+        ))}
+      </PoolsProvider>
 
       <Footer />
       <FloatingCTA />
