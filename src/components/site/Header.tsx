@@ -11,7 +11,12 @@ const navItems = [
   { label: "Contato", href: "#contato" },
 ];
 
-export const Header = () => {
+interface HeaderProps {
+  /** Texto final do breadcrumb (ex.: nome da página/procedimento). Default: "Botox Masculino". */
+  breadcrumbCurrent?: string;
+}
+
+export const Header = ({ breadcrumbCurrent = "Botox Masculino" }: HeaderProps = {}) => {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -42,7 +47,7 @@ export const Header = () => {
             <span className="mx-3 text-brand-gold/50">/</span>
             <a href="#procedimentos" className="hover:text-brand-gold transition-colors">Procedimentos</a>
             <span className="mx-3 text-brand-gold/50">/</span>
-            <span className="text-brand-gold">Botox Masculino</span>
+            <span className="text-brand-gold">{breadcrumbCurrent}</span>
           </nav>
         </div>
       </div>
