@@ -166,6 +166,20 @@ export default function NewPageFromTopic() {
             rows={4}
             className="mt-1.5 font-mono text-xs"
           />
+          <label className="mt-3 flex items-start gap-2 cursor-pointer">
+            <Checkbox
+              checked={linksAreOwnOldPage}
+              onCheckedChange={(v) => setLinksAreOwnOldPage(!!v)}
+              disabled={isWorking || linksRaw.trim().length === 0}
+              className="mt-0.5"
+            />
+            <span className="text-xs text-brand-text-light leading-snug">
+              Estes links são <strong>páginas antigas da própria clínica</strong>
+              <span className="block text-[11px] text-brand-text-muted mt-0.5">
+                Quando marcado, a IA aproveita conteúdo real (depoimentos, FAQs, seções) da página antiga. Quando desmarcado, trata só como inspiração — não copia conteúdo.
+              </span>
+            </span>
+          </label>
         </div>
 
         <div>
