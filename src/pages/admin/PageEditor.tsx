@@ -526,6 +526,60 @@ export default function PageEditor() {
                     onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))}
                   />
                 </div>
+
+                <div className="border-t border-brand-gold/15 pt-4 mt-2 space-y-3">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/80">
+                    Contexto editorial (IA)
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Tema / procedimento</Label>
+                    <Input
+                      value={String(pageMeta.metadata?.tema ?? "")}
+                      onChange={(e) =>
+                        setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))
+                      }
+                      placeholder="Ex.: Preenchimento Labial"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Categoria</Label>
+                    <Input
+                      value={String(pageMeta.metadata?.categoria ?? "")}
+                      onChange={(e) =>
+                        setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))
+                      }
+                      placeholder="injetáveis, bioestimuladores, tecnologias…"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Área anatômica</Label>
+                    <Input
+                      value={String(pageMeta.metadata?.area_anatomica ?? "")}
+                      onChange={(e) =>
+                        setPageMeta((p) => ({
+                          ...p,
+                          metadata: { ...p.metadata, area_anatomica: e.target.value },
+                        }))
+                      }
+                      placeholder="labios, terco_superior, mandibula…"
+                    />
+                    <p className="text-[10px] text-brand-text-muted">
+                      Usado para filtrar casos clínicos do pool global no bloco Casos.
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Notas para a IA</Label>
+                    <Textarea
+                      rows={3}
+                      value={String(pageMeta.metadata?.ai_notes ?? "")}
+                      onChange={(e) =>
+                        setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, ai_notes: e.target.value } }))
+                      }
+                      placeholder="Direcionamentos editoriais, o que evitar, ângulo desejado…"
+                    />
+                  </div>
+                </div>
+
                 <p className="text-xs text-brand-text-muted">
                   Selecione um bloco à esquerda para editar seu conteúdo.
                 </p>
