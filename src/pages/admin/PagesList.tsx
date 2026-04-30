@@ -39,12 +39,17 @@ export default function PagesList() {
     if (!pendingDelete) return;
     setDeleting(true);
     try {
-      // Remove dependent rows first (no FK cascade configured).
-      await supabase.from("page_blocks").delete().eq("page_id", pendingDelete.id);
-      await supabase.from("case_page_overrides").delete().eq("page_id", pendingDelete.id);
-      const { error } = await supabase.from("pages").delete().eq("id", pendingDelete.id);
+      // Atomic backend deletion: validates admin role, removes blocks + case overrides,
+      // then the page itself — all in one transaction.
+      const { data, error } = await supabase.rpc("admin_delete_page" as any, {
+        _page_id: pendingDelete.id,
+      });
       if (error) throw error;
-      toast({ title: "Página excluída", description: `"${pendingDelete.title}" foi removida.` });
+      const result = (data ?? {}) as { blocks_deleted?: number; overrides_deleted?: number };
+      toast({
+        title: "Página excluída",
+        description: `"${pendingDelete.title}" removida (${result.blocks_deleted ?? 0} blocos, ${result.overrides_deleted ?? 0} overrides).`,
+      });
       setPendingDelete(null);
       queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
     } catch (err: any) {
