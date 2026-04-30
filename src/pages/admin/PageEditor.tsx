@@ -93,7 +93,12 @@ export default function PageEditor() {
   });
 
   // Estado local editável
-  const [pageMeta, setPageMeta] = useState({ title: "", meta_title: "", meta_description: "" });
+  const [pageMeta, setPageMeta] = useState({
+    title: "",
+    meta_title: "",
+    meta_description: "",
+    metadata: {} as Record<string, unknown>,
+  });
   const [blocks, setBlocks] = useState<DraftBlock[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
@@ -107,6 +112,8 @@ export default function PageEditor() {
       title: data.page.title ?? "",
       meta_title: data.page.meta_title ?? "",
       meta_description: data.page.meta_description ?? "",
+      metadata:
+        (data.page as unknown as { metadata?: Record<string, unknown> }).metadata ?? {},
     });
     setBlocks(
       (data.blocks as PageBlockRow[]).map((b) => ({
@@ -188,6 +195,7 @@ export default function PageEditor() {
           title: pageMeta.title,
           meta_title: pageMeta.meta_title || null,
           meta_description: pageMeta.meta_description || null,
+          metadata: asJson(pageMeta.metadata ?? {}),
         })
         .eq("id", data.page.id);
       if (pe) throw pe;
@@ -286,6 +294,7 @@ export default function PageEditor() {
           title: pageMeta.title,
           meta_title: pageMeta.meta_title || null,
           meta_description: pageMeta.meta_description || null,
+          metadata: pageMeta.metadata ?? {},
         },
         blocks: fresh,
       };
