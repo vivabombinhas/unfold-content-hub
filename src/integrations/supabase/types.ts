@@ -265,6 +265,7 @@ export type Database = {
           id: string
           meta_description: string | null
           meta_title: string | null
+          metadata: Json
           published_at: string | null
           published_snapshot: Json | null
           slug: string
@@ -277,6 +278,7 @@ export type Database = {
           id?: string
           meta_description?: string | null
           meta_title?: string | null
+          metadata?: Json
           published_at?: string | null
           published_snapshot?: Json | null
           slug: string
@@ -289,6 +291,7 @@ export type Database = {
           id?: string
           meta_description?: string | null
           meta_title?: string | null
+          metadata?: Json
           published_at?: string | null
           published_snapshot?: Json | null
           slug?: string
