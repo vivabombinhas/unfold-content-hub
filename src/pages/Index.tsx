@@ -106,6 +106,7 @@ const Index = () => {
     authority_strip: () => <AuthorityStrip />,
     manifesto_curto: () => renderManifesto(),
     metodo: () => <MethodSection />,
+    procedimento_detalhado: () => null,
     casos: () => renderCasos(),
     preco_ancora: () => renderPrecoAncora(),
     depoimentos: () => <ReviewsSection />,
