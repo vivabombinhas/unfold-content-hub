@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Search, Wand2, Loader2, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Step = "form" | "researching" | "generating" | "done" | "error";
 
@@ -38,6 +39,7 @@ export default function NewPageFromTopic() {
   const [tema, setTema] = useState("");
   const [slug, setSlug] = useState("");
   const [linksRaw, setLinksRaw] = useState("");
+  const [linksAreOwnOldPage, setLinksAreOwnOldPage] = useState(false);
   const [aiNotes, setAiNotes] = useState("");
   const [step, setStep] = useState<Step>("form");
   const [research, setResearch] = useState<ResearchData | null>(null);
@@ -69,7 +71,7 @@ export default function NewPageFromTopic() {
       // Step 1: research
       setStep("researching");
       const { data: researchData, error: researchErr } = await supabase.functions.invoke("research-topic", {
-        body: { tema, links_referencia: links },
+        body: { tema, links_referencia: links, own_old_page: linksAreOwnOldPage && links.length > 0 },
       });
       if (researchErr) throw new Error(researchErr.message);
       if (researchData?.error) throw new Error(researchData.error);
@@ -86,6 +88,8 @@ export default function NewPageFromTopic() {
           links_referencia: links,
           sources: researchData.sources || [],
           ai_notes: aiNotes.trim() || undefined,
+          own_old_page: linksAreOwnOldPage && links.length > 0,
+          old_page_content: researchData.old_page_content || null,
         },
       });
       if (pageErr) throw new Error(pageErr.message);
