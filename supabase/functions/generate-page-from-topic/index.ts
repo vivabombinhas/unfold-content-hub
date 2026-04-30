@@ -1,10 +1,19 @@
 // Edge function: generate-page-from-topic
-// Receives { tema, slug, research, sources?, links_referencia? }
-// 1. Validates admin caller
-// 2. Reads "voice DNA" from botox-masculino page (template)
-// 3. Asks Lovable AI to generate all 11 blocks following the same tone
-// 4. Inserts a new page (status=draft) + 11 page_blocks rows
-// 5. Returns { page_id, slug }
+// Receives { tema, slug, research, sources?, links_referencia?, ai_notes? }
+//
+// Fase 1:
+// - Botox-masculino é REFERÊNCIA EDITORIAL apenas (tom, cadência, estrutura
+//   de campos por bloco). NUNCA clonamos o `data` do Botox para a página
+//   nova — isso causava contaminação ("toxina botulínica" na página de
+//   harmonização, números de Botox na faixa de autoridade etc.).
+// - A IA gera todo o conteúdo textual de TODOS os blocos contextualizado
+//   ao tema, incluindo cursos (que continua ativo por padrão).
+// - Blocos coletivos (casos, depoimentos, ai_opinions, equipe_rt, cursos)
+//   recebem só os headers + um `data` neutro; os cards continuam vindo
+//   dos pools globais via BlockRenderer.
+// - Metadata estruturado (tema, categoria, area_anatomica, ai_notes,
+//   links_referencia, sources) é salvo em pages.metadata para futura
+//   curadoria.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -43,8 +52,9 @@ const generatePageSchema = {
         title: { type: "string", description: "Título da página (ex: 'Preenchimento Labial em Curitiba')." },
         meta_title: { type: "string", description: "Title SEO (60 chars)." },
         meta_description: { type: "string", description: "Meta description SEO (150-160 chars)." },
+        categoria: { type: "string", description: "Categoria editorial: ex 'injetáveis', 'bioestimuladores', 'tecnologias', 'cuidados faciais', 'corpo'." },
       },
-      required: ["title", "meta_title", "meta_description"],
+      required: ["title", "meta_title", "meta_description", "categoria"],
       additionalProperties: false,
     },
     blocks: {
@@ -58,6 +68,7 @@ const generatePageSchema = {
             subtitle: { type: "string" },
             cta_label: { type: "string" },
             cta_href: { type: "string", description: "Sempre '#contato'." },
+            footnote: { type: "string", description: "Frase curta de credibilidade (opcional)." },
           },
           required: ["eyebrow", "title", "subtitle", "cta_label", "cta_href"],
           additionalProperties: false,
@@ -65,6 +76,7 @@ const generatePageSchema = {
         manifesto_curto: {
           type: "object",
           properties: {
+            eyebrow: { type: "string" },
             title: { type: "string" },
             body: { type: "string", description: "2-4 frases, voz Batel: direto, técnico-acessível." },
           },
@@ -74,6 +86,7 @@ const generatePageSchema = {
         metodo: {
           type: "object",
           properties: {
+            eyebrow: { type: "string" },
             title: { type: "string" },
             steps: {
               type: "array",
@@ -97,6 +110,7 @@ const generatePageSchema = {
         preco_ancora: {
           type: "object",
           properties: {
+            eyebrow: { type: "string" },
             title: { type: "string" },
             price_label: { type: "string", description: "Ex: 'a partir de R$ X.XXX' — sem promessa." },
             note: { type: "string" },
@@ -134,14 +148,14 @@ const generatePageSchema = {
         // título/eyebrow do bloco precisa falar do tema atual, não de Botox).
         collective_headers: {
           type: "object",
-          description: "Eyebrow + título de cada bloco coletivo, adaptados ao tema.",
+          description: "Eyebrow + título contextualizados ao tema da página. NUNCA mencionar Botox aqui (a menos que o tema seja Botox).",
           properties: {
             authority_strip: { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
             casos:           { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
             depoimentos:     { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
             ai_opinions:     { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, subtitle: { type: "string" } }, required: ["eyebrow", "title_html", "subtitle"], additionalProperties: false },
-            equipe_rt:       { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
-            cursos:          { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, intro: { type: "string" } }, required: ["eyebrow", "title_html", "intro"], additionalProperties: false },
+            equipe_rt:       { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, bio: { type: "string", description: "Bio curta da RT contextualizada ao tema desta página." } }, required: ["eyebrow", "title_html"], additionalProperties: false },
+            cursos:          { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, intro: { type: "string" }, footnote: { type: "string" } }, required: ["eyebrow", "title_html", "intro"], additionalProperties: false },
           },
           required: ["authority_strip", "casos", "depoimentos", "ai_opinions", "equipe_rt", "cursos"],
           additionalProperties: false,
@@ -196,6 +210,13 @@ serve(async (req) => {
     const tema = String(body?.tema || "").trim();
     const slug = String(body?.slug || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
     const research = body?.research || null;
+    const linksReferencia: string[] = Array.isArray(body?.links_referencia)
+      ? body.links_referencia.filter((u: unknown) => typeof u === "string")
+      : [];
+    const sourcesIn: { url: string; title?: string }[] = Array.isArray(body?.sources)
+      ? body.sources.filter((s: unknown) => s && typeof (s as { url?: unknown }).url === "string")
+      : [];
+    const aiNotes = String(body?.ai_notes || "").trim();
 
     if (!tema || tema.length < 3) {
       return new Response(JSON.stringify({ error: "Tema obrigatório (3+ caracteres)" }), {
@@ -219,7 +240,7 @@ serve(async (req) => {
       });
     }
 
-    // Read template DNA
+    // Read template DNA — usado SOMENTE como referência de tom/estrutura (não copiado).
     const { data: templatePage } = await admin
       .from("pages")
       .select("id")
@@ -233,10 +254,23 @@ serve(async (req) => {
       .eq("page_id", templatePage.id)
       .order("position");
 
-    const dnaPayload = (templateBlocks || []).map((b) => ({ type: b.type, data: b.data })).slice(0, 12);
+    // DNA enxuto: só estrutura/forma de cada bloco para a IA imitar a cadência,
+    // sem despejar copy específica de Botox no prompt.
+    const dnaPayload = (templateBlocks || []).map((b) => ({
+      type: b.type,
+      campos: Object.keys((b.data as Record<string, unknown>) || {}),
+    }));
 
     // Build prompt for AI
-    const systemPrompt = `Você é a copywriter chefe da Estética Batel (Curitiba, desde 1995). Sua voz é a EXATA voz da página-modelo "Botox Masculino" abaixo.
+    const systemPrompt = `Você é a copywriter chefe da Estética Batel (Curitiba, desde 1995).
+Você está escrevendo uma NOVA landing page sobre "${tema}".
+
+IMPORTANTÍSSIMO — REGRA DE CONTAMINAÇÃO:
+- A página-modelo da clínica é "Botox Masculino", mas ela serve APENAS como referência de TOM e ESTRUTURA.
+- VOCÊ NÃO PODE mencionar Botox / toxina botulínica / aplicações musculares NESTA página, a menos que o tema "${tema}" seja literalmente sobre toxina botulínica.
+- Todo o conteúdo (eyebrow, títulos, parágrafos, métodos, FAQs, CTAs, headers de blocos coletivos, intro de cursos) deve falar EXCLUSIVAMENTE do procedimento "${tema}".
+- Se o tema for "Preenchimento Labial", NUNCA escreva sobre rugas, expressão facial, ou toxina. Foque em ácido hialurônico, contorno, hidratação, volume.
+- Se o tema for "Bioestimulador de Colágeno", foque em estímulo dérmico, melhora gradual, qualidade da pele — NÃO em paralisação muscular.
 
 REGRAS DE TOM (não negociáveis):
 - Autoridade discreta, direta, sem hype
@@ -244,22 +278,31 @@ REGRAS DE TOM (não negociáveis):
 - Frases curtas. Verbo no início.
 - Evite adjetivos vagos ("incrível", "perfeito", "fantástico")
 - NUNCA prometa resultado garantido, "sem riscos", "100% seguro", "indolor"
-- NUNCA cite marcas comerciais de toxina (Botox®, Dysport®, Xeomin®) — diga "toxina botulínica"
+- NUNCA cite marcas comerciais (Botox®, Dysport®, Xeomin®, Juvederm®, Sculptra®) — use o nome técnico do ativo
 - NUNCA use selo Anvisa nem CRBM como argumento principal de copy
 - Sempre mencione "avaliação" ou "consulta" antes de dose/preço
 - Linguagem que respeita o leitor; sem sensacionalismo
 
-VOZ-MODELO (replicar):
+ESTRUTURA DOS BLOCOS (campos esperados por tipo, replicar a cadência):
 ${JSON.stringify(dnaPayload, null, 2)}
 
-Sua tarefa: gerar uma nova landing page para o tema solicitado, mantendo a mesma estrutura, cadência e tom do modelo. Adapte conteúdo ao tema, NÃO copie frases.`;
+SOBRE O BLOCO CURSOS:
+- O bloco existe em todas as páginas. Você DEVE adaptar eyebrow, título, intro e footnote ao tema "${tema}".
+- Exemplo: para "Preenchimento Labial" → intro pode falar de formação técnica em harmonização perioral.
+- NÃO mencione Botox (a menos que o tema seja Botox). Se o pool de cursos da clínica não tiver curso específico desse tema, mantenha o copy genérico mas conectado ao universo do procedimento.`;
 
     const userPrompt = `Tema da nova página: "${tema}"
 Slug: ${slug}
 
-${research ? `Pesquisa do tema (use como base de verdade):\n${JSON.stringify(research, null, 2)}` : "(sem pesquisa pré-feita — use seu conhecimento)"}
+${aiNotes ? `Notas do editor (prioridade máxima):\n${aiNotes}\n\n` : ""}${
+      research
+        ? `Pesquisa do tema (use como base de verdade):\n${JSON.stringify(research, null, 2)}`
+        : "(sem pesquisa pré-feita — use seu conhecimento)"
+    }
+${linksReferencia.length ? `\nLinks de referência fornecidos pelo editor: ${linksReferencia.join(", ")}` : ""}
 
-Gere os blocos. Para FAQs, derive das dúvidas reais da pesquisa.`;
+Gere TODOS os blocos contextualizados ao tema "${tema}". Para FAQs, derive das dúvidas reais da pesquisa.
+Para cursos, escreva header e intro contextualizados — os cards continuam vindo do catálogo da clínica.`;
 
     const aiRes = await fetch(AI_GATEWAY, {
       method: "POST",
@@ -315,19 +358,32 @@ Gere os blocos. Para FAQs, derive das dúvidas reais da pesquisa.`;
     }
     const generated = JSON.parse(toolCall.function.arguments);
 
-    // Build blocks: AI-generated for text-heavy ones, copy-from-template for collection blocks
-    const templateMap = new Map<string, unknown>(
-      (templateBlocks || []).map((b) => [b.type as string, b.data]),
-    );
+    // Build blocks: para blocos coletivos NÃO copiamos o `data` do Botox.
+    // Apenas reusamos a imagem do hero (estrutura visual neutra) e deixamos os
+    // blocos coletivos com `data` mínimo (header gerado pela IA). Os cards
+    // (casos, reviews, ai_opinions, courses) vêm dos pools globais.
+    const heroImage =
+      ((templateBlocks || []).find((b) => b.type === "hero")?.data as { image_url?: string } | undefined)?.image_url || null;
+    const equipeBase =
+      ((templateBlocks || []).find((b) => b.type === "equipe_rt")?.data as Record<string, unknown> | undefined) || {};
+    // Reaproveitamos apenas dados institucionais da RT (foto, registro, nome) —
+    // NUNCA bio/accordions, que falam do Botox.
+    const equipeInstitutional: Record<string, unknown> = {};
+    for (const k of ["image_url", "register", "register_label", "name"]) {
+      if (equipeBase[k]) equipeInstitutional[k] = equipeBase[k];
+    }
 
     const newBlocks: Array<{ type: string; position: number; data: unknown; mode: string; enabled: boolean }> = [];
     let pos = 1;
-    const headers = (generated.blocks.collective_headers || {}) as Record<string, { eyebrow?: string; title_html?: string; subtitle?: string; intro?: string }>;
+    const headers = (generated.blocks.collective_headers || {}) as Record<
+      string,
+      { eyebrow?: string; title_html?: string; subtitle?: string; intro?: string; footnote?: string; bio?: string }
+    >;
     for (const type of BLOCK_ORDER) {
       let data: unknown;
       switch (type) {
         case "hero":
-          data = { ...generated.blocks.hero, image_url: (templateMap.get("hero") as { image_url?: string })?.image_url };
+          data = { ...generated.blocks.hero, ...(heroImage ? { image_url: heroImage } : {}) };
           break;
         case "manifesto_curto":
           data = generated.blocks.manifesto_curto;
@@ -344,35 +400,52 @@ Gere os blocos. Para FAQs, derive das dúvidas reais da pesquisa.`;
         case "faq":
           data = { title: "Perguntas frequentes", items: generated.blocks.faq_items };
           break;
-        // Collection blocks: AI generates the header (eyebrow + title), but the
-        // visual structure / extra fields come from the template so we keep the
-        // editorial cadence of the modelo Botox.
+        // Blocos coletivos: header da IA + data neutro. NUNCA herdam copy do Botox.
         case "authority_strip":
         case "casos":
         case "depoimentos":
         case "ai_opinions":
-        case "equipe_rt":
         case "cursos": {
-          const base = (templateMap.get(type) as Record<string, unknown>) || {};
           const h = headers[type] || {};
-          const merged: Record<string, unknown> = {
-            ...base,
-            ...(h.eyebrow ? { eyebrow: h.eyebrow } : {}),
-            ...(h.title_html ? { title_html: h.title_html } : {}),
-            ...(type === "ai_opinions" && h.subtitle ? { subtitle: h.subtitle } : {}),
-            ...(type === "cursos" && h.intro ? { intro: h.intro } : {}),
-          };
-          // Tag the "casos" block with the anatomical area so the renderer can
-          // filter the global pool when it's wired to the database.
+          const merged: Record<string, unknown> = {};
+          if (h.eyebrow) merged.eyebrow = h.eyebrow;
+          if (h.title_html) merged.title_html = h.title_html;
+          if (type === "ai_opinions" && h.subtitle) merged.subtitle = h.subtitle;
+          if (type === "cursos") {
+            if (h.intro) merged.intro = h.intro;
+            if (h.footnote) merged.footnote = h.footnote;
+          }
           if (type === "casos" && research?.area_anatomica) {
             merged.area_filter = String(research.area_anatomica);
           }
           data = merged;
           break;
         }
+        case "equipe_rt": {
+          const h = headers.equipe_rt || {};
+          const merged: Record<string, unknown> = { ...equipeInstitutional };
+          if (h.eyebrow) merged.eyebrow = h.eyebrow;
+          if (h.title_html) merged.title_html = h.title_html;
+          if (h.bio) merged.bio = h.bio;
+          data = merged;
+          break;
+        }
       }
+      // Cursos SEMPRE ativo por padrão (decisão editorial Fase 1).
       newBlocks.push({ type, position: pos++, data, mode: "structured", enabled: true });
     }
+
+    // Build metadata for the new page (Fase 1).
+    const metadata = {
+      tema,
+      categoria: generated.page.categoria || null,
+      area_anatomica: research?.area_anatomica || null,
+      ai_notes: aiNotes || null,
+      links_referencia: linksReferencia,
+      sources: sourcesIn,
+      generated_at: new Date().toISOString(),
+      template_slug: TEMPLATE_SLUG,
+    };
 
     // Insert page + blocks
     const { data: newPage, error: pageErr } = await admin
@@ -383,6 +456,7 @@ Gere os blocos. Para FAQs, derive das dúvidas reais da pesquisa.`;
         meta_title: generated.page.meta_title,
         meta_description: generated.page.meta_description,
         status: "draft",
+        metadata,
       })
       .select("id,slug")
       .single();

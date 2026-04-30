@@ -38,6 +38,7 @@ export default function NewPageFromTopic() {
   const [tema, setTema] = useState("");
   const [slug, setSlug] = useState("");
   const [linksRaw, setLinksRaw] = useState("");
+  const [aiNotes, setAiNotes] = useState("");
   const [step, setStep] = useState<Step>("form");
   const [research, setResearch] = useState<ResearchData | null>(null);
   const [sources, setSources] = useState<{ url: string; title: string }[]>([]);
@@ -78,7 +79,14 @@ export default function NewPageFromTopic() {
       // Step 2: generate
       setStep("generating");
       const { data: pageData, error: pageErr } = await supabase.functions.invoke("generate-page-from-topic", {
-        body: { tema, slug, research: researchData.research },
+        body: {
+          tema,
+          slug,
+          research: researchData.research,
+          links_referencia: links,
+          sources: researchData.sources || [],
+          ai_notes: aiNotes.trim() || undefined,
+        },
       });
       if (pageErr) throw new Error(pageErr.message);
       if (pageData?.error) throw new Error(pageData.error);
@@ -154,6 +162,24 @@ export default function NewPageFromTopic() {
             rows={4}
             className="mt-1.5 font-mono text-xs"
           />
+        </div>
+
+        <div>
+          <Label htmlFor="ai_notes" className="text-brand-text-light text-xs uppercase tracking-wider">
+            Notas para a IA <span className="text-brand-text-muted normal-case tracking-normal">(opcional)</span>
+          </Label>
+          <Textarea
+            id="ai_notes"
+            value={aiNotes}
+            onChange={(e) => setAiNotes(e.target.value)}
+            placeholder={"Direcionamentos extras: público-alvo, ângulo editorial, o que evitar, palavras a usar.\nEx.: focar em mulheres 35+, evitar comparação com toxina, destacar abordagem progressiva."}
+            disabled={isWorking}
+            rows={3}
+            className="mt-1.5"
+          />
+          <p className="text-[11px] text-brand-text-muted mt-1">
+            A IA prioriza essas instruções sobre a pesquisa automática.
+          </p>
         </div>
 
         <div className="pt-2">
