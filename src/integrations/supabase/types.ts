@@ -402,7 +402,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_delete_page: { Args: { _page_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin"
