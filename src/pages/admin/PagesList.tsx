@@ -6,6 +6,7 @@ import { ExternalLink, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
+import { useAuth } from "@/hooks/use-auth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,10 @@ import { toast } from "@/hooks/use-toast";
 
 export default function PagesList() {
   const queryClient = useQueryClient();
+  // Gate the query on auth readiness. Without this, useQuery fires before the
+  // Supabase session is restored, RLS returns empty/errors, and the user has to
+  // refresh until it works.
+  const { isAdmin, loading: authLoading } = useAuth();
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string; slug: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -33,6 +38,7 @@ export default function PagesList() {
       if (error) throw error;
       return data;
     },
+    enabled: !authLoading && isAdmin,
   });
 
   async function handleDelete() {
