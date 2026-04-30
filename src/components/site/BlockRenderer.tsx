@@ -487,7 +487,18 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Reputação · Google");
   const titleHtml = firstS([data.title_html, data.title, data.subtitle], "<em>4,9</em> de 5 · centenas de avaliações públicas.");
   const showCount = typeof data.show_count === "number" ? data.show_count : 5;
-  const list = reviews.slice(0, showCount);
+  // Fase 1.2: se a página tiver depoimentos próprios (extraídos de página antiga
+  // da clínica), eles têm prioridade sobre o pool global de Google reviews.
+  const ownItems = arr<{ name?: string; text?: string; rating?: number; date_label?: string; source?: string }>(data.items);
+  const list = ownItems.length > 0
+    ? ownItems.slice(0, showCount).map((it, i) => ({
+        id: `own-${i}`,
+        name: s(it.name, "Paciente"),
+        text: s(it.text),
+        rating: typeof it.rating === "number" ? Math.max(1, Math.min(5, it.rating)) : 5,
+        date_label: s(it.date_label, ""),
+      }))
+    : reviews.slice(0, showCount);
   if (list.length === 0) return null;
   return (
     <section className="bg-brand-black section-pad relative z-[2] overflow-hidden">
