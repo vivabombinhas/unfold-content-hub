@@ -90,16 +90,17 @@ const generatePageSchema = {
             title: { type: "string" },
             steps: {
               type: "array",
-              minItems: 4,
-              maxItems: 4,
+              minItems: 3,
+              maxItems: 3,
               items: {
                 type: "object",
                 properties: {
                   n: { type: "number" },
                   title: { type: "string" },
-                  desc: { type: "string" },
+                  summary: { type: "string", description: "Frase curta (1 linha) que aparece sob o título do passo." },
+                  detail: { type: "string", description: "Conteúdo do accordion 'Como funciona na prática' — 2 a 3 frases concretas, contextualizadas ao procedimento desta página. NUNCA mencionar Botox a menos que o tema seja Botox." },
                 },
-                required: ["n", "title", "desc"],
+                required: ["n", "title", "summary", "detail"],
                 additionalProperties: false,
               },
             },
