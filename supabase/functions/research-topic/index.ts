@@ -21,6 +21,7 @@ const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 interface ResearchInput {
   tema: string;
   links_referencia?: string[];
+  own_old_page?: boolean;
 }
 
 interface FirecrawlSearchResultItem {
@@ -60,11 +61,18 @@ async function firecrawlScrape(apiKey: string, url: string) {
   const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: true }),
+    body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: true }),
   });
   if (!res.ok) return null;
   const data = await res.json();
-  return data?.markdown || data?.data?.markdown || null;
+  // Normalize SDK/REST shapes
+  const root = data?.data ?? data;
+  return {
+    markdown: root?.markdown || null,
+    html: root?.html || null,
+    links: Array.isArray(root?.links) ? root.links : [],
+    metadata: root?.metadata || null,
+  };
 }
 
 function truncate(s: string | null | undefined, n: number) {
@@ -112,6 +120,7 @@ serve(async (req) => {
     const body = (await req.json()) as ResearchInput;
     const tema = (body?.tema || "").trim();
     const links = (body?.links_referencia || []).filter((u) => /^https?:\/\//.test(u)).slice(0, 5);
+    const ownOldPage = !!body?.own_old_page && links.length > 0;
 
     if (!tema || tema.length < 3 || tema.length > 200) {
       return new Response(JSON.stringify({ error: "Tema inválido (3-200 caracteres)" }), {
@@ -135,10 +144,10 @@ serve(async (req) => {
       const snippet = item.markdown || item.description || "";
       if (snippet) corpusParts.push(`[${item.title || item.url}]\n${truncate(snippet, 1500)}`);
     }
-    refScrapes.forEach((md, i) => {
-      if (md) {
+    refScrapes.forEach((scrape, i) => {
+      if (scrape?.markdown) {
         sources.push({ url: links[i], title: `Referência fornecida: ${links[i]}` });
-        corpusParts.push(`[Referência do usuário ${i + 1}]\n${truncate(md, 3000)}`);
+        corpusParts.push(`[Referência do usuário ${i + 1}]\n${truncate(scrape.markdown, 3000)}`);
       }
     });
 
@@ -241,8 +250,147 @@ serve(async (req) => {
       });
     }
 
+    // Fase 1.2: se as URLs são páginas antigas próprias, tenta extrair conteúdo
+    // estruturado real (depoimentos, FAQs, seções, imagens candidatas).
+    let oldPageContent: unknown = null;
+    if (ownOldPage) {
+      const ownCorpusParts: string[] = [];
+      const candidateImages: { url: string; alt: string; source_url: string }[] = [];
+      refScrapes.forEach((scrape, i) => {
+        if (!scrape) return;
+        const sourceUrl = links[i];
+        if (scrape.markdown) {
+          ownCorpusParts.push(`[Página antiga ${i + 1} — ${sourceUrl}]\nMARKDOWN:\n${truncate(scrape.markdown, 8000)}`);
+        }
+        if (scrape.html) {
+          // Extrai <img src> e alt diretamente do HTML como candidatas
+          const imgRegex = /<img[^>]*?src=["']([^"']+)["'][^>]*?(?:alt=["']([^"']*)["'])?[^>]*>/gi;
+          let m;
+          while ((m = imgRegex.exec(scrape.html)) !== null) {
+            const url = m[1];
+            if (!url || url.startsWith("data:")) continue;
+            // Resolve URL relativa
+            let abs = url;
+            try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
+            // Pula ícones/SVGs decorativos óbvios
+            if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
+            if (candidateImages.length < 30 && !candidateImages.some((c) => c.url === abs)) {
+              candidateImages.push({ url: abs, alt: m[2] || "", source_url: sourceUrl });
+            }
+          }
+        }
+      });
+
+      if (ownCorpusParts.length > 0) {
+        const extractRes = await fetch(AI_GATEWAY, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Você é uma editora extraindo conteúdo real de uma página antiga da clínica Estética Batel para reaproveitar em uma página nova. Português do Brasil. NUNCA invente: só registre o que está literalmente nas páginas fornecidas. Se um campo não tem conteúdo, devolva array vazio. Mantenha o sentido original; pode ajustar pontuação e formatação leve.",
+              },
+              {
+                role: "user",
+                content: `Tema da nova página: "${tema}"\n\nConteúdo bruto das páginas antigas:\n\n${ownCorpusParts.join("\n\n---\n\n").slice(0, 25000)}`,
+              },
+            ],
+            tools: [
+              {
+                type: "function",
+                function: {
+                  name: "registrar_conteudo_antigo",
+                  description: "Registra conteúdo real extraído da(s) página(s) antiga(s).",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      testimonials: {
+                        type: "array",
+                        description: "Depoimentos encontrados literalmente. NÃO inventar. Pode ficar vazio.",
+                        items: {
+                          type: "object",
+                          properties: {
+                            name: { type: "string", description: "Nome de quem deu o depoimento; vazio se não houver." },
+                            text: { type: "string", description: "Texto do depoimento, mantendo sentido original." },
+                            source: { type: "string", description: "Sempre 'old_page'." },
+                          },
+                          required: ["name", "text", "source"],
+                          additionalProperties: false,
+                        },
+                      },
+                      faqs: {
+                        type: "array",
+                        description: "Perguntas frequentes encontradas. Importe TODAS as que aparecem na página, mesmo que sejam 20+. NÃO inventar.",
+                        items: {
+                          type: "object",
+                          properties: {
+                            question: { type: "string" },
+                            answer: { type: "string" },
+                          },
+                          required: ["question", "answer"],
+                          additionalProperties: false,
+                        },
+                      },
+                      sections: {
+                        type: "array",
+                        description: "Seções de conteúdo relevantes da página antiga (texto explicativo, descrição do procedimento, benefícios). Identifique se vale aproveitar como bloco extra.",
+                        items: {
+                          type: "object",
+                          properties: {
+                            title: { type: "string" },
+                            body: { type: "string", description: "Texto completo da seção (pode ter parágrafos separados por \\n\\n)." },
+                            type_suggestion: {
+                              type: "string",
+                              description: "Sugestão de uso: 'procedimento_detalhado' (descreve como funciona o procedimento), 'manifesto', 'metodo', 'beneficios', 'preparo', 'pos_procedimento', 'unknown'.",
+                            },
+                          },
+                          required: ["title", "body", "type_suggestion"],
+                          additionalProperties: false,
+                        },
+                      },
+                      ctas: {
+                        type: "array",
+                        description: "CTAs encontrados (texto do botão).",
+                        items: { type: "string" },
+                      },
+                    },
+                    required: ["testimonials", "faqs", "sections", "ctas"],
+                    additionalProperties: false,
+                  },
+                },
+              },
+            ],
+            tool_choice: { type: "function", function: { name: "registrar_conteudo_antigo" } },
+          }),
+        });
+
+        if (extractRes.ok) {
+          const extractData = await extractRes.json();
+          const tc = extractData?.choices?.[0]?.message?.tool_calls?.[0];
+          if (tc) {
+            try {
+              const parsed = JSON.parse(tc.function.arguments);
+              oldPageContent = { ...parsed, images: candidateImages };
+            } catch (e) {
+              console.error("old_page_content parse error", e);
+            }
+          }
+        } else {
+          console.error("old_page extract failed", extractRes.status, await extractRes.text());
+        }
+      }
+
+      // Mesmo se extração da IA falhar, salva imagens encontradas
+      if (!oldPageContent && candidateImages.length > 0) {
+        oldPageContent = { testimonials: [], faqs: [], sections: [], ctas: [], images: candidateImages };
+      }
+    }
+
     return new Response(
-      JSON.stringify({ tema, research: args, sources: sources.slice(0, 10) }),
+      JSON.stringify({ tema, research: args, sources: sources.slice(0, 10), old_page_content: oldPageContent }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
