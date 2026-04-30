@@ -578,6 +578,67 @@ export default function PageEditor() {
                       placeholder="Direcionamentos editoriais, o que evitar, ângulo desejado…"
                     />
                   </div>
+                  {(() => {
+                    const meta = pageMeta.metadata as Record<string, unknown>;
+                    const refType = String(meta?.reference_type ?? "");
+                    const images = Array.isArray(meta?.old_page_images)
+                      ? (meta.old_page_images as { url?: string; alt?: string; source_url?: string }[])
+                      : [];
+                    const extracted = (meta?.old_page_extracted ?? null) as
+                      | { testimonials_count?: number; faqs_count?: number; sections_count?: number; used_section_for_detalhado?: boolean }
+                      | null;
+                    if (refType !== "own_old_page" && images.length === 0 && !extracted) return null;
+                    return (
+                      <div className="border-t border-brand-gold/15 pt-4 mt-2 space-y-3">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/80">
+                          Página antiga aproveitada
+                        </p>
+                        {extracted && (
+                          <ul className="text-[11px] text-brand-text-muted space-y-1">
+                            <li>Depoimentos importados: <strong className="text-brand-text-light">{extracted.testimonials_count ?? 0}</strong></li>
+                            <li>FAQs importadas: <strong className="text-brand-text-light">{extracted.faqs_count ?? 0}</strong></li>
+                            <li>Seções identificadas: <strong className="text-brand-text-light">{extracted.sections_count ?? 0}</strong></li>
+                            <li>Bloco "procedimento detalhado": <strong className="text-brand-text-light">{extracted.used_section_for_detalhado ? "ativo" : "vazio"}</strong></li>
+                          </ul>
+                        )}
+                        {images.length > 0 && (
+                          <div>
+                            <Label className="text-xs uppercase tracking-wider text-brand-text-muted">
+                              Imagens candidatas ({images.length})
+                            </Label>
+                            <p className="text-[10px] text-brand-text-muted mb-2">
+                              URLs encontradas na página antiga. Clique para copiar e cole no campo de imagem do bloco desejado.
+                            </p>
+                            <div className="grid grid-cols-3 gap-1.5 max-h-64 overflow-y-auto">
+                              {images.map((img, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => {
+                                    if (img.url) {
+                                      navigator.clipboard.writeText(img.url);
+                                    }
+                                  }}
+                                  title={`${img.alt || "(sem alt)"}\n${img.url}\n— clique para copiar URL`}
+                                  className="relative aspect-square overflow-hidden border border-brand-gold/15 hover:border-brand-gold/60 transition-colors group"
+                                >
+                                  <img
+                                    src={img.url}
+                                    alt={img.alt || ""}
+                                    loading="lazy"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).style.opacity = "0.2";
+                                    }}
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <p className="text-xs text-brand-text-muted">
