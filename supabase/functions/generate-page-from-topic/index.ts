@@ -404,7 +404,16 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     let pos = 1;
     const headers = (generated.blocks.collective_headers || {}) as Record<
       string,
-      { eyebrow?: string; title_html?: string; subtitle?: string; intro?: string; footnote?: string; bio?: string }
+      {
+        eyebrow?: string;
+        title_html?: string;
+        subtitle?: string;
+        intro?: string;
+        footnote?: string;
+        bio?: string;
+        accordions?: { question: string; answer: string }[];
+        cta_label?: string;
+      }
     >;
     for (const type of BLOCK_ORDER) {
       let data: unknown;
@@ -454,6 +463,15 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           if (h.eyebrow) merged.eyebrow = h.eyebrow;
           if (h.title_html) merged.title_html = h.title_html;
           if (h.bio) merged.bio = h.bio;
+          if (Array.isArray(h.accordions) && h.accordions.length > 0) merged.accordions = h.accordions;
+          merged.cta_label = h.cta_label || "Conhecer a equipe completa";
+          // Garante campos institucionais mínimos vindos do template/page-mãe.
+          if (!merged.image_url && (equipeInstitutional as { photo_url?: string }).photo_url) {
+            merged.image_url = (equipeInstitutional as { photo_url?: string }).photo_url;
+          }
+          if (!merged.register_label && (equipeInstitutional as { register?: string }).register) {
+            merged.register_label = (equipeInstitutional as { register?: string }).register;
+          }
           data = merged;
           break;
         }
