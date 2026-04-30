@@ -423,6 +423,7 @@ export type Database = {
         | "cursos"
         | "faq"
         | "cta_final"
+        | "procedimento_detalhado"
       page_status: "draft" | "published"
     }
     CompositeTypes: {
@@ -566,6 +567,7 @@ export const Constants = {
         "cursos",
         "faq",
         "cta_final",
+        "procedimento_detalhado",
       ],
       page_status: ["draft", "published"],
     },
