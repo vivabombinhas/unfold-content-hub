@@ -318,6 +318,15 @@ SOBRE O BLOCO CURSOS:
 - Exemplo: para "Preenchimento Labial" → intro pode falar de formação técnica em harmonização perioral.
 - NÃO mencione Botox (a menos que o tema seja Botox). Se o pool de cursos da clínica não tiver curso específico desse tema, mantenha o copy genérico mas conectado ao universo do procedimento.`;
 
+REGRAS ESPECÍFICAS DE BLOCOS (estrutura aprovada — NÃO simplificar):
+
+- METODO: 3 passos. Cada passo TEM OBRIGATORIAMENTE 'title', 'summary' (frase curta) e 'detail' (2-3 frases concretas que abrem no accordion "Como funciona na prática"). O 'detail' precisa ser específico do procedimento "${tema}" — descreve o que acontece naquele passo na prática clínica deste procedimento.
+
+- EQUIPE_RT (Responsável Técnica): NÃO transformar essa seção em "Direção Técnica" ou bloco genérico. Sempre manter como apresentação da Dra. Daniele Florencio. O título deve trazer o nome dela. A bio adapta-se ao tema. Os 2 accordions são:
+  1) "Como a Dra. Daniele pensa o [procedimento desta página]" — ponto de vista clínico dela sobre este procedimento específico (1 parágrafo curto, em 1ª pessoa, entre aspas).
+  2) "Especializações e formação" — institucional (lista de 4-5 itens em texto corrido, separados por '·' ou em frases curtas). Pode reusar a base: especialização em Harmonização Orofacial, atualizações anuais, +10.000 procedimentos documentados, mentora de profissionais em formação.
+  O cta_label é sempre "Conhecer a equipe completa".`;
+
     const userPrompt = `Tema da nova página: "${tema}"
 Slug: ${slug}
 
