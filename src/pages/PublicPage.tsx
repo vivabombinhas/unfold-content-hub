@@ -6,6 +6,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { FloatingCTA } from "@/components/site/FloatingCTA";
 import { BlockRenderer } from "@/components/site/BlockRenderer";
+import { LocalizacaoSection } from "@/components/site/LocalizacaoSection";
 import { useReveal } from "@/hooks/use-reveal";
 import { PoolsProvider, usePoolsQuery } from "@/hooks/use-pools";
 import type { BlockType } from "@/types/blocks";
@@ -128,6 +129,9 @@ export default function PublicPage() {
           <BlockRenderer key={b.id} type={b.type} data={b.data || {}} />
         ))}
       </PoolsProvider>
+
+      {/* Seção fixa de localização — global, não é um block_type. */}
+      <LocalizacaoSection />
 
       <Footer />
       <FloatingCTA />
