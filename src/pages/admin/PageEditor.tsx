@@ -22,6 +22,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DndContext,
   closestCenter,
@@ -63,12 +64,16 @@ export default function PageEditor() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  // Wait for auth/admin check before firing the query — otherwise RLS returns
+  // nothing and the user has to refresh until the session is restored.
+  const { isAdmin, loading: authLoading } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-page", slug],
     refetchOnMount: false,
     refetchOnReconnect: false,
     refetchOnWindowFocus: false,
+    enabled: !authLoading && isAdmin,
     queryFn: async () => {
       const { data: page, error } = await supabase
         .from("pages")
