@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, Pencil, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
 
 export default function PagesList() {
   const { data: pages, isLoading } = useQuery({
@@ -62,6 +63,11 @@ export default function PagesList() {
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
+                      <CopyLinkButton
+                        slug={p.slug}
+                        status={p.status as "draft" | "published"}
+                        variant="icon"
+                      />
                       <a
                         href={p.status === "published" ? `/p/${p.slug}` : `/p/${p.slug}?preview=1`}
                         target="_blank"

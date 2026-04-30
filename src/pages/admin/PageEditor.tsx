@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
+import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
 import {
   DndContext,
   closestCenter,
@@ -378,6 +379,10 @@ export default function PageEditor() {
           <p className="text-xs text-brand-text-muted font-mono">/{data.page.slug}</p>
         </div>
         <div className="flex items-center gap-2">
+          <CopyLinkButton
+            slug={data.page.slug}
+            status={data.page.status as "draft" | "published"}
+          />
           <Button variant="ghost" size="sm" asChild>
             <a
               href={data.page.status === "published" ? `/p/${data.page.slug}` : `/p/${data.page.slug}?preview=1`}
