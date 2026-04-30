@@ -1,12 +1,28 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Pencil, Sparkles } from "lucide-react";
+import { ExternalLink, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/hooks/use-toast";
 
 export default function PagesList() {
+  const queryClient = useQueryClient();
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string; slug: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const { data: pages, isLoading } = useQuery({
     queryKey: ["admin-pages"],
     queryFn: async () => {
@@ -18,6 +34,25 @@ export default function PagesList() {
       return data;
     },
   });
+
+  async function handleDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      // Remove dependent rows first (no FK cascade configured).
+      await supabase.from("page_blocks").delete().eq("page_id", pendingDelete.id);
+      await supabase.from("case_page_overrides").delete().eq("page_id", pendingDelete.id);
+      const { error } = await supabase.from("pages").delete().eq("id", pendingDelete.id);
+      if (error) throw error;
+      toast({ title: "Página excluída", description: `"${pendingDelete.title}" foi removida.` });
+      setPendingDelete(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+    } catch (err: any) {
+      toast({ title: "Erro ao excluir", description: err?.message ?? "Tente novamente.", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="p-8 max-w-5xl">
@@ -45,7 +80,7 @@ export default function PagesList() {
                 <th className="px-5 py-3">Slug</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Atualizada</th>
-                <th className="px-5 py-3 w-32"></th>
+                <th className="px-5 py-3 w-40"></th>
               </tr>
             </thead>
             <tbody>
@@ -84,6 +119,15 @@ export default function PagesList() {
                         <Pencil className="size-3.5" />
                         Editar
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete({ id: p.id, title: p.title, slug: p.slug })}
+                        className="text-brand-text-muted hover:text-destructive transition-colors"
+                        title="Excluir página"
+                        aria-label={`Excluir ${p.title}`}
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -92,6 +136,31 @@ export default function PagesList() {
           </table>
         </div>
       )}
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && !deleting && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir página?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir <strong>{pendingDelete?.title}</strong> (/p/{pendingDelete?.slug}).
+              Todos os blocos e overrides de casos desta página serão removidos. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo…" : "Excluir definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
