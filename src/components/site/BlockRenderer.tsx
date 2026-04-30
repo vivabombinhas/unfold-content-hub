@@ -570,9 +570,10 @@ function EquipeBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Responsável técnica");
   const titleHtml = firstS([data.title_html, data.title, data.name], "Dra. Daniele <em>Florencio</em>");
   const registerLabel = firstS([data.register_label, data.register], "CRBM 8242 PR");
-  const imageUrl = s(data.image_url);
+  const imageUrl = firstS([data.image_url, data.photo_url]);
   const bio = firstS([data.bio, data.description]);
   const accordions = arr<{ question?: string; answer?: string }>(data.accordions);
+  const ctaLabel = s(data.cta_label, "Conhecer a equipe completa");
   return (
     <section id="equipe" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
       <div className="container-editorial grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-16 items-center">
@@ -597,6 +598,15 @@ function EquipeBlock({ data }: { data: BlockData }) {
                 </InlineExpand>
               ))}
             </div>
+          )}
+          {ctaLabel && (
+            <a
+              href="#contato"
+              className="mt-8 inline-flex items-center gap-3 text-brand-green text-[11px] font-body font-semibold uppercase tracking-[0.2em] border-b border-brand-green/40 pb-1 hover:border-brand-green transition-colors group"
+            >
+              {ctaLabel}
+              <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" strokeWidth={2} />
+            </a>
           )}
         </div>
       </div>

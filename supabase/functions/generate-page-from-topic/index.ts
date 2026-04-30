@@ -90,16 +90,17 @@ const generatePageSchema = {
             title: { type: "string" },
             steps: {
               type: "array",
-              minItems: 4,
-              maxItems: 4,
+              minItems: 3,
+              maxItems: 3,
               items: {
                 type: "object",
                 properties: {
                   n: { type: "number" },
                   title: { type: "string" },
-                  desc: { type: "string" },
+                  summary: { type: "string", description: "Frase curta (1 linha) que aparece sob o título do passo." },
+                  detail: { type: "string", description: "Conteúdo do accordion 'Como funciona na prática' — 2 a 3 frases concretas, contextualizadas ao procedimento desta página. NUNCA mencionar Botox a menos que o tema seja Botox." },
                 },
-                required: ["n", "title", "desc"],
+                required: ["n", "title", "summary", "detail"],
                 additionalProperties: false,
               },
             },
@@ -154,7 +155,33 @@ const generatePageSchema = {
             casos:           { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
             depoimentos:     { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" } }, required: ["eyebrow", "title_html"], additionalProperties: false },
             ai_opinions:     { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, subtitle: { type: "string" } }, required: ["eyebrow", "title_html", "subtitle"], additionalProperties: false },
-            equipe_rt:       { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, bio: { type: "string", description: "Bio curta da RT contextualizada ao tema desta página." } }, required: ["eyebrow", "title_html"], additionalProperties: false },
+            equipe_rt: {
+              type: "object",
+              description: "Bloco da Responsável Técnica. PRESERVAR estrutura: eyebrow institucional, título com nome da RT, bio + 2 accordions + CTA. Adaptar SOMENTE a copy ao tema desta página.",
+              properties: {
+                eyebrow: { type: "string", description: "Sempre 'Responsável técnica' (ou similar)." },
+                title_html: { type: "string", description: "Sempre o nome da RT, ex: 'Dra. Daniele <em>Florencio</em>'. NÃO inventar nomes alternativos como 'Direção Técnica'." },
+                bio: { type: "string", description: "Bio curta (2-3 frases) da Dra. Daniele Florencio adaptada ao tema desta página. Deve mencionar a experiência dela aplicada AO PROCEDIMENTO desta página." },
+                accordions: {
+                  type: "array",
+                  minItems: 2,
+                  maxItems: 2,
+                  description: "Sempre 2 accordions. (1) 'Como a Dra. Daniele pensa o [tema]' adaptado ao procedimento. (2) 'Especializações e formação' — institucional, pode reutilizar base.",
+                  items: {
+                    type: "object",
+                    properties: {
+                      question: { type: "string" },
+                      answer: { type: "string" },
+                    },
+                    required: ["question", "answer"],
+                    additionalProperties: false,
+                  },
+                },
+                cta_label: { type: "string", description: "Sempre 'Conhecer a equipe completa'." },
+              },
+              required: ["eyebrow", "title_html", "bio", "accordions", "cta_label"],
+              additionalProperties: false,
+            },
             cursos:          { type: "object", properties: { eyebrow: { type: "string" }, title_html: { type: "string" }, intro: { type: "string" }, footnote: { type: "string" } }, required: ["eyebrow", "title_html", "intro"], additionalProperties: false },
           },
           required: ["authority_strip", "casos", "depoimentos", "ai_opinions", "equipe_rt", "cursos"],
@@ -289,7 +316,16 @@ ${JSON.stringify(dnaPayload, null, 2)}
 SOBRE O BLOCO CURSOS:
 - O bloco existe em todas as páginas. Você DEVE adaptar eyebrow, título, intro e footnote ao tema "${tema}".
 - Exemplo: para "Preenchimento Labial" → intro pode falar de formação técnica em harmonização perioral.
-- NÃO mencione Botox (a menos que o tema seja Botox). Se o pool de cursos da clínica não tiver curso específico desse tema, mantenha o copy genérico mas conectado ao universo do procedimento.`;
+- NÃO mencione Botox (a menos que o tema seja Botox). Se o pool de cursos da clínica não tiver curso específico desse tema, mantenha o copy genérico mas conectado ao universo do procedimento.
+
+REGRAS ESPECÍFICAS DE BLOCOS (estrutura aprovada — NÃO simplificar):
+
+- METODO: 3 passos. Cada passo TEM OBRIGATORIAMENTE 'title', 'summary' (frase curta) e 'detail' (2-3 frases concretas que abrem no accordion "Como funciona na prática"). O 'detail' precisa ser específico do procedimento "${tema}" — descreve o que acontece naquele passo na prática clínica deste procedimento.
+
+- EQUIPE_RT (Responsável Técnica): NÃO transformar essa seção em "Direção Técnica" ou bloco genérico. Sempre manter como apresentação da Dra. Daniele Florencio. O título deve trazer o nome dela. A bio adapta-se ao tema. Os 2 accordions são:
+  1) "Como a Dra. Daniele pensa o [procedimento desta página]" — ponto de vista clínico dela sobre este procedimento específico (1 parágrafo curto, em 1ª pessoa, entre aspas).
+  2) "Especializações e formação" — institucional (lista de 4-5 itens em texto corrido, separados por '·' ou em frases curtas). Pode reusar a base: especialização em Harmonização Orofacial, atualizações anuais, +10.000 procedimentos documentados, mentora de profissionais em formação.
+  O cta_label é sempre "Conhecer a equipe completa".`;
 
     const userPrompt = `Tema da nova página: "${tema}"
 Slug: ${slug}
@@ -377,7 +413,16 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     let pos = 1;
     const headers = (generated.blocks.collective_headers || {}) as Record<
       string,
-      { eyebrow?: string; title_html?: string; subtitle?: string; intro?: string; footnote?: string; bio?: string }
+      {
+        eyebrow?: string;
+        title_html?: string;
+        subtitle?: string;
+        intro?: string;
+        footnote?: string;
+        bio?: string;
+        accordions?: { question: string; answer: string }[];
+        cta_label?: string;
+      }
     >;
     for (const type of BLOCK_ORDER) {
       let data: unknown;
@@ -427,6 +472,15 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           if (h.eyebrow) merged.eyebrow = h.eyebrow;
           if (h.title_html) merged.title_html = h.title_html;
           if (h.bio) merged.bio = h.bio;
+          if (Array.isArray(h.accordions) && h.accordions.length > 0) merged.accordions = h.accordions;
+          merged.cta_label = h.cta_label || "Conhecer a equipe completa";
+          // Garante campos institucionais mínimos vindos do template/page-mãe.
+          if (!merged.image_url && (equipeInstitutional as { photo_url?: string }).photo_url) {
+            merged.image_url = (equipeInstitutional as { photo_url?: string }).photo_url;
+          }
+          if (!merged.register_label && (equipeInstitutional as { register?: string }).register) {
+            merged.register_label = (equipeInstitutional as { register?: string }).register;
+          }
           data = merged;
           break;
         }
