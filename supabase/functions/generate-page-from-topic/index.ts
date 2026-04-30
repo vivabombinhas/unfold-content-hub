@@ -32,6 +32,7 @@ const BLOCK_ORDER = [
   "authority_strip",
   "manifesto_curto",
   "metodo",
+  "procedimento_detalhado",
   "casos",
   "preco_ancora",
   "depoimentos",
@@ -244,6 +245,16 @@ serve(async (req) => {
       ? body.sources.filter((s: unknown) => s && typeof (s as { url?: unknown }).url === "string")
       : [];
     const aiNotes = String(body?.ai_notes || "").trim();
+    const ownOldPage = !!body?.own_old_page;
+    const oldPageContent = (body?.old_page_content && typeof body.old_page_content === "object")
+      ? body.old_page_content as {
+          testimonials?: { name?: string; text?: string; source?: string }[];
+          faqs?: { question?: string; answer?: string }[];
+          sections?: { title?: string; body?: string; type_suggestion?: string }[];
+          ctas?: string[];
+          images?: { url?: string; alt?: string; source_url?: string }[];
+        }
+      : null;
 
     if (!tema || tema.length < 3) {
       return new Response(JSON.stringify({ error: "Tema obrigatório (3+ caracteres)" }), {
@@ -394,6 +405,52 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     }
     const generated = JSON.parse(toolCall.function.arguments);
 
+    // ---- Fase 1.2: conteúdo real da página antiga própria tem prioridade ----
+    const ownTestimonials = (oldPageContent?.testimonials || [])
+      .filter((t) => t && typeof t.text === "string" && t.text.trim().length > 0)
+      .map((t) => ({
+        name: (t.name || "Paciente").trim(),
+        text: t.text!.trim(),
+        rating: 5,
+        date_label: "",
+        source: "old_page",
+      }));
+
+    const ownFaqs = (oldPageContent?.faqs || [])
+      .filter((f) => f && typeof f.question === "string" && typeof f.answer === "string" && f.question.trim() && f.answer.trim())
+      .map((f) => ({ question: f.question!.trim(), answer: f.answer!.trim(), source: "old_page" }));
+
+    // Mescla FAQs antigas (prioridade) + FAQs geradas pela IA (complemento, marcadas)
+    const aiFaqs = (Array.isArray(generated.blocks?.faq_items) ? generated.blocks.faq_items : [])
+      .map((f: { question: string; answer: string }) => ({ ...f, source: "ai" }));
+    const mergedFaqs = ownFaqs.length > 0
+      ? [...ownFaqs, ...aiFaqs.slice(0, Math.max(0, 8 - ownFaqs.length))]
+      : aiFaqs;
+
+    // Procedimento detalhado: ativa só se a página antiga tem uma seção forte
+    // marcada como 'procedimento_detalhado' / 'beneficios' / 'metodo' / 'preparo'.
+    const detailedSection = (oldPageContent?.sections || []).find((sec) => {
+      const t = (sec.type_suggestion || "").toLowerCase();
+      return ["procedimento_detalhado", "beneficios", "metodo", "preparo", "pos_procedimento"].includes(t)
+        && typeof sec.body === "string"
+        && sec.body.trim().length > 80;
+    });
+    const procedimentoDetalhadoData = detailedSection ? {
+      eyebrow: "Como é o procedimento",
+      title_html: detailedSection.title || "Como é, na prática, esse <em>procedimento</em>.",
+      paragraphs: (detailedSection.body || "")
+        .split(/\n\s*\n/)
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0)
+        .slice(0, 6),
+      bullets: [],
+    } : null;
+
+    const candidateImages = (oldPageContent?.images || [])
+      .filter((img) => img && typeof img.url === "string")
+      .slice(0, 30);
+    // -----------------------------------------------------------------------
+
     // Build blocks: para blocos coletivos NÃO copiamos o `data` do Botox.
     // Apenas reusamos a imagem do hero (estrutura visual neutra) e deixamos os
     // blocos coletivos com `data` mínimo (header gerado pela IA). Os cards
@@ -426,6 +483,7 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     >;
     for (const type of BLOCK_ORDER) {
       let data: unknown;
+      let enabled = true;
       switch (type) {
         case "hero":
           data = { ...generated.blocks.hero, ...(heroImage ? { image_url: heroImage } : {}) };
@@ -436,6 +494,11 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
         case "metodo":
           data = generated.blocks.metodo;
           break;
+        case "procedimento_detalhado":
+          // Bloco opcional — só ativa quando há seção forte da página antiga.
+          data = procedimentoDetalhadoData ?? { eyebrow: "", title_html: "", paragraphs: [], bullets: [] };
+          enabled = !!procedimentoDetalhadoData;
+          break;
         case "preco_ancora":
           data = generated.blocks.preco_ancora;
           break;
@@ -443,7 +506,11 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           data = generated.blocks.cta_final;
           break;
         case "faq":
-          data = { title: "Perguntas frequentes", items: generated.blocks.faq_items };
+          data = {
+            title: "Perguntas frequentes",
+            eyebrow: "Dúvidas frequentes",
+            items: mergedFaqs,
+          };
           break;
         // Blocos coletivos: header da IA + data neutro. NUNCA herdam copy do Botox.
         case "authority_strip":
@@ -462,6 +529,12 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           }
           if (type === "casos" && research?.area_anatomica) {
             merged.area_filter = String(research.area_anatomica);
+          }
+          // Fase 1.2: depoimentos próprios da página antiga têm prioridade
+          // sobre o pool de Google reviews.
+          if (type === "depoimentos" && ownTestimonials.length > 0) {
+            merged.items = ownTestimonials;
+            merged.show_count = ownTestimonials.length;
           }
           data = merged;
           break;
@@ -485,8 +558,7 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           break;
         }
       }
-      // Cursos SEMPRE ativo por padrão (decisão editorial Fase 1).
-      newBlocks.push({ type, position: pos++, data, mode: "structured", enabled: true });
+      newBlocks.push({ type, position: pos++, data, mode: "structured", enabled });
     }
 
     // Build metadata for the new page (Fase 1).
@@ -499,6 +571,18 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       sources: sourcesIn,
       generated_at: new Date().toISOString(),
       template_slug: TEMPLATE_SLUG,
+      // Fase 1.2 — origem do conteúdo das referências
+      reference_type: ownOldPage ? "own_old_page" : (linksReferencia.length > 0 ? "external" : "none"),
+      // URLs de imagens encontradas nas páginas antigas próprias.
+      // NÃO baixamos automaticamente — ficam como sugestões para o admin colar
+      // nos blocos de imagem (hero, etc.).
+      old_page_images: ownOldPage ? candidateImages : [],
+      old_page_extracted: ownOldPage ? {
+        testimonials_count: ownTestimonials.length,
+        faqs_count: ownFaqs.length,
+        sections_count: (oldPageContent?.sections || []).length,
+        used_section_for_detalhado: !!procedimentoDetalhadoData,
+      } : null,
     };
 
     // Insert page + blocks

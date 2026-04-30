@@ -101,6 +101,8 @@ export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData
       return <ManifestoBlock data={data} />;
     case "metodo":
       return <MetodoBlock data={data} />;
+    case "procedimento_detalhado":
+      return <ProcedimentoDetalhadoBlock data={data} />;
     case "casos":
       return <CasosBlock data={data} />;
     case "preco_ancora":
@@ -485,7 +487,18 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Reputação · Google");
   const titleHtml = firstS([data.title_html, data.title, data.subtitle], "<em>4,9</em> de 5 · centenas de avaliações públicas.");
   const showCount = typeof data.show_count === "number" ? data.show_count : 5;
-  const list = reviews.slice(0, showCount);
+  // Fase 1.2: se a página tiver depoimentos próprios (extraídos de página antiga
+  // da clínica), eles têm prioridade sobre o pool global de Google reviews.
+  const ownItems = arr<{ name?: string; text?: string; rating?: number; date_label?: string; source?: string }>(data.items);
+  const list = ownItems.length > 0
+    ? ownItems.slice(0, showCount).map((it, i) => ({
+        id: `own-${i}`,
+        name: s(it.name, "Paciente"),
+        text: s(it.text),
+        rating: typeof it.rating === "number" ? Math.max(1, Math.min(5, it.rating)) : 5,
+        date_label: s(it.date_label, ""),
+      }))
+    : reviews.slice(0, showCount);
   if (list.length === 0) return null;
   return (
     <section className="bg-brand-black section-pad relative z-[2] overflow-hidden">
@@ -710,6 +723,62 @@ function CtaFinalBlock({ data }: { data: BlockData }) {
             <Phone className="size-4" /> {ctaSecondary.label}
           </GoldButton>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   PROCEDIMENTO DETALHADO (Fase 1.2 — opcional)
+   Aproveita seções fortes de páginas antigas da própria clínica,
+   mantendo o design da página nova. Não copia layout antigo.
+   ============================================================ */
+function ProcedimentoDetalhadoBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Como é o procedimento");
+  const titleHtml = firstS([data.title_html, data.title], "Como é, na prática, esse <em>procedimento</em>.");
+  const paragraphs = arr<string>(data.paragraphs);
+  const bullets = arr<{ title?: string; text?: string } | string>(data.bullets);
+  const cta = readCta(data.cta, { label: "", href: "" });
+  if (!paragraphs.length && !bullets.length) return null;
+  return (
+    <section className="bg-brand-graphite section-pad relative z-[2]">
+      <div className="container-editorial max-w-4xl mx-auto">
+        <div className="reveal text-center">
+          <span className="eyebrow mx-auto justify-center">{eyebrow}</span>
+          <h2 className="h-display-2 mt-5 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule mx-auto mt-7" />
+        </div>
+        {paragraphs.length > 0 && (
+          <div className="mt-10 space-y-5 text-brand-text-soft text-[16px] leading-[1.75] reveal">
+            {paragraphs.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </div>
+        )}
+        {bullets.length > 0 && (
+          <div className="mt-10 grid sm:grid-cols-2 gap-4 reveal">
+            {bullets.map((b, i) => {
+              const title = typeof b === "string" ? "" : s(b.title);
+              const text = typeof b === "string" ? b : s(b.text);
+              return (
+                <div key={i} className="bg-brand-black/40 border border-brand-gold/15 p-6">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="size-5 text-brand-gold shrink-0 mt-0.5" strokeWidth={1.5} />
+                    <div>
+                      {title && <h3 className="font-display text-lg leading-snug">{title}</h3>}
+                      {text && <p className={cn("text-[14px] text-brand-text-soft leading-relaxed", title && "mt-2")}>{text}</p>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {cta.label && cta.href && (
+          <div className="mt-10 text-center reveal">
+            <GoldButton as="a" href={cta.href} withArrow>{cta.label}</GoldButton>
+          </div>
+        )}
       </div>
     </section>
   );

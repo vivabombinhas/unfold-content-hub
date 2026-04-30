@@ -167,6 +167,10 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
     case "depoimentos":
     case "ai_opinions":
     case "cursos":
+    {
+      const depItems = type === "depoimentos"
+        ? arr<{ name?: string; text?: string; rating?: number; date_label?: string; source?: string }>(data.items)
+        : [];
       return (
         <div className="space-y-4">
           <Field label="Eyebrow" value={field(data.eyebrow)} onChange={(v) => set("eyebrow", v)} />
@@ -179,11 +183,43 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
               <Field label="Footnote" value={field(data.footnote)} onChange={(v) => set("footnote", v)} />
             </>
           )}
-          <p className="text-xs text-brand-text-muted">
-            O conteúdo dos cards vem do pool global. Edite no menu correspondente.
-          </p>
+          {type === "depoimentos" ? (
+            <div>
+              <p className="text-xs uppercase tracking-wider text-brand-text-muted mb-2">
+                Depoimentos próprios da página{depItems.length > 0 ? ` (${depItems.length})` : ""}
+              </p>
+              <p className="text-[11px] text-brand-text-muted mb-3">
+                Se vazio, o bloco usa o pool global de Google Reviews. Quando houver itens aqui, eles têm prioridade — útil para depoimentos extraídos de páginas antigas da clínica.
+              </p>
+              <div className="space-y-3">
+                {depItems.map((it, i) => (
+                  <div key={i} className="border border-brand-gold/15 p-3 space-y-2">
+                    <div className="flex justify-end">
+                      <Button size="icon" variant="ghost" onClick={() => set("items", depItems.filter((_, idx) => idx !== i))}>
+                        <Trash2 className="size-4 text-brand-bordeaux" />
+                      </Button>
+                    </div>
+                    <Field label="Nome" value={it.name ?? ""} onChange={(v) => { const n = [...depItems]; n[i] = { ...it, name: v }; set("items", n); }} />
+                    <FieldArea label="Texto" value={it.text ?? ""} onChange={(v) => { const n = [...depItems]; n[i] = { ...it, text: v }; set("items", n); }} rows={3} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="Data (rótulo)" value={it.date_label ?? ""} onChange={(v) => { const n = [...depItems]; n[i] = { ...it, date_label: v }; set("items", n); }} />
+                      <Field label="Estrelas (1-5)" value={String(it.rating ?? 5)} onChange={(v) => { const n = [...depItems]; n[i] = { ...it, rating: Math.max(1, Math.min(5, parseInt(v) || 5)) }; set("items", n); }} />
+                    </div>
+                  </div>
+                ))}
+                <Button size="sm" variant="outline" onClick={() => set("items", [...depItems, { name: "", text: "", rating: 5, date_label: "" }])}>
+                  <Plus className="size-3.5 mr-1" /> Adicionar depoimento próprio
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-brand-text-muted">
+              O conteúdo dos cards vem do pool global. Edite no menu correspondente.
+            </p>
+          )}
         </div>
       );
+    }
 
     case "equipe_rt": {
       const accs = arr<{ question: string; answer: string }>(data.accordions);
@@ -219,16 +255,86 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
     }
 
     case "faq":
+    {
+      const faqItems = arr<{ question?: string; answer?: string; source?: "old_page" | "ai" }>(data.items);
       return (
         <div className="space-y-4">
           <Field label="Eyebrow" value={field(data.eyebrow)} onChange={(v) => set("eyebrow", v)} />
           <AIField label="Título (HTML)" fieldKey="title_html" value={field(data.title_html)} onChange={(v) => set("title_html", v)} ctx={aiCtx} />
-          <p className="text-xs text-brand-text-muted">
-            As perguntas vêm do pool global. Marque a flag <strong>destacada</strong> nas FAQs
-            que devem aparecer antes do botão "Ver todas".
+          <p className="text-[11px] text-brand-text-muted">
+            FAQs próprias desta página{faqItems.length > 0 ? ` (${faqItems.length})` : ""}. Se vazio, cai no pool global. Quando importadas de uma página antiga da clínica, ficam aqui.
           </p>
+          <div className="space-y-3">
+            {faqItems.map((f, i) => (
+              <div key={i} className="border border-brand-gold/15 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  {f.source === "old_page" ? (
+                    <span className="text-[10px] uppercase tracking-wider text-brand-gold">Da página antiga</span>
+                  ) : f.source === "ai" ? (
+                    <span className="text-[10px] uppercase tracking-wider text-brand-text-muted">Gerada por IA</span>
+                  ) : <span />}
+                  <Button size="icon" variant="ghost" onClick={() => set("items", faqItems.filter((_, idx) => idx !== i))}>
+                    <Trash2 className="size-4 text-brand-bordeaux" />
+                  </Button>
+                </div>
+                <AIField label="Pergunta" fieldKey="question" value={f.question ?? ""} onChange={(v) => { const n = [...faqItems]; n[i] = { ...f, question: v }; set("items", n); }} ctx={aiCtx} />
+                <AITextArea label="Resposta" fieldKey="answer" value={f.answer ?? ""} onChange={(v) => { const n = [...faqItems]; n[i] = { ...f, answer: v }; set("items", n); }} rows={3} ctx={{ ...aiCtx, extraContext: f.question ? `Pergunta: "${f.question}"` : undefined }} />
+              </div>
+            ))}
+            <Button size="sm" variant="outline" onClick={() => set("items", [...faqItems, { question: "", answer: "" }])}>
+              <Plus className="size-3.5 mr-1" /> Adicionar pergunta
+            </Button>
+          </div>
         </div>
       );
+    }
+
+    case "procedimento_detalhado": {
+      const paragraphs = arr<string>(data.paragraphs);
+      const bullets = arr<{ title?: string; text?: string }>(data.bullets);
+      return (
+        <div className="space-y-4">
+          <Field label="Eyebrow" value={field(data.eyebrow)} onChange={(v) => set("eyebrow", v)} />
+          <AIField label="Título (HTML)" fieldKey="title_html" value={field(data.title_html)} onChange={(v) => set("title_html", v)} ctx={aiCtx} />
+          <div>
+            <p className="text-xs uppercase tracking-wider text-brand-text-muted mb-2">Parágrafos</p>
+            <div className="space-y-2">
+              {paragraphs.map((p, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <Textarea rows={3} value={p} onChange={(e) => { const n = [...paragraphs]; n[i] = e.target.value; set("paragraphs", n); }} />
+                  <Button size="icon" variant="ghost" onClick={() => set("paragraphs", paragraphs.filter((_, idx) => idx !== i))}>
+                    <Trash2 className="size-4 text-brand-bordeaux" />
+                  </Button>
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={() => set("paragraphs", [...paragraphs, ""])}>
+                <Plus className="size-3.5 mr-1" /> Adicionar parágrafo
+              </Button>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-brand-text-muted mb-2">Cards de benefícios</p>
+            <div className="space-y-3">
+              {bullets.map((b, i) => (
+                <div key={i} className="border border-brand-gold/15 p-3 space-y-2">
+                  <div className="flex justify-end">
+                    <Button size="icon" variant="ghost" onClick={() => set("bullets", bullets.filter((_, idx) => idx !== i))}>
+                      <Trash2 className="size-4 text-brand-bordeaux" />
+                    </Button>
+                  </div>
+                  <Field label="Título" value={b.title ?? ""} onChange={(v) => { const n = [...bullets]; n[i] = { ...b, title: v }; set("bullets", n); }} />
+                  <FieldArea label="Texto" value={b.text ?? ""} onChange={(v) => { const n = [...bullets]; n[i] = { ...b, text: v }; set("bullets", n); }} rows={2} />
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={() => set("bullets", [...bullets, { title: "", text: "" }])}>
+                <Plus className="size-3.5 mr-1" /> Adicionar card
+              </Button>
+            </div>
+          </div>
+          <CtaField label="CTA (opcional)" value={data.cta} onChange={(v) => set("cta", v)} />
+        </div>
+      );
+    }
 
     case "cta_final":
       return (

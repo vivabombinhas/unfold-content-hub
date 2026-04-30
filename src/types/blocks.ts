@@ -6,6 +6,7 @@ export type BlockType =
   | "authority_strip"
   | "manifesto_curto"
   | "metodo"
+  | "procedimento_detalhado"
   | "casos"
   | "preco_ancora"
   | "depoimentos"
@@ -50,6 +51,7 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   authority_strip: "Faixa de autoridade",
   manifesto_curto: "Manifesto",
   metodo: "Método em passos",
+  procedimento_detalhado: "Procedimento detalhado (opcional)",
   casos: "Casos clínicos",
   preco_ancora: "Preço-âncora",
   depoimentos: "Depoimentos / Google Reviews",
