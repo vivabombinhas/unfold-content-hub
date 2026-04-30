@@ -316,7 +316,7 @@ ${JSON.stringify(dnaPayload, null, 2)}
 SOBRE O BLOCO CURSOS:
 - O bloco existe em todas as páginas. Você DEVE adaptar eyebrow, título, intro e footnote ao tema "${tema}".
 - Exemplo: para "Preenchimento Labial" → intro pode falar de formação técnica em harmonização perioral.
-- NÃO mencione Botox (a menos que o tema seja Botox). Se o pool de cursos da clínica não tiver curso específico desse tema, mantenha o copy genérico mas conectado ao universo do procedimento.`;
+- NÃO mencione Botox (a menos que o tema seja Botox). Se o pool de cursos da clínica não tiver curso específico desse tema, mantenha o copy genérico mas conectado ao universo do procedimento.
 
 REGRAS ESPECÍFICAS DE BLOCOS (estrutura aprovada — NÃO simplificar):
 
