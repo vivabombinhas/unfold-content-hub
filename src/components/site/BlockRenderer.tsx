@@ -101,6 +101,8 @@ export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData
       return <ManifestoBlock data={data} />;
     case "metodo":
       return <MetodoBlock data={data} />;
+    case "procedimento_detalhado":
+      return <ProcedimentoDetalhadoBlock data={data} />;
     case "casos":
       return <CasosBlock data={data} />;
     case "preco_ancora":
