@@ -58,6 +58,8 @@ const ALL_TYPES: BlockType[] = [
   "cursos",
   "faq",
   "cta_final",
+  "beneficios_grid",
+  "procedimento_detalhado_v2",
 ];
 
 export default function PageEditor() {
