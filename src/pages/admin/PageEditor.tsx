@@ -392,10 +392,15 @@ export default function PageEditor() {
     );
   }
 
-  const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
-
-  return (
-    <div className="flex flex-col h-screen overflow-hidden">
+   const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
+ 
+   return (
+     <div className="flex flex-col h-screen overflow-hidden">
+       <ImportBlockModal 
+         open={isImportModalOpen} 
+         onOpenChange={setIsImportModalOpen}
+         onImport={handleImportBlock}
+       />
       {/* Topbar */}
       <header className="border-b border-brand-gold/15 bg-brand-graphite/40 px-5 py-3 flex items-center gap-4 shrink-0">
         <Link to="/admin/paginas" className="text-brand-text-muted hover:text-brand-text-light">
