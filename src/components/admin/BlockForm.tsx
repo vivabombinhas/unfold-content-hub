@@ -336,6 +336,84 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
       );
     }
 
+    case "beneficios_grid": {
+      const cards = arr<{ title: string; text: string }>(data.cards);
+      return (
+        <div className="space-y-4">
+          <Field label="Eyebrow" value={field(data.eyebrow)} onChange={(v) => set("eyebrow", v)} />
+          <AIField label="Título (HTML)" fieldKey="title_html" value={field(data.title_html)} onChange={(v) => set("title_html", v)} ctx={aiCtx} />
+          <AITextArea label="Subtítulo (opcional)" fieldKey="subtitle" value={field(data.subtitle)} onChange={(v) => set("subtitle", v)} rows={3} ctx={aiCtx} />
+          <div>
+            <p className="text-xs uppercase tracking-wider text-brand-text-muted mb-2">Cards de benefícios</p>
+            <div className="space-y-3">
+              {cards.map((c, i) => (
+                <div key={i} className="border border-brand-gold/15 p-3 space-y-2">
+                  <div className="flex justify-end">
+                    <Button size="icon" variant="ghost" onClick={() => set("cards", cards.filter((_, idx) => idx !== i))}>
+                      <Trash2 className="size-4 text-brand-bordeaux" />
+                    </Button>
+                  </div>
+                  <AIField label="Título" fieldKey="title" value={c.title ?? ""} onChange={(v) => { const n = [...cards]; n[i] = { ...c, title: v }; set("cards", n); }} ctx={{ ...aiCtx, extraContext: `Card ${i + 1} de benefícios.` }} />
+                  <FieldArea label="Texto" value={c.text ?? ""} onChange={(v) => { const n = [...cards]; n[i] = { ...c, text: v }; set("cards", n); }} rows={2} />
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={() => set("cards", [...cards, { title: "", text: "" }])}>
+                <Plus className="size-3.5 mr-1" /> Adicionar card
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    case "procedimento_detalhado_v2": {
+      const paragraphs = arr<string>(data.paragraphs);
+      const sideCards = arr<{ title: string; text: string }>(data.side_cards);
+      return (
+        <div className="space-y-4">
+          <Field label="Eyebrow" value={field(data.eyebrow)} onChange={(v) => set("eyebrow", v)} />
+          <AIField label="Título (HTML)" fieldKey="title_html" value={field(data.title_html)} onChange={(v) => set("title_html", v)} ctx={aiCtx} />
+          <div>
+            <p className="text-xs uppercase tracking-wider text-brand-text-muted mb-2">Texto principal (Parágrafos)</p>
+            <div className="space-y-2">
+              {paragraphs.map((p, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <Textarea rows={3} value={p} onChange={(e) => { const n = [...paragraphs]; n[i] = e.target.value; set("paragraphs", n); }} />
+                  <Button size="icon" variant="ghost" onClick={() => set("paragraphs", paragraphs.filter((_, idx) => idx !== i))}>
+                    <Trash2 className="size-4 text-brand-bordeaux" />
+                  </Button>
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={() => set("paragraphs", [...paragraphs, ""])}>
+                <Plus className="size-3.5 mr-1" /> Adicionar parágrafo
+              </Button>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-brand-text-muted mb-2">Cards laterais (Destaques)</p>
+            <div className="space-y-3">
+              {sideCards.map((c, i) => (
+                <div key={i} className="border border-brand-gold/15 p-3 space-y-2">
+                  <div className="flex justify-end">
+                    <Button size="icon" variant="ghost" onClick={() => set("side_cards", sideCards.filter((_, idx) => idx !== i))}>
+                      <Trash2 className="size-4 text-brand-bordeaux" />
+                    </Button>
+                  </div>
+                  <AIField label="Título" fieldKey="title" value={c.title ?? ""} onChange={(v) => { const n = [...sideCards]; n[i] = { ...c, title: v }; set("side_cards", n); }} ctx={{ ...aiCtx, extraContext: `Card lateral ${i + 1}.` }} />
+                  <FieldArea label="Texto" value={c.text ?? ""} onChange={(v) => { const n = [...sideCards]; n[i] = { ...c, text: v }; set("side_cards", n); }} rows={2} />
+                </div>
+              ))}
+              <Button size="sm" variant="outline" onClick={() => set("side_cards", [...sideCards, { title: "", text: "" }])}>
+                <Plus className="size-3.5 mr-1" /> Adicionar card lateral
+              </Button>
+            </div>
+          </div>
+          <MediaInput label="Imagem (opcional)" value={field(data.image_url)} onChange={(v) => set("image_url", v)} />
+          <CtaField label="CTA (opcional)" value={data.cta} onChange={(v) => set("cta", v)} />
+        </div>
+      );
+    }
+
     case "cta_final":
       return (
         <div className="space-y-4">
