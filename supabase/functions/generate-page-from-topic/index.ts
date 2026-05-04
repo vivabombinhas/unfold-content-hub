@@ -514,16 +514,20 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
            .map((p: string) => p.trim())
            .filter((p: string) => p.length > 0)
            .slice(0, 6),
-        bullets: Array.isArray((detailedSection as any).bullets)
-            ? (detailedSection as any).bullets.map((b: any) => {
-                const str = String(b);
-                const hasColon = str.includes(":");
-                return {
-                  title: hasColon ? str.split(":")[0].trim() : "Destaque",
-                  text: hasColon ? str.split(":").slice(1).join(":").trim() : str.trim()
-                };
-              }).slice(0, 8)
-          : [],
+         bullets: Array.isArray((detailedSection as any).bullets)
+             ? (detailedSection as any).bullets.map((b: any) => {
+                 if (typeof b === 'object' && b !== null && b.title && b.text) {
+                   return { title: b.title, text: b.text };
+                 }
+                 // Fallback para caso a estrutura antiga ainda esteja em cache ou venha errada
+                 const str = String(b);
+                 const hasColon = str.includes(":");
+                 return {
+                   title: hasColon ? str.split(":")[0].trim() : "Destaque",
+                   text: hasColon ? str.split(":").slice(1).join(":").trim() : str.trim()
+                 };
+               }).slice(0, 8)
+           : [],
        };
        procedimentoDetalhadoEnabled = true;
      } else {
