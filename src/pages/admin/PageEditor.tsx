@@ -581,9 +581,22 @@ export default function PageEditor() {
                   {(() => {
                     const meta = pageMeta.metadata as Record<string, unknown>;
                     const refType = String(meta?.reference_type ?? "");
-                    const images = Array.isArray(meta?.old_page_images)
-                      ? (meta.old_page_images as { url?: string; alt?: string; source_url?: string }[])
+                    const images = Array.isArray(meta?.old_page_images) 
+                      ? (meta.old_page_images as { url?: string; alt?: string; source_url?: string }[]) 
                       : [];
+
+                    const setHeroImage = (url: string) => {
+                      const hero = blocks.find(b => b.type === 'hero');
+                      if (hero) {
+                        markDirty(hero.id, { data: { ...hero.data, image_url: url } });
+                        toast({ title: "Hero atualizado", description: "A imagem foi aplicada ao bloco Hero." });
+                        // Opcionalmente seleciona o hero para o usuário ver
+                        setSelectedId(hero.id);
+                      } else {
+                        toast({ title: "Hero não encontrado", description: "Adicione um bloco Hero primeiro.", variant: "destructive" });
+                      }
+                    };
+
                     const extracted = (meta?.old_page_extracted ?? null) as
                       | { testimonials_count?: number; faqs_count?: number; sections_count?: number; used_section_for_detalhado?: boolean }
                       | null;
@@ -609,29 +622,58 @@ export default function PageEditor() {
                             <p className="text-[10px] text-brand-text-muted mb-2">
                               URLs encontradas na página antiga. Clique para copiar e cole no campo de imagem do bloco desejado.
                             </p>
-                            <div className="grid grid-cols-3 gap-1.5 max-h-64 overflow-y-auto">
+                            <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1">
                               {images.map((img, i) => (
-                                <button
+                                <div
                                   key={i}
-                                  type="button"
-                                  onClick={() => {
-                                    if (img.url) {
-                                      navigator.clipboard.writeText(img.url);
-                                    }
-                                  }}
-                                  title={`${img.alt || "(sem alt)"}\n${img.url}\n— clique para copiar URL`}
-                                  className="relative aspect-square overflow-hidden border border-brand-gold/15 hover:border-brand-gold/60 transition-colors group"
+                                  className="group relative flex flex-col border border-brand-gold/15 bg-brand-black/20 hover:border-brand-gold/40 transition-colors overflow-hidden rounded"
                                 >
-                                  <img
-                                    src={img.url}
-                                    alt={img.alt || ""}
-                                    loading="lazy"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      (e.currentTarget as HTMLImageElement).style.opacity = "0.2";
-                                    }}
-                                  />
-                                </button>
+                                  <div className="relative aspect-video overflow-hidden border-b border-brand-gold/10">
+                                    <img
+                                      src={img.url}
+                                      alt={img.alt || ""}
+                                      loading="lazy"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (e.currentTarget as HTMLImageElement).style.opacity = "0.2";
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 bg-brand-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-2">
+                                      <Button 
+                                        size="icon" 
+                                        variant="secondary" 
+                                        className="size-7 rounded-full bg-brand-gold text-brand-green hover:bg-brand-gold/90"
+                                        onClick={() => img.url && setHeroImage(img.url)}
+                                        title="Usar no Hero"
+                                      )
+                                        <Save className="size-3.5" />
+                                      </Button>
+                                      <Button 
+                                        size="icon" 
+                                        variant="outline" 
+                                        className="size-7 rounded-full border-brand-gold/40 bg-brand-graphite text-brand-text-light hover:bg-brand-gold/10"
+                                        onClick={() => {
+                                          if (img.url) {
+                                            navigator.clipboard.writeText(img.url);
+                                            toast({ title: "Copiado", description: "URL da imagem copiada." });
+                                          }
+                                        }}
+                                        title="Copiar URL"
+                                      >
+                                        <ExternalLink className="size-3.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="p-1.5 space-y-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      className="w-full h-6 px-1.5 text-[9px] uppercase tracking-wider text-brand-gold/80 hover:text-brand-gold hover:bg-brand-gold/10"
+                                      onClick={() => img.url && setHeroImage(img.url)}
+                                    >
+                                      Usar no Hero
+                                    </Button>
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           </div>
