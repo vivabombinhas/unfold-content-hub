@@ -13,8 +13,10 @@ export type BlockType =
   | "ai_opinions"
   | "equipe_rt"
   | "cursos"
-  | "faq"
-  | "cta_final";
+   | "faq"
+   | "cta_final"
+   | "beneficios_grid"
+   | "procedimento_detalhado_v2";
 
 export type BlockMode = "structured" | "html";
 
@@ -60,4 +62,6 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   cursos: "Cursos e mentorias",
   faq: "Perguntas frequentes",
   cta_final: "CTA final",
+  beneficios_grid: "Grid de benefícios (Premium)",
+  procedimento_detalhado_v2: "Procedimento detalhado v2 (Premium)",
 };

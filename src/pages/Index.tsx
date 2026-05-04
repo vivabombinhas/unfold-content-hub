@@ -115,6 +115,8 @@ const Index = () => {
     cursos: () => renderCursos(),
     faq: () => renderFaq(),
     cta_final: () => renderCtaFinal(),
+    beneficios_grid: () => null,
+    procedimento_detalhado_v2: () => null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), []); // eslint-disable-line react-hooks/exhaustive-deps
 
