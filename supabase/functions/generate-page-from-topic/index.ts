@@ -552,9 +552,6 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     // Build blocks: Prioridade de imagem do Hero
     // 1. Primeira imagem da página antiga (se houver)
     // 2. Imagem do template (Botox) como fallback neutro
-    const candidateImages = (oldPageContent?.images || [])
-      .filter((img) => img && typeof img.url === "string")
-      .slice(0, 30);
 
     const heroImageFallback =
       ((templateBlocks || []).find((b) => b.type === "hero")?.data as { image_url?: string } | undefined)?.image_url || null;
