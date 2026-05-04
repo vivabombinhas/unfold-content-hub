@@ -61,13 +61,19 @@ async function firecrawlScrape(apiKey: string, url: string) {
   const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: true }),
+    body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: false, waitFor: 2500 }),
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    console.error("Firecrawl scrape failed", url, res.status, t.slice(0, 300));
+    return { ok: false, status: res.status, error: t.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
+  }
   const data = await res.json();
   // Normalize SDK/REST shapes
   const root = data?.data ?? data;
   return {
+    ok: true,
+    status: 200,
     markdown: root?.markdown || null,
     html: root?.html || null,
     links: Array.isArray(root?.links) ? root.links : [],
