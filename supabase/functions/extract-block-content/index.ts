@@ -33,7 +33,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
         const html = await directRes.text();
         return { ok: true, markdown: null, html };
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Direct fetch failed", e);
     }
   }
@@ -41,7 +41,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
   return { ok: false };
 }
 
-serve(async (req) => {
+ export const handler = async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -53,10 +53,11 @@ serve(async (req) => {
 
     // Auth check (Admin only)
     const authHeader = req.headers.get("Authorization") || "";
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user } } = await userClient.auth.getUser();
+     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+       global: { headers: { Authorization: authHeader } },
+     });
+ 
+     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -96,7 +97,7 @@ serve(async (req) => {
      // Deterministic Fallback for Simple Text (Before AI)
      const fallbackSections = [];
      if (!url && userText) {
-       const lines = userText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+        const lines = userText.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 0);
        // If we have pairs of lines (Title + Text)
        if (lines.length >= 2 && lines.length % 2 === 0) {
          const cards = [];
@@ -206,13 +207,17 @@ serve(async (req) => {
        debug: stats 
      }), {
        headers: { ...corsHeaders, "Content-Type": "application/json" },
-     });
-
-   } catch (e) {
-     console.error(e);
-     return new Response(JSON.stringify({ error: e.message }), {
-       status: 500,
-       headers: { ...corsHeaders, "Content-Type": "application/json" },
-     });
-   }
- });
+      });
+ 
+    } catch (e: any) {
+      console.error(e);
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+ };
+ 
+ if (import.meta.main) {
+   serve(handler);
+ }
