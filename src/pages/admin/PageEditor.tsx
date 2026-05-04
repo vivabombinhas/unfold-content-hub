@@ -13,14 +13,16 @@ import {
   ArrowLeft,
   ExternalLink,
   GripVertical,
-  Save,
-  Send,
-  Undo2,
-  Plus,
-  Trash2,
+   Save,
+   Send,
+   Undo2,
+   Plus,
+   Trash2,
+   Download,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
+import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -107,6 +109,7 @@ export default function PageEditor() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   useEffect(() => {
     if (!data?.page) return;
@@ -176,6 +179,27 @@ export default function PageEditor() {
     ]);
     setSelectedId(id);
     setShowAddMenu(false);
+  }
+
+  function handleImportBlock(type: BlockType, data: any) {
+    const id = `new-${crypto.randomUUID()}`;
+    setBlocks((prev) => [
+      ...prev,
+      {
+        id,
+        type,
+        position: prev.length,
+        enabled: true,
+        mode: "structured",
+        data,
+        html_content: null,
+        _new: true,
+        _dirty: true,
+      },
+    ]);
+    setSelectedId(id);
+    setIsImportModalOpen(false);
+    toast({ title: "Bloco importado", description: "O bloco foi adicionado como rascunho no final da página." });
   }
 
   function removeBlock(id: string) {
@@ -368,10 +392,15 @@ export default function PageEditor() {
     );
   }
 
-  const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
-
-  return (
-    <div className="flex flex-col h-screen overflow-hidden">
+   const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
+ 
+   return (
+     <div className="flex flex-col h-screen overflow-hidden">
+       <ImportBlockModal 
+         open={isImportModalOpen} 
+         onOpenChange={setIsImportModalOpen}
+         onImport={handleImportBlock}
+       />
       {/* Topbar */}
       <header className="border-b border-brand-gold/15 bg-brand-graphite/40 px-5 py-3 flex items-center gap-4 shrink-0">
         <Link to="/admin/paginas" className="text-brand-text-muted hover:text-brand-text-light">
@@ -449,15 +478,26 @@ export default function PageEditor() {
               </SortableContext>
             </DndContext>
 
-            <div className="relative pt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                onClick={() => setShowAddMenu((s) => !s)}
-              >
-                <Plus className="size-3.5 mr-1.5" /> Adicionar bloco
-              </Button>
+            <div className="relative pt-2 space-y-2">
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowAddMenu((s) => !s)}
+                >
+                  <Plus className="size-3.5 mr-1.5" /> Adicionar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-brand-gold/40 text-brand-gold hover:bg-brand-gold/10"
+                  onClick={() => setIsImportModalOpen(true)}
+                >
+                  <Download className="size-3.5 mr-1.5" /> Importar
+                </Button>
+              </div>
+
               {showAddMenu && (
                 <div className="mt-2 border border-brand-gold/20 bg-brand-graphite/80 rounded p-1 max-h-72 overflow-y-auto">
                   {ALL_TYPES.map((t) => (
