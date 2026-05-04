@@ -123,7 +123,6 @@ export default function NewPageFromTopic() {
       setSources(researchData.sources || []);
       setDiagnostics(researchData.scrape_diagnostics || []);
       setOldPageContent(researchData.old_page_content || null);
-      setPendingResearch(researchData);
 
       // Step 2: generate
       setStep("generating");
