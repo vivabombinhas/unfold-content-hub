@@ -352,7 +352,7 @@ serve(async (req) => {
               {
                 role: "system",
                 content:
-                  "Você é uma editora extraindo conteúdo real de uma página antiga da clínica Estética Batel para reaproveitar em uma página nova. Português do Brasil. REGRAS DURAS:\n1. NUNCA invente. Só registre o que está LITERALMENTE no markdown fornecido.\n2. FAQs: copie a pergunta e resposta exatamente como aparecem. Se aparecem 20 FAQs, devolva 20. Se 25, devolva 25. NÃO resuma, NÃO reescreva, NÃO 'melhore'.\n3. Depoimentos: copie texto integral entre aspas. Se não tem nome, deixe vazio. NÃO crie depoimentos genéricos.\n4. Seções: identifique blocos de conteúdo (procedimento, diferenciais, benefícios, preparo, pós) e copie texto completo.\n5. Se um campo não tem conteúdo na página, devolva array vazio.\n6. Pode corrigir apenas pontuação e quebras de linha óbvias. Nada mais.",
+                   "Você é uma editora especializada em extração estrutural de dados. Seu trabalho é ler o markdown de uma página antiga e extrair TODOS os depoimentos e TODAS as perguntas frequentes (FAQs) LITERALMENTE.\n\nREGRAS CRÍTICAS:\n1. NUNCA resuma. NUNCA pule itens. Se a página tem 20 FAQs, extraia as 20.\n2. FAQ: Identifique padrões como '1. Pergunta' seguida de texto, ou blocos em accordions. Copie Pergunta e Resposta exatamente.\n3. DEPOIMENTOS: Procure por blocos de texto seguidos de nomes próprios (ex: 'Ana Maria Souza') e origens (ex: 'Via Whatsapp').\n4. SEÇÕES: Procure especificamente pela seção 'Como é o Procedimento...' ou similar. Extraia o texto principal e os bullets de benefícios/diferenciais.\n5. Se não encontrar algo, retorne array vazio. NÃO invente conteúdo.",
               },
               {
                 role: "user",
@@ -382,19 +382,19 @@ serve(async (req) => {
                           additionalProperties: false,
                         },
                       },
-                      faqs: {
-                        type: "array",
-                        description: "Perguntas frequentes encontradas LITERALMENTE. Importe TODAS — se a página tem 20, devolva 20; se tem 25, devolva 25. Texto exato da pergunta e da resposta. NUNCA inventar nem reescrever.",
-                        items: {
-                          type: "object",
-                          properties: {
-                            question: { type: "string" },
-                            answer: { type: "string" },
-                          },
-                          required: ["question", "answer"],
-                          additionalProperties: false,
-                        },
-                      },
+                       faqs: {
+                         type: "array",
+                         description: "LISTA COMPLETA de FAQs. Se houver 30 na página, retorne as 30. Copie pergunta e resposta sem alterar uma vírgula.",
+                         items: {
+                           type: "object",
+                           properties: {
+                             question: { type: "string" },
+                             answer: { type: "string" },
+                           },
+                           required: ["question", "answer"],
+                           additionalProperties: false,
+                         },
+                       },
                       sections: {
                         type: "array",
                         description: "Seções de conteúdo relevantes da página antiga (texto explicativo, descrição do procedimento, benefícios). Identifique se vale aproveitar como bloco extra.",
