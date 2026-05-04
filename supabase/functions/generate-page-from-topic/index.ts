@@ -446,6 +446,29 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     }
     const generated = JSON.parse(toolCall.function.arguments);
 
+    // Fase B: filtro anti-Botox para todos os campos textuais quando o tema
+    // não é toxina/botox. Não regeneramos — só sanitizamos substituindo termos
+    // proibidos por placeholders neutros e marcamos para revisão no metadata.
+    const isBotoxTheme = /\b(botox|toxina|botulin)/i.test(tema);
+    const contaminationFlags: string[] = [];
+    function sanitize(input: unknown, path: string): unknown {
+      if (typeof input === "string") {
+        if (!isBotoxTheme && /\b(botox|toxina botul[íi]nica?|botulin\w*)\b/i.test(input)) {
+          contaminationFlags.push(path);
+          return input.replace(/\b(botox|toxina botul[íi]nica?|botulin\w*)\b/gi, "[procedimento]");
+        }
+        return input;
+      }
+      if (Array.isArray(input)) return input.map((v, i) => sanitize(v, `${path}[${i}]`));
+      if (input && typeof input === "object") {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(input)) out[k] = sanitize(v, `${path}.${k}`);
+        return out;
+      }
+      return input;
+    }
+    generated.blocks = sanitize(generated.blocks, "blocks") as typeof generated.blocks;
+
     // ---- Fase 1.2: conteúdo real da página antiga própria tem prioridade ----
     const ownTestimonials = (oldPageContent?.testimonials || [])
       .filter((t) => t && typeof t.text === "string" && t.text.trim().length > 0)
@@ -461,31 +484,56 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       .filter((f) => f && typeof f.question === "string" && typeof f.answer === "string" && f.question.trim() && f.answer.trim())
       .map((f) => ({ question: f.question!.trim(), answer: f.answer!.trim(), source: "old_page" }));
 
-    // Mescla FAQs antigas (prioridade) + FAQs geradas pela IA (complemento, marcadas)
+    // Fase B: se a página antiga trouxe FAQs reais, USA APENAS elas. Sem mistura.
     const aiFaqs = (Array.isArray(generated.blocks?.faq_items) ? generated.blocks.faq_items : [])
       .map((f: { question: string; answer: string }) => ({ ...f, source: "ai" }));
-    const mergedFaqs = ownFaqs.length > 0
-      ? [...ownFaqs, ...aiFaqs.slice(0, Math.max(0, 8 - ownFaqs.length))]
-      : aiFaqs;
+    const mergedFaqs = ownFaqs.length > 0 ? ownFaqs : aiFaqs;
 
-    // Procedimento detalhado: ativa só se a página antiga tem uma seção forte
-    // marcada como 'procedimento_detalhado' / 'beneficios' / 'metodo' / 'preparo'.
+    // Fase C: bloco procedimento_detalhado SEMPRE vem preenchido.
+    // Prioridade 1: seção forte da página antiga (ativo por padrão).
+    // Prioridade 2: seções com qualquer conteúdo (ativo).
+    // Fallback: parágrafos derivados do manifesto + método (criado disabled,
+    // mas com conteúdo editável — admin ativa quando quiser).
     const detailedSection = (oldPageContent?.sections || []).find((sec) => {
       const t = (sec.type_suggestion || "").toLowerCase();
       return ["procedimento_detalhado", "beneficios", "metodo", "preparo", "pos_procedimento"].includes(t)
         && typeof sec.body === "string"
         && sec.body.trim().length > 80;
-    });
-    const procedimentoDetalhadoData = detailedSection ? {
-      eyebrow: "Como é o procedimento",
-      title_html: detailedSection.title || "Como é, na prática, esse <em>procedimento</em>.",
-      paragraphs: (detailedSection.body || "")
-        .split(/\n\s*\n/)
-        .map((p) => p.trim())
-        .filter((p) => p.length > 0)
-        .slice(0, 6),
-      bullets: [],
-    } : null;
+    }) || (oldPageContent?.sections || []).find((sec) =>
+      typeof sec?.body === "string" && sec.body.trim().length > 120
+    );
+
+    let procedimentoDetalhadoData: { eyebrow: string; title_html: string; paragraphs: string[]; bullets: unknown[] };
+    let procedimentoDetalhadoEnabled = false;
+    if (detailedSection) {
+      procedimentoDetalhadoData = {
+        eyebrow: "Como é o procedimento",
+        title_html: detailedSection.title || "Como é, na prática, esse <em>procedimento</em>.",
+        paragraphs: (detailedSection.body || "")
+          .split(/\n\s*\n/)
+          .map((p) => p.trim())
+          .filter((p) => p.length > 0)
+          .slice(0, 6),
+        bullets: [],
+      };
+      procedimentoDetalhadoEnabled = true;
+    } else {
+      // Fallback: monta um esboço a partir do manifesto e dos detalhes do método.
+      const manifestoBody = (generated.blocks?.manifesto_curto?.body as string | undefined) || "";
+      const stepDetails = (generated.blocks?.metodo?.steps || [])
+        .map((s: { title?: string; detail?: string }) => s?.detail)
+        .filter((d: unknown): d is string => typeof d === "string" && d.trim().length > 0);
+      const seedParagraphs = [manifestoBody, ...stepDetails]
+        .filter((p) => p && p.trim().length > 0)
+        .slice(0, 4);
+      procedimentoDetalhadoData = {
+        eyebrow: "Como é o procedimento",
+        title_html: "Como é, na prática, esse <em>procedimento</em>.",
+        paragraphs: seedParagraphs,
+        bullets: [],
+      };
+      procedimentoDetalhadoEnabled = false;
+    }
 
     const candidateImages = (oldPageContent?.images || [])
       .filter((img) => img && typeof img.url === "string")
@@ -536,9 +584,10 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           data = generated.blocks.metodo;
           break;
         case "procedimento_detalhado":
-          // Bloco opcional — só ativa quando há seção forte da página antiga.
-          data = procedimentoDetalhadoData ?? { eyebrow: "", title_html: "", paragraphs: [], bullets: [] };
-          enabled = !!procedimentoDetalhadoData;
+          // Fase C: sempre vem com conteúdo. Ativo se veio da página antiga,
+          // desligado (mas editável) se veio do fallback.
+          data = procedimentoDetalhadoData;
+          enabled = procedimentoDetalhadoEnabled;
           break;
         case "preco_ancora":
           data = generated.blocks.preco_ancora;
@@ -573,9 +622,13 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           }
           // Fase 1.2: depoimentos próprios da página antiga têm prioridade
           // sobre o pool de Google reviews.
+          // Fase B: depoimentos APENAS da página antiga quando ela tem.
+          // Quando tem, desliga o pool global setando source explícito.
           if (type === "depoimentos" && ownTestimonials.length > 0) {
             merged.items = ownTestimonials;
             merged.show_count = ownTestimonials.length;
+            merged.source = "own_old_page";
+            merged.disable_pool = true;
           }
           data = merged;
           break;
@@ -624,6 +677,12 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
         sections_count: (oldPageContent?.sections || []).length,
         used_section_for_detalhado: !!procedimentoDetalhadoData,
       } : null,
+      // Fase A: persiste diagnóstico bruto da extração + raw_markdown para
+      // re-geração futura sem precisar chamar Firecrawl de novo.
+      scrape_diagnostics: scrapeDiagnostics,
+      old_page_raw_markdown: ownOldPage && oldPageContent?.raw_markdown ? oldPageContent.raw_markdown : null,
+      contamination_flags: contaminationFlags,
+      allow_ai_only_fallback: ownOldPage ? allowAiOnlyFallback : null,
     };
 
     // Insert page + blocks
