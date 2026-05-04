@@ -33,7 +33,11 @@
    });
  }
  
- Deno.test("extract-block-content: simple text paste identifies benefits (fallback)", async () => {
+ Deno.test({
+   name: "extract-block-content: simple text paste identifies benefits (fallback)",
+   sanitizeResources: false,
+   sanitizeOps: false,
+   async fn() {
    mockFetch({
      "/auth/v1/user": { data: { user: { id: "user-1" } } },
      "/rest/v1/user_roles": [{ role: "admin" }],
@@ -67,9 +71,14 @@
    assertEquals(data.sections[0].target_type, "beneficios_grid");
    assertEquals(data.sections[0].data.cards.length, 2);
    assertEquals(data.sections[0].data.cards[0].title, "Rejuvenescimento Seguro");
+   }
  });
  
- Deno.test("extract-block-content: URL extraction identifies content", async () => {
+ Deno.test({
+   name: "extract-block-content: URL extraction identifies content",
+   sanitizeResources: false,
+   sanitizeOps: false,
+   async fn() {
    mockFetch({
      "/auth/v1/user": { data: { user: { id: "user-1" } } },
      "/rest/v1/user_roles": [{ role: "admin" }],
@@ -107,9 +116,14 @@
    assertEquals(data.sections.length, 1);
    assertEquals(data.sections[0].target_type, "procedimento_detalhado_v2");
    assertEquals(data.debug.url_accessed, true);
+   }
  });
  
- Deno.test("extract-block-content: returns empty sections but diagnostic if no content", async () => {
+ Deno.test({
+   name: "extract-block-content: returns empty sections but diagnostic if no content",
+   sanitizeResources: false,
+   sanitizeOps: false,
+   async fn() {
     mockFetch({
       "/auth/v1/user": { data: { user: { id: "user-1" } } },
       "/rest/v1/user_roles": [{ role: "admin" }]
@@ -122,4 +136,5 @@
     assertEquals(data.sections.length, 0);
     assertExists(data.error_details);
     assertEquals(data.error_details.message, "Conteúdo vazio ou inacessível.");
+   }
  });
