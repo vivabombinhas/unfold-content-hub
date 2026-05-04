@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Search, Wand2, Loader2, ChevronLeft, CheckCircle2, AlertTriangle, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Search, Wand2, Loader2, ChevronLeft, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -78,7 +78,6 @@ export default function NewPageFromTopic() {
   const [oldPageContent, setOldPageContent] = useState<OldPageContent | null>(null);
   const [confirmIntent, setConfirmIntent] = useState(false);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
-  const [pendingResearch, setPendingResearch] = useState<unknown>(null);
 
   const links = useMemo(
     () => linksRaw.split(/\s+/).map((s) => s.trim()).filter((s) => /^https?:\/\//.test(s)),
