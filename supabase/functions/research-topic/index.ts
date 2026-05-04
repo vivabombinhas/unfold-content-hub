@@ -308,9 +308,11 @@ serve(async (req) => {
           scrapeDiagnostics.push({ url: sourceUrl, ok: false, status: 0, markdown_chars: 0, html_chars: 0, images_found: 0, error: "no response" });
           return;
         }
-        if (scrape.markdown) {
-          ownCorpusParts.push(`[Página antiga ${i + 1} — ${sourceUrl}]\nMARKDOWN:\n${truncate(scrape.markdown, 8000)}`);
-          ownRawMarkdown.push(`# ${sourceUrl}\n\n${scrape.markdown}`);
+        const content = scrape.markdown || scrape.html;
+        if (content) {
+          const label = scrape.markdown ? "MARKDOWN" : "HTML";
+          ownCorpusParts.push(`[Página antiga ${i + 1} — ${sourceUrl}]\n${label}:\n${truncate(content, 12000)}`);
+          if (scrape.markdown) ownRawMarkdown.push(`# ${sourceUrl}\n\n${scrape.markdown}`);
         }
         if (scrape.html) {
           ownRawHtml.push(`<!-- ${sourceUrl} -->\n${scrape.html}`);
