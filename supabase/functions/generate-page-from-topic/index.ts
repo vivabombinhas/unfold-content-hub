@@ -375,6 +375,23 @@ ${linksReferencia.length ? `\nLinks de referência fornecidos pelo editor: ${lin
 Gere TODOS os blocos contextualizados ao tema "${tema}". Para FAQs, derive das dúvidas reais da pesquisa.
 Para cursos, escreva header e intro contextualizados — os cards continuam vindo do catálogo da clínica.`;
 
+    // Fase B: se há conteúdo da página antiga, dá contexto + ordens duras à IA
+    const ownPageHint = (ownOldPage && oldPageContent) ? `\n\nCONTEÚDO REAL DA PÁGINA ANTIGA DESTA CLÍNICA (preservar):\n${
+      (oldPageContent.faqs || []).length > 0
+        ? `- FAQs reais: ${(oldPageContent.faqs || []).length} (NÃO inventar perguntas; FAQs serão substituídas pelas reais).\n`
+        : ""
+    }${
+      (oldPageContent.testimonials || []).length > 0
+        ? `- Depoimentos reais: ${(oldPageContent.testimonials || []).length} (NÃO inventar depoimentos; serão substituídos pelos reais).\n`
+        : ""
+    }${
+      oldPageContent.raw_markdown
+        ? `\nResumo do markdown original (para você ENCAIXAR o tom da clínica, não copiar):\n${oldPageContent.raw_markdown.slice(0, 6000)}\n`
+        : ""
+    }` : "";
+
+    const fullUserPrompt = userPrompt + ownPageHint;
+
     const aiRes = await fetch(AI_GATEWAY, {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
@@ -382,7 +399,7 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: "user", content: fullUserPrompt },
         ],
         tools: [
           {
