@@ -352,7 +352,7 @@ serve(async (req) => {
               {
                 role: "system",
                 content:
-                    "Você é uma editora especializada em extração estrutural de dados. Seu trabalho é ler o markdown de uma página antiga e extrair TODOS os depoimentos, TODAS as perguntas frequentes (FAQs) e as seções principais LITERALMENTE.\n\nREGRAS CRÍTICAS:\n1. NUNCA resuma. NUNCA pule itens. Se a página tem 20 FAQs, extraia as 20.\n2. FAQ: Identifique padrões como '1. Pergunta' seguida de texto, ou blocos em accordions. Copie Pergunta e Resposta exatamente sem alterar o sentido.\n3. DEPOIMENTOS: Procure por blocos de texto seguidos de nomes próprios (ex: 'Ana Maria Souza') e origens (ex: 'Via Whatsapp'). Extraia o texto real, sem edições.\n4. SEÇÕES: Procure especificamente pela seção 'Como é o Procedimento...' ou similar. Extraia o texto principal de forma LITERAL. Se houver bullets de diferenciais/benefícios, extraia-os também exatamente como escritos.\n5. FIDELIDADE TÉCNICA: Não mude termos técnicos. Se a página original diz '6 a 12 meses', mantenha '6 a 12 meses'. Não 'melhore' o texto. Se o texto for ruim, extraia ruim mesmo.\n6. Se não encontrar algo, retorne array vazio. NÃO invente conteúdo.",
+                     "Você é uma editora especializada em extração estrutural de dados. Seu trabalho é ler o markdown de uma página antiga e extrair TODOS os depoimentos, TODAS as perguntas frequentes (FAQs) e as seções principais LITERALMENTE.\n\nREGRAS CRÍTICAS:\n1. NUNCA resuma. NUNCA pule itens. Se a página tem 20 FAQs, extraia as 20.\n2. FAQ: Identifique padrões como '1. Pergunta' seguida de texto, ou blocos em accordions. Copie Pergunta e Resposta exatamente sem alterar o sentido.\n3. DEPOIMENTOS: Procure por blocos de texto seguidos de nomes próprios (ex: 'Ana Maria Souza') e origens (ex: 'Via Whatsapp'). Extraia o texto real, sem edições.\n4. SEÇÕES: Procure especificamente pela seção 'Como é o Procedimento...' ou similar. Extraia o texto principal de forma LITERAL. Se houver bullets de diferenciais/benefícios, extraia-os estruturadamente com um 'title' (resumo curto de 1-3 palavras) e 'text' (o conteúdo literal). NUNCA use 'Destaque' como título se puder criar um melhor.\n5. FIDELIDADE TÉCNICA: Não mude termos técnicos. Se a página original diz '6 a 12 meses', mantenha '6 a 12 meses'. Não 'melhore' o texto. Se o texto for ruim, extraia ruim mesmo.\n6. Se não encontrar algo, retorne array vazio. NÃO invente conteúdo.",
               },
               {
                 role: "user",
@@ -403,11 +403,19 @@ serve(async (req) => {
                            properties: {
                              title: { type: "string" },
                              body: { type: "string", description: "Texto completo da seção." },
-                             bullets: { 
-                               type: "array", 
-                               description: "Lista de benefícios ou atributos (bullets) encontrados NESTA seção específica.",
-                               items: { type: "string" } 
-                             },
+                               bullets: {
+                                 type: "array",
+                                 description: "Lista de benefícios ou atributos (bullets) encontrados NESTA seção específica.",
+                                 items: {
+                                   type: "object",
+                                   properties: {
+                                     title: { type: "string", description: "Título curto (1-3 palavras) que resume o bullet. Se não houver título claro no original, crie um fiel ao conteúdo. NUNCA use 'Destaque'." },
+                                     text: { type: "string", description: "O texto literal do bullet encontrado na página." }
+                                   },
+                                   required: ["title", "text"],
+                                   additionalProperties: false
+                                 }
+                               },
                              type_suggestion: {
                                type: "string",
                                description: "Sugestão: 'procedimento_detalhado', 'beneficios', etc.",
