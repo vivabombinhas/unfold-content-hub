@@ -692,7 +692,7 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
         testimonials_count: ownTestimonials.length,
         faqs_count: ownFaqs.length,
         sections_count: (oldPageContent?.sections || []).length,
-        used_section_for_detalhado: !!procedimentoDetalhadoData,
+        used_section_for_detalhado: procedimentoDetalhadoEnabled,
       } : null,
       // Fase A: persiste diagnóstico bruto da extração + raw_markdown para
       // re-geração futura sem precisar chamar Firecrawl de novo.
