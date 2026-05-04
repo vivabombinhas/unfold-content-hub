@@ -645,7 +645,7 @@ export default function PageEditor() {
                                         className="size-7 rounded-full bg-brand-gold text-brand-green hover:bg-brand-gold/90"
                                         onClick={() => img.url && setHeroImage(img.url)}
                                         title="Usar no Hero"
-                                      )
+                                      >
                                         <Save className="size-3.5" />
                                       </Button>
                                       <Button 
