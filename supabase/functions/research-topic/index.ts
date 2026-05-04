@@ -61,13 +61,19 @@ async function firecrawlScrape(apiKey: string, url: string) {
   const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: true }),
+    body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: false, waitFor: 2500 }),
   });
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    console.error("Firecrawl scrape failed", url, res.status, t.slice(0, 300));
+    return { ok: false, status: res.status, error: t.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
+  }
   const data = await res.json();
   // Normalize SDK/REST shapes
   const root = data?.data ?? data;
   return {
+    ok: true,
+    status: 200,
     markdown: root?.markdown || null,
     html: root?.html || null,
     links: Array.isArray(root?.links) ? root.links : [],
@@ -145,7 +151,7 @@ serve(async (req) => {
       if (snippet) corpusParts.push(`[${item.title || item.url}]\n${truncate(snippet, 1500)}`);
     }
     refScrapes.forEach((scrape, i) => {
-      if (scrape?.markdown) {
+      if (scrape && scrape.markdown) {
         sources.push({ url: links[i], title: `Referência fornecida: ${links[i]}` });
         corpusParts.push(`[Referência do usuário ${i + 1}]\n${truncate(scrape.markdown, 3000)}`);
       }
@@ -253,16 +259,33 @@ serve(async (req) => {
     // Fase 1.2: se as URLs são páginas antigas próprias, tenta extrair conteúdo
     // estruturado real (depoimentos, FAQs, seções, imagens candidatas).
     let oldPageContent: unknown = null;
+    const scrapeDiagnostics: Array<{
+      url: string;
+      ok: boolean;
+      status: number;
+      markdown_chars: number;
+      html_chars: number;
+      images_found: number;
+      error?: string;
+    }> = [];
     if (ownOldPage) {
       const ownCorpusParts: string[] = [];
       const candidateImages: { url: string; alt: string; source_url: string }[] = [];
+      const ownRawMarkdown: string[] = [];
+      const ownRawHtml: string[] = [];
       refScrapes.forEach((scrape, i) => {
-        if (!scrape) return;
         const sourceUrl = links[i];
+        const before = candidateImages.length;
+        if (!scrape) {
+          scrapeDiagnostics.push({ url: sourceUrl, ok: false, status: 0, markdown_chars: 0, html_chars: 0, images_found: 0, error: "no response" });
+          return;
+        }
         if (scrape.markdown) {
           ownCorpusParts.push(`[Página antiga ${i + 1} — ${sourceUrl}]\nMARKDOWN:\n${truncate(scrape.markdown, 8000)}`);
+          ownRawMarkdown.push(`# ${sourceUrl}\n\n${scrape.markdown}`);
         }
         if (scrape.html) {
+          ownRawHtml.push(`<!-- ${sourceUrl} -->\n${scrape.html}`);
           // Extrai <img src> e alt diretamente do HTML como candidatas
           const imgRegex = /<img[^>]*?src=["']([^"']+)["'][^>]*?(?:alt=["']([^"']*)["'])?[^>]*>/gi;
           let m;
@@ -274,11 +297,49 @@ serve(async (req) => {
             try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
             // Pula ícones/SVGs decorativos óbvios
             if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
+            if (/\/(logo|icon|favicon|sprite)/i.test(abs)) continue;
             if (candidateImages.length < 30 && !candidateImages.some((c) => c.url === abs)) {
               candidateImages.push({ url: abs, alt: m[2] || "", source_url: sourceUrl });
             }
           }
+          // data-src / data-lazy-src / data-original
+          const lazyRegex = /<img[^>]*?(?:data-src|data-lazy-src|data-original)=["']([^"']+)["'][^>]*?(?:alt=["']([^"']*)["'])?[^>]*>/gi;
+          let lm;
+          while ((lm = lazyRegex.exec(scrape.html)) !== null) {
+            const url = lm[1];
+            if (!url || url.startsWith("data:")) continue;
+            let abs = url;
+            try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
+            if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
+            if (/\/(logo|icon|favicon|sprite)/i.test(abs)) continue;
+            if (candidateImages.length < 30 && !candidateImages.some((c) => c.url === abs)) {
+              candidateImages.push({ url: abs, alt: lm[2] || "", source_url: sourceUrl });
+            }
+          }
+          // background-image inline
+          const bgRegex = /background-image\s*:\s*url\((['"]?)([^'")]+)\1\)/gi;
+          let bm;
+          while ((bm = bgRegex.exec(scrape.html)) !== null) {
+            const url = bm[2];
+            if (!url || url.startsWith("data:")) continue;
+            let abs = url;
+            try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
+            if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
+            if (/\/(logo|icon|favicon|sprite)/i.test(abs)) continue;
+            if (candidateImages.length < 30 && !candidateImages.some((c) => c.url === abs)) {
+              candidateImages.push({ url: abs, alt: "", source_url: sourceUrl });
+            }
+          }
         }
+        scrapeDiagnostics.push({
+          url: sourceUrl,
+          ok: !!scrape.ok,
+          status: scrape.status ?? (scrape.markdown ? 200 : 0),
+          markdown_chars: scrape.markdown ? scrape.markdown.length : 0,
+          html_chars: scrape.html ? scrape.html.length : 0,
+          images_found: candidateImages.length - before,
+          error: scrape.ok === false ? scrape.error : undefined,
+        });
       });
 
       if (ownCorpusParts.length > 0) {
@@ -291,11 +352,11 @@ serve(async (req) => {
               {
                 role: "system",
                 content:
-                  "Você é uma editora extraindo conteúdo real de uma página antiga da clínica Estética Batel para reaproveitar em uma página nova. Português do Brasil. NUNCA invente: só registre o que está literalmente nas páginas fornecidas. Se um campo não tem conteúdo, devolva array vazio. Mantenha o sentido original; pode ajustar pontuação e formatação leve.",
+                  "Você é uma editora extraindo conteúdo real de uma página antiga da clínica Estética Batel para reaproveitar em uma página nova. Português do Brasil. REGRAS DURAS:\n1. NUNCA invente. Só registre o que está LITERALMENTE no markdown fornecido.\n2. FAQs: copie a pergunta e resposta exatamente como aparecem. Se aparecem 20 FAQs, devolva 20. Se 25, devolva 25. NÃO resuma, NÃO reescreva, NÃO 'melhore'.\n3. Depoimentos: copie texto integral entre aspas. Se não tem nome, deixe vazio. NÃO crie depoimentos genéricos.\n4. Seções: identifique blocos de conteúdo (procedimento, diferenciais, benefícios, preparo, pós) e copie texto completo.\n5. Se um campo não tem conteúdo na página, devolva array vazio.\n6. Pode corrigir apenas pontuação e quebras de linha óbvias. Nada mais.",
               },
               {
                 role: "user",
-                content: `Tema da nova página: "${tema}"\n\nConteúdo bruto das páginas antigas:\n\n${ownCorpusParts.join("\n\n---\n\n").slice(0, 25000)}`,
+                content: `Tema da nova página: "${tema}"\n\nConteúdo bruto das páginas antigas (extraia LITERALMENTE):\n\n${ownCorpusParts.join("\n\n---\n\n").slice(0, 40000)}`,
               },
             ],
             tools: [
@@ -323,7 +384,7 @@ serve(async (req) => {
                       },
                       faqs: {
                         type: "array",
-                        description: "Perguntas frequentes encontradas. Importe TODAS as que aparecem na página, mesmo que sejam 20+. NÃO inventar.",
+                        description: "Perguntas frequentes encontradas LITERALMENTE. Importe TODAS — se a página tem 20, devolva 20; se tem 25, devolva 25. Texto exato da pergunta e da resposta. NUNCA inventar nem reescrever.",
                         items: {
                           type: "object",
                           properties: {
@@ -387,10 +448,22 @@ serve(async (req) => {
       if (!oldPageContent && candidateImages.length > 0) {
         oldPageContent = { testimonials: [], faqs: [], sections: [], ctas: [], images: candidateImages };
       }
+
+      // Persiste markdown/html cru no objeto retornado para o gerador salvar
+      if (oldPageContent && typeof oldPageContent === "object") {
+        (oldPageContent as Record<string, unknown>).raw_markdown = ownRawMarkdown.join("\n\n---\n\n").slice(0, 80000);
+        (oldPageContent as Record<string, unknown>).raw_html_size = ownRawHtml.reduce((a, b) => a + b.length, 0);
+      }
     }
 
     return new Response(
-      JSON.stringify({ tema, research: args, sources: sources.slice(0, 10), old_page_content: oldPageContent }),
+      JSON.stringify({
+        tema,
+        research: args,
+        sources: sources.slice(0, 10),
+        old_page_content: oldPageContent,
+        scrape_diagnostics: scrapeDiagnostics,
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
