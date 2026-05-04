@@ -63,22 +63,68 @@ serve(async (req) => {
     const { data: roleRows } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin");
     if (!roleRows?.length) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
 
-    const { url, text } = await req.json();
-    let content = text || "";
+     const { url, text: userText } = await req.json();
+     let content = userText || "";
+     let stats = {
+       url_accessed: false,
+       text_received: !!userText,
+       char_count: userText?.length || 0,
+       source_type: url ? "url" : "text"
+     };
 
     if (url) {
-      const scrape = await firecrawlScrape(FIRECRAWL_API_KEY!, url);
+       const scrape = await firecrawlScrape(FIRECRAWL_API_KEY || "", url);
+       stats.url_accessed = scrape.ok;
       if (scrape.ok) {
-        content = scrape.markdown || scrape.html || "";
+         content = (scrape.markdown || scrape.html || "").trim();
+         stats.char_count = content.length;
       } else {
         throw new Error("Falha ao acessar a URL.");
       }
     }
 
-    if (!content.trim()) throw new Error("Conteúdo vazio.");
+     if (!content.trim()) {
+       return new Response(JSON.stringify({ 
+         sections: [], 
+         error_details: {
+           message: "Conteúdo vazio ou inacessível.",
+           ...stats
+         }
+       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+     }
+
+     // Deterministic Fallback for Simple Text (Before AI)
+     const fallbackSections = [];
+     if (!url && userText) {
+       const lines = userText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+       // If we have pairs of lines (Title + Text)
+       if (lines.length >= 2 && lines.length % 2 === 0) {
+         const cards = [];
+         for (let i = 0; i < lines.length; i += 2) {
+           if (lines[i].length < 100 && lines[i+1].length > 5) {
+             cards.push({ title: lines[i], text: lines[i+1] });
+           }
+         }
+         if (cards.length > 0) {
+           fallbackSections.push({
+             suggested_label: "Benefícios (Identificação Rápida)",
+             target_type: "beneficios_grid",
+             confidence: 0.8,
+             data: {
+               eyebrow: "Diferenciais",
+               title_html: "Por que nos <em>escolher</em>",
+               cards
+             }
+           });
+         }
+       }
+     }
 
     // Extract blocks via AI
-    const aiRes = await fetch(AI_GATEWAY, {
+     let sections = [...fallbackSections];
+     
+     try {
+       const aiRes = await fetch(AI_GATEWAY, {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -86,20 +132,24 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é uma editora especializada em estruturação de landing pages premium.
-Seu objetivo é ler o conteúdo bruto fornecido e identificar seções que se encaixam nos seguintes blocos:
-
-1. beneficios_grid: Uma lista de benefícios, diferenciais ou motivos para escolher o tratamento.
-   Estrutura: { eyebrow: string, title_html: string, cards: Array<{ title: string, text: string }> }
-
-2. procedimento_detalhado_v2: Uma explicação detalhada de como funciona o procedimento, com parágrafos e cards de destaque (como duração, anestesia, recuperação).
-   Estrutura: { eyebrow: string, title_html: string, paragraphs: string[], side_cards: Array<{ title: string, text: string }> }
-
-REGRAS:
-- Extraia o conteúdo LITERALMENTE. Não resuma.
-- Para title_html, use <em> para destacar palavras-chave importantes com tom dourado.
-- Gere títulos curtos e significativos para os cards (evite usar sempre "Destaque").
-- Se encontrar ambas as seções, retorne ambas.`,
+             content: `Você é uma editora especializada em estruturação de landing pages premium da Estética Batel.
+ Seu objetivo é analisar o conteúdo bruto e mapeá-lo para os blocos premium disponíveis.
+ 
+ TIPOS DE BLOCOS DISPONÍVEIS:
+ 1. beneficios_grid: Use para listas de vantagens, benefícios, diferenciais ou "por que fazer".
+    - Requisito: Mínimo 2 itens.
+    - Estrutura: { eyebrow: string, title_html: string, cards: Array<{ title: string, text: string }> }
+ 
+ 2. procedimento_detalhado_v2: Use para descrições de "como funciona", etapas do tratamento ou detalhes técnicos.
+    - Requisito: Pelo menos um parágrafo descritivo.
+    - Estrutura: { eyebrow: string, title_html: string, paragraphs: string[], side_cards: Array<{ title: string, text: string }> }
+ 
+ DIRETRIZES DE MAPEAMENTO:
+ - Se o usuário fornecer pares de "Título" e "Descrição", mapeie SEMPRE para beneficios_grid.
+ - Se houver um bloco de texto explicativo com alguns itens de destaque (ex: tempo, dor, repouso), use procedimento_detalhado_v2.
+ - NUNCA retorne vazio se houver texto legível. Se estiver em dúvida, sugira o mapeamento mais provável com o campo "confidence".
+ - Títulos de cards (cards[].title) devem ser CURTOS (max 3 palavras).
+ - title_html deve ser elegante, ex: "Resultados que <em>surpreendem</em>".`,
           },
           {
             role: "user",
@@ -137,19 +187,32 @@ REGRAS:
       })
     });
 
-    const aiData = await aiRes.json();
-    const toolCall = aiData?.choices?.[0]?.message?.tool_calls?.[0];
-    const sections = toolCall ? JSON.parse(toolCall.function.arguments).sections : [];
+       const aiData = await aiRes.json();
+       const toolCall = aiData?.choices?.[0]?.message?.tool_calls?.[0];
+       if (toolCall) {
+         const aiSections = JSON.parse(toolCall.function.arguments).sections;
+         // Merge AI sections, avoiding duplicates if fallback already found something similar
+         aiSections.forEach((s: any) => {
+           s.confidence = s.confidence || 0.9;
+           sections.push(s);
+         });
+       }
+     } catch (aiError) {
+       console.error("AI Extraction failed:", aiError);
+     }
 
-    return new Response(JSON.stringify({ sections }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+     return new Response(JSON.stringify({ 
+       sections, 
+       debug: stats 
+     }), {
+       headers: { ...corsHeaders, "Content-Type": "application/json" },
+     });
 
-  } catch (e) {
-    console.error(e);
-    return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-});
+   } catch (e) {
+     console.error(e);
+     return new Response(JSON.stringify({ error: e.message }), {
+       status: 500,
+       headers: { ...corsHeaders, "Content-Type": "application/json" },
+     });
+   }
+ });
