@@ -356,7 +356,7 @@ serve(async (req) => {
               },
               {
                 role: "user",
-                content: `Tema da nova página: "${tema}"\n\nConteúdo bruto das páginas antigas (extraia LITERALMENTE):\n\n${ownCorpusParts.join("\n\n---\n\n").slice(0, 40000)}`,
+                content: `Tema da nova página: "${tema}"\n\nConteúdo bruto das páginas antigas (extraia LITERALMENTE):\n\n${ownCorpusParts.join("\n\n---\n\n").slice(0, 45000)}`,
               },
             ],
             tools: [
