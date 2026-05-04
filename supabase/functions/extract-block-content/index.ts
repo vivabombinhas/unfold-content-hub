@@ -41,7 +41,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
   return { ok: false };
 }
 
-serve(async (req) => {
+ export const handler = async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -55,7 +55,11 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
-    });
+ };
+ 
+ if (import.meta.main) {
+   serve(handler);
+ }
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
