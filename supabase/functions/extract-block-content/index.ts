@@ -97,7 +97,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
      // Deterministic Fallback for Simple Text (Before AI)
      const fallbackSections = [];
      if (!url && userText) {
-       const lines = userText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+        const lines = userText.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 0);
        // If we have pairs of lines (Title + Text)
        if (lines.length >= 2 && lines.length % 2 === 0) {
          const cards = [];
