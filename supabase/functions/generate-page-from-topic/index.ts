@@ -514,9 +514,12 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
            .map((p: string) => p.trim())
            .filter((p: string) => p.length > 0)
            .slice(0, 6),
-         bullets: Array.isArray((detailedSection as any).bullets) 
-           ? (detailedSection as any).bullets.map((b: any) => String(b)).slice(0, 6)
-           : [],
+        bullets: Array.isArray((detailedSection as any).bullets)
+          ? (detailedSection as any).bullets.map((b: any) => ({
+              title: String(b).split(":")[0] || "Destaque",
+              text: String(b).includes(":") ? String(b).split(":").slice(1).join(":") : String(b)
+            })).slice(0, 8)
+          : [],
        };
        procedimentoDetalhadoEnabled = true;
      } else {
@@ -542,12 +545,19 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       .slice(0, 30);
     // -----------------------------------------------------------------------
 
-    // Build blocks: para blocos coletivos NÃO copiamos o `data` do Botox.
-    // Apenas reusamos a imagem do hero (estrutura visual neutra) e deixamos os
-    // blocos coletivos com `data` mínimo (header gerado pela IA). Os cards
-    // (casos, reviews, ai_opinions, courses) vêm dos pools globais.
-    const heroImage =
+    // Build blocks: Prioridade de imagem do Hero
+    // 1. Primeira imagem da página antiga (se houver)
+    // 2. Imagem do template (Botox) como fallback neutro
+    const candidateImages = (oldPageContent?.images || [])
+      .filter((img) => img && typeof img.url === "string")
+      .slice(0, 30);
+
+    const heroImageFallback =
       ((templateBlocks || []).find((b) => b.type === "hero")?.data as { image_url?: string } | undefined)?.image_url || null;
+    
+    const heroImage = (ownOldPage && candidateImages.length > 0) 
+      ? candidateImages[0].url 
+      : heroImageFallback;
     const equipeBase =
       ((templateBlocks || []).find((b) => b.type === "equipe_rt")?.data as Record<string, unknown> | undefined) || {};
     // Reaproveitamos apenas dados institucionais da RT (foto, registro, nome) —
