@@ -253,8 +253,12 @@ serve(async (req) => {
           sections?: { title?: string; body?: string; type_suggestion?: string }[];
           ctas?: string[];
           images?: { url?: string; alt?: string; source_url?: string }[];
+          raw_markdown?: string;
+          raw_html_size?: number;
         }
       : null;
+    const allowAiOnlyFallback = !!body?.allow_ai_only_fallback;
+    const scrapeDiagnostics = Array.isArray(body?.scrape_diagnostics) ? body.scrape_diagnostics : [];
 
     if (!tema || tema.length < 3) {
       return new Response(JSON.stringify({ error: "Tema obrigatório (3+ caracteres)" }), {
@@ -267,6 +271,25 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Fase A: bloquear geração silenciosa quando o usuário marcou "página antiga"
+    // mas a extração não trouxe NADA aproveitável.
+    if (ownOldPage && !allowAiOnlyFallback) {
+      const t = (oldPageContent?.testimonials || []).length;
+      const f = (oldPageContent?.faqs || []).length;
+      const s = (oldPageContent?.sections || []).length;
+      const i = (oldPageContent?.images || []).length;
+      if (t + f + s + i === 0) {
+        return new Response(JSON.stringify({
+          error: "extraction_empty",
+          message: "A extração da(s) página(s) antiga(s) não retornou nenhum conteúdo (FAQs, depoimentos, seções ou imagens). Para prosseguir mesmo assim com IA pura, reenvie com allow_ai_only_fallback=true.",
+          diagnostics: scrapeDiagnostics,
+        }), {
+          status: 422,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Slug uniqueness
@@ -305,7 +328,8 @@ Você está escrevendo uma NOVA landing page sobre "${tema}".
 
 IMPORTANTÍSSIMO — REGRA DE CONTAMINAÇÃO:
 - A página-modelo da clínica é "Botox Masculino", mas ela serve APENAS como referência de TOM e ESTRUTURA.
-- VOCÊ NÃO PODE mencionar Botox / toxina botulínica / aplicações musculares NESTA página, a menos que o tema "${tema}" seja literalmente sobre toxina botulínica.
+- VOCÊ NÃO PODE mencionar Botox / toxina botulínica / botulinum / "rugas dinâmicas" / "paralisação muscular" / "linhas de expressão" NESTA página, a menos que o tema "${tema}" seja literalmente sobre toxina botulínica.
+- Qualquer texto contendo "botox" ou "toxina" será REJEITADO automaticamente. Releia antes de devolver.
 - Todo o conteúdo (eyebrow, títulos, parágrafos, métodos, FAQs, CTAs, headers de blocos coletivos, intro de cursos) deve falar EXCLUSIVAMENTE do procedimento "${tema}".
 - Se o tema for "Preenchimento Labial", NUNCA escreva sobre rugas, expressão facial, ou toxina. Foque em ácido hialurônico, contorno, hidratação, volume.
 - Se o tema for "Bioestimulador de Colágeno", foque em estímulo dérmico, melhora gradual, qualidade da pele — NÃO em paralisação muscular.
