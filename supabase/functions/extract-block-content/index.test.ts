@@ -1,3 +1,41 @@
+ Deno.test({
+   name: "extract-block-content: merges fallback and AI sections",
+   sanitizeResources: false,
+   sanitizeOps: false,
+   async fn() {
+     mockFetch({
+       "/auth/v1/user": { data: { user: { id: "user-1" } } },
+       "/rest/v1/user_roles": [{ role: "admin" }],
+       "ai.gateway.lovable.dev": {
+         choices: [{
+           message: {
+             tool_calls: [{
+               function: {
+                 name: "registrar_blocos",
+                 arguments: JSON.stringify({ 
+                   sections: [{
+                     suggested_label: "IA Procedimento",
+                     target_type: "procedimento_detalhado_v2",
+                     data: { title_html: "IA Result" }
+                   }] 
+                 })
+               }
+             }]
+           }
+         }]
+       }
+     });
+ 
+     const text = `Beneficio 1\nDesc 1\nBeneficio 2\nDesc 2`;
+     const req = createReq({ text });
+     const res = await handler(req);
+     const data = await res.json();
+ 
+     assertEquals(data.sections.length, 2); // 1 fallback + 1 AI
+     assertEquals(data.sections[0].target_type, "beneficios_grid");
+     assertEquals(data.sections[1].target_type, "procedimento_detalhado_v2");
+   }
+ });
  import { assertEquals, assertExists } from "https://deno.land/std@0.168.0/testing/asserts.ts";
  import { handler } from "./index.ts";
  
