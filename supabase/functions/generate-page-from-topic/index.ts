@@ -503,21 +503,23 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       typeof sec?.body === "string" && sec.body.trim().length > 120
     );
 
-    let procedimentoDetalhadoData: { eyebrow: string; title_html: string; paragraphs: string[]; bullets: unknown[] };
+     let procedimentoDetalhadoData: { eyebrow: string; title_html: string; paragraphs: string[]; bullets: string[] };
     let procedimentoDetalhadoEnabled = false;
-    if (detailedSection) {
-      procedimentoDetalhadoData = {
-        eyebrow: "Como é o procedimento",
-        title_html: detailedSection.title || "Como é, na prática, esse <em>procedimento</em>.",
-        paragraphs: (detailedSection.body || "")
-          .split(/\n\s*\n/)
-          .map((p) => p.trim())
-          .filter((p) => p.length > 0)
-          .slice(0, 6),
-        bullets: [],
-      };
-      procedimentoDetalhadoEnabled = true;
-    } else {
+     if (detailedSection) {
+       procedimentoDetalhadoData = {
+         eyebrow: "Como é o procedimento",
+         title_html: detailedSection.title || "Como é o procedimento",
+         paragraphs: (detailedSection.body || "")
+           .split(/\n\s*\n/)
+           .map((p: string) => p.trim())
+           .filter((p: string) => p.length > 0)
+           .slice(0, 6),
+         bullets: Array.isArray((detailedSection as any).bullets) 
+           ? (detailedSection as any).bullets.map((b: any) => String(b)).slice(0, 6)
+           : [],
+       };
+       procedimentoDetalhadoEnabled = true;
+     } else {
       // Fallback: monta um esboço a partir do manifesto e dos detalhes do método.
       const manifestoBody = (generated.blocks?.manifesto_curto?.body as string | undefined) || "";
       const stepDetails = (generated.blocks?.metodo?.steps || [])
