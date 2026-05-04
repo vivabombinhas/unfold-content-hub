@@ -33,7 +33,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
         const html = await directRes.text();
         return { ok: true, markdown: null, html };
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Direct fetch failed", e);
     }
   }
@@ -209,7 +209,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
  
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       return new Response(JSON.stringify({ error: e.message }), {
         status: 500,
