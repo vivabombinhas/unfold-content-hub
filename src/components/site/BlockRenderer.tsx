@@ -119,6 +119,10 @@ export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData
       return <FaqBlock data={data} />;
     case "cta_final":
       return <CtaFinalBlock data={data} />;
+    case "beneficios_grid":
+      return <BeneficiosGridBlock data={data} />;
+    case "procedimento_detalhado_v2":
+      return <ProcedimentoDetalhadoV2Block data={data} />;
     default:
       return null;
   }
@@ -189,6 +193,109 @@ function HeroBlock({ data }: { data: BlockData }) {
             )}
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   BENEFÍCIOS GRID (Premium)
+   ============================================================ */
+function BeneficiosGridBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Benefícios");
+  const titleHtml = firstS([data.title_html, data.title], "Diferenciais do <em>tratamento</em>.");
+  const subtitle = s(data.subtitle);
+  const cards = arr<{ title?: string; text?: string; icon?: string }>(data.cards);
+  const variant = s(data.layout_variant, "grid"); // "grid" ou "centered"
+
+  if (!cards.length) return null;
+
+  return (
+    <section className="bg-brand-black section-pad relative z-[2]">
+      <div className="container-editorial">
+        <div className={cn("reveal mb-12", variant === "centered" ? "text-center mx-auto max-w-2xl" : "max-w-2xl")}>
+          <span className={cn("eyebrow", variant === "centered" && "mx-auto justify-center")}>{eyebrow}</span>
+          <h2 className="h-display-2 mt-5 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className={cn("gold-rule mt-7", variant === "centered" && "mx-auto")} />
+          {subtitle && <p className="mt-6 text-brand-text-soft text-lg leading-relaxed">{subtitle}</p>}
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {cards.map((card, i) => (
+            <div key={i} className="reveal group bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 hover:border-brand-gold/40 transition-all duration-500">
+              <div className="flex flex-col h-full">
+                <Sparkles className="size-6 text-brand-gold/60 mb-6" strokeWidth={1} />
+                <h3 className="font-display text-2xl leading-tight mb-4">{s(card.title)}</h3>
+                <p className="text-brand-text-soft leading-relaxed text-[15px]">{s(card.text)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ============================================================
+   PROCEDIMENTO DETALHADO V2 (Premium)
+   ============================================================ */
+function ProcedimentoDetalhadoV2Block({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Etapas");
+  const titleHtml = firstS([data.title_html, data.title], "O <em>procedimento</em> detalhado.");
+  const mainText = s(data.main_text);
+  const paragraphs = arr<string>(data.paragraphs);
+  const sideCards = arr<{ title?: string; text?: string; icon?: string }>(data.side_cards);
+  const imageUrl = s(data.image_url);
+  const cta = readCta(data.cta, { label: "", href: "" });
+  const variant = s(data.layout_variant, "standard");
+
+  return (
+    <section className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
+      <div className="container-editorial">
+        <div className="grid lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-20 items-start">
+          <div className="reveal">
+            <span className="eyebrow" style={{ color: "hsl(var(--gold-deep))" }}>{eyebrow}</span>
+            <h2 className="h-display-2 mt-5 text-brand-text-dark text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+            <span className="gold-rule mt-7" />
+            
+            <div className="mt-8 space-y-6 text-brand-text-dark/80 text-[17px] leading-[1.8]">
+              {mainText && <p>{mainText}</p>}
+              {paragraphs.map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
+            </div>
+
+            {imageUrl && (
+              <div className="mt-12 aspect-video overflow-hidden bg-brand-cream-2 border border-brand-gold/10">
+                <img src={imageUrl} alt={s(data.image_alt)} className="w-full h-full object-cover" loading="lazy" />
+              </div>
+            )}
+
+            {cta.label && cta.href && (
+              <div className="mt-10">
+                <GoldButton as="a" href={cta.href} withArrow size="lg">
+                  {cta.label}
+                </GoldButton>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {sideCards.map((card, i) => (
+              <div key={i} className="reveal bg-brand-cream-2 border border-brand-gold/15 p-7 md:p-8">
+                <div className="flex gap-4 items-start">
+                  <div className="size-10 rounded-full bg-brand-gold/10 flex items-center justify-center shrink-0 mt-1">
+                    <CheckCircle2 className="size-5 text-brand-gold" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-xl leading-tight mb-2 text-brand-text-dark">{s(card.title)}</h3>
+                    <p className="text-brand-text-dark/70 text-sm leading-relaxed">{s(card.text)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
