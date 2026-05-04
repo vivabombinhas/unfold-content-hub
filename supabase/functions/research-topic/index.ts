@@ -395,23 +395,28 @@ serve(async (req) => {
                            additionalProperties: false,
                          },
                        },
-                      sections: {
-                        type: "array",
-                        description: "Seções de conteúdo relevantes da página antiga (texto explicativo, descrição do procedimento, benefícios). Identifique se vale aproveitar como bloco extra.",
-                        items: {
-                          type: "object",
-                          properties: {
-                            title: { type: "string" },
-                            body: { type: "string", description: "Texto completo da seção (pode ter parágrafos separados por \\n\\n)." },
-                            type_suggestion: {
-                              type: "string",
-                              description: "Sugestão de uso: 'procedimento_detalhado' (descreve como funciona o procedimento), 'manifesto', 'metodo', 'beneficios', 'preparo', 'pos_procedimento', 'unknown'.",
-                            },
-                          },
-                          required: ["title", "body", "type_suggestion"],
-                          additionalProperties: false,
-                        },
-                      },
+                       sections: {
+                         type: "array",
+                         description: "Seções de conteúdo relevantes da página antiga.",
+                         items: {
+                           type: "object",
+                           properties: {
+                             title: { type: "string" },
+                             body: { type: "string", description: "Texto completo da seção." },
+                             bullets: { 
+                               type: "array", 
+                               description: "Lista de benefícios ou atributos (bullets) encontrados NESTA seção específica.",
+                               items: { type: "string" } 
+                             },
+                             type_suggestion: {
+                               type: "string",
+                               description: "Sugestão: 'procedimento_detalhado', 'beneficios', etc.",
+                             },
+                           },
+                           required: ["title", "body", "type_suggestion"],
+                           additionalProperties: false,
+                         },
+                       },
                       ctas: {
                         type: "array",
                         description: "CTAs encontrados (texto do botão).",
