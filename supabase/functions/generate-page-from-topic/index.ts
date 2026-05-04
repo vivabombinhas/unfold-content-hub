@@ -515,10 +515,14 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
            .filter((p: string) => p.length > 0)
            .slice(0, 6),
         bullets: Array.isArray((detailedSection as any).bullets)
-          ? (detailedSection as any).bullets.map((b: any) => ({
-              title: String(b).split(":")[0] || "Destaque",
-              text: String(b).includes(":") ? String(b).split(":").slice(1).join(":") : String(b)
-            })).slice(0, 8)
+            ? (detailedSection as any).bullets.map((b: any) => {
+                const str = String(b);
+                const hasColon = str.includes(":");
+                return {
+                  title: hasColon ? str.split(":")[0].trim() : "Destaque",
+                  text: hasColon ? str.split(":").slice(1).join(":").trim() : str.trim()
+                };
+              }).slice(0, 8)
           : [],
        };
        procedimentoDetalhadoEnabled = true;
