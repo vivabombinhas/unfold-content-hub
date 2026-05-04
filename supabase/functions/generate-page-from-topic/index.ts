@@ -626,12 +626,17 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           // sobre o pool de Google reviews.
           // Fase B: depoimentos APENAS da página antiga quando ela tem.
           // Quando tem, desliga o pool global setando source explícito.
-          if (type === "depoimentos" && ownTestimonials.length > 0) {
-            merged.items = ownTestimonials;
-            merged.show_count = ownTestimonials.length;
-            merged.source = "own_old_page";
-            merged.disable_pool = true;
-          }
+           if (type === "depoimentos") {
+             if (ownTestimonials.length > 0) {
+               merged.items = ownTestimonials;
+               merged.show_count = ownTestimonials.length;
+               merged.source = "own_old_page";
+               merged.disable_pool = true;
+             } else if (ownOldPage) {
+               // Se é página própria e não extraiu depoimentos, oculta o bloco.
+               enabled = false;
+             }
+           }
           data = merged;
           break;
         }
