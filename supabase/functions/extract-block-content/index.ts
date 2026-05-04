@@ -53,14 +53,11 @@ async function firecrawlScrape(apiKey: string, url: string) {
 
     // Auth check (Admin only)
     const authHeader = req.headers.get("Authorization") || "";
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
- };
+     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+       global: { headers: { Authorization: authHeader } },
+     });
  
- if (import.meta.main) {
-   serve(handler);
- }
-    const { data: { user } } = await userClient.auth.getUser();
+     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -210,9 +207,20 @@ async function firecrawlScrape(apiKey: string, url: string) {
        debug: stats 
      }), {
        headers: { ...corsHeaders, "Content-Type": "application/json" },
-     });
-
-   } catch (e) {
+      });
+ 
+    } catch (e) {
+      console.error(e);
+      return new Response(JSON.stringify({ error: e.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+ };
+ 
+ if (import.meta.main) {
+   serve(handler);
+ }
      console.error(e);
      return new Response(JSON.stringify({ error: e.message }), {
        status: 500,
