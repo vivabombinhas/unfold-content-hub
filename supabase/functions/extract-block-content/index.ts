@@ -221,10 +221,3 @@ async function firecrawlScrape(apiKey: string, url: string) {
  if (import.meta.main) {
    serve(handler);
  }
-     console.error(e);
-     return new Response(JSON.stringify({ error: e.message }), {
-       status: 500,
-       headers: { ...corsHeaders, "Content-Type": "application/json" },
-     });
-   }
- });
