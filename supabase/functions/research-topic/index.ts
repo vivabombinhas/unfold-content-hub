@@ -61,13 +61,41 @@ async function firecrawlScrape(apiKey: string, url: string) {
   const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: false, waitFor: 2500 }),
+    body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: true, waitFor: 1000 }),
   });
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    console.error("Firecrawl scrape failed", url, res.status, t.slice(0, 300));
-    return { ok: false, status: res.status, error: t.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
+  if (res.ok) {
+    const data = await res.json();
+    const root = data?.data ?? data;
+    return {
+      ok: true,
+      status: 200,
+      markdown: root?.markdown || null,
+      html: root?.html || null,
+      links: Array.isArray(root?.links) ? root.links : [],
+      metadata: root?.metadata || null,
+    };
   }
+
+  const errorText = await res.text().catch(() => "");
+  console.error("Firecrawl scrape failed", url, res.status, errorText.slice(0, 300));
+
+  // Fallback: Tentativa de fetch direto se for do próprio domínio e Firecrawl falhou por créditos
+  if (res.status === 402 && url.includes("esteticabatel.com.br")) {
+    try {
+      console.log("Tentando fallback de fetch direto para", url);
+      const directRes = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" }
+      });
+      if (directRes.ok) {
+        const html = await directRes.text();
+        return { ok: true, status: 200, markdown: null, html, links: [], metadata: null, note: "Fallback direct fetch" };
+      }
+    } catch (e) {
+      console.error("Fallback fetch failed", e);
+    }
+  }
+
+  return { ok: false, status: res.status, error: errorText.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
   const data = await res.json();
   // Normalize SDK/REST shapes
   const root = data?.data ?? data;
