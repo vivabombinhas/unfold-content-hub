@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Loader2, Download, Search, CheckCircle2, AlertCircle, ChevronDown, Image as ImageIcon, Upload, X } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
- import { 
-   DropdownMenu, 
-   DropdownMenuContent, 
-   DropdownMenuItem, 
-   DropdownMenuTrigger 
- } from "@/components/ui/dropdown-menu";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BLOCK_LABELS, type BlockType } from "@/types/blocks";
@@ -41,7 +41,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"input" | "sections">("input");
   const [scanResult, setScanResult] = useState<ScannedPage | null>(null);
-   const [selectedSections, setSelectedSections] = useState<Record<string, { selected: boolean; forcedType?: BlockType }>>({});
+  const [selectedSections, setSelectedSections] = useState<Record<string, { selected: boolean; forcedType?: BlockType }>>({});
   const { toast } = useToast();
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -110,12 +110,12 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
         return;
       }
 
-       setScanResult(data);
-       const initialSelected: Record<string, { selected: boolean; forcedType?: BlockType }> = {};
-       data.sections.forEach((s: any) => {
-         initialSelected[s.id] = { selected: false };
-       });
-       setSelectedSections(initialSelected);
+      setScanResult(data);
+      const initialSelected: Record<string, { selected: boolean; forcedType?: BlockType }> = {};
+      data.sections.forEach((s: any) => {
+        initialSelected[s.id] = { selected: false };
+      });
+      setSelectedSections(initialSelected);
       setStep("sections");
     } catch (e) {
       console.error(e);
@@ -125,23 +125,23 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
     }
   }
 
-   const selectedCount = useMemo(() => 
-     Object.values(selectedSections).filter(s => s.selected).length
-   , [selectedSections]);
+  const selectedCount = useMemo(() => 
+    Object.values(selectedSections).filter(s => s.selected).length
+  , [selectedSections]);
 
-   function toggleSection(id: string) {
-     setSelectedSections(prev => ({
-       ...prev,
-       [id]: { ...prev[id], selected: !prev[id]?.selected }
-     }));
-   }
+  function toggleSection(id: string) {
+    setSelectedSections(prev => ({
+      ...prev,
+      [id]: { ...prev[id], selected: !prev[id]?.selected }
+    }));
+  }
 
-   function setSectionType(id: string, type: BlockType) {
-     setSelectedSections(prev => ({
-       ...prev,
-       [id]: { ...prev[id], forcedType: type, selected: true }
-     }));
-   }
+  function setSectionType(id: string, type: BlockType) {
+    setSelectedSections(prev => ({
+      ...prev,
+      [id]: { ...prev[id], forcedType: type, selected: true }
+    }));
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -149,13 +149,13 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="font-display text-xl text-brand-gold">Importar Bloco com IA</DialogTitle>
           <DialogDescription className="text-brand-text-muted">
-            Extraia conteúdo de uma URL ou texto e converta automaticamente para blocos Premium.
+            Extraia conteúdo de uma URL, texto ou print e converta automaticamente para blocos Premium.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-0 flex flex-col">
           <div className="p-6 border-b border-brand-gold/10">
-            <div className="flex gap-4 mb-4">
+            <div className="flex flex-col gap-4 mb-4">
               <div className="flex gap-4">
                 {(["url", "text", "vision"] as const).map((m) => (
                   <button 
@@ -173,8 +173,9 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
                   </button>
                 ))}
               </div>
+              
               {step === "input" && (
-                 <div className="space-y-2 w-full">
+                <div className="space-y-4 w-full">
                   <div className="flex flex-col gap-4">
                     {mode === "vision" && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -266,31 +267,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
                       {mode === "vision" ? "Analisar Print + Texto" : "Scanear"}
                     </Button>
                   </div>
-                      <Input 
-                        placeholder="https://esteticabatel.com.br/..." 
-                        value={source}
-                        onChange={e => setSource(e.target.value)}
-                        className="bg-brand-graphite/40 border-brand-gold/10 text-brand-text-light"
-                      />
-                    ) : (
-                      <Textarea 
-                        placeholder="Cole aqui..." 
-                        value={source}
-                        onChange={e => setSource(e.target.value)}
-                        rows={4}
-                        className="bg-brand-graphite/40 border-brand-gold/10 text-brand-text-light"
-                      />
-                    )}
-                    <Button 
-                      onClick={handleExtract} 
-                      disabled={loading || !source.trim()}
-                      className="bg-brand-gold text-brand-green hover:bg-brand-gold/90 shrink-0"
-                    >
-                      {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4 mr-2" />}
-                      Scanear
-                    </Button>
-                  </div>
-                 </div>
+                </div>
               )}
 
               {step === "sections" && scanResult && (
@@ -369,7 +346,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
               onClick={() => {
                 toast({ title: "Funcionalidade em desenvolvimento", description: "A conversão de seções selecionadas para blocos será implementada na próxima fase." });
               }} 
-               disabled={selectedCount === 0}
+              disabled={selectedCount === 0}
               className="bg-brand-gold text-brand-green hover:bg-brand-gold/90"
             >
               <CheckCircle2 className="size-4 mr-2" />
