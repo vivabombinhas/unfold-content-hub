@@ -153,7 +153,9 @@ export type Database = {
           description: string | null
           duration: string | null
           id: string
+          long_description: string | null
           position: number
+          price_label: string | null
           title: string
           updated_at: string
         }
@@ -163,7 +165,9 @@ export type Database = {
           description?: string | null
           duration?: string | null
           id?: string
+          long_description?: string | null
           position?: number
+          price_label?: string | null
           title: string
           updated_at?: string
         }
@@ -173,7 +177,9 @@ export type Database = {
           description?: string | null
           duration?: string | null
           id?: string
+          long_description?: string | null
           position?: number
+          price_label?: string | null
           title?: string
           updated_at?: string
         }
