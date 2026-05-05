@@ -24,7 +24,8 @@ import {
   Award,
   Star,
 } from "lucide-react";
-import { useState } from "react";
+ import { useState, useEffect } from "react";
+ import draRT from "@/assets/dra-rt.jpg";
 import { GoldButton } from "@/components/site/GoldButton";
 import { Medal } from "@/components/site/Medal";
 import { InlineExpand } from "@/components/site/InlineExpand";
@@ -136,7 +137,10 @@ export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData
 function HeroBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Estética Batel · Curitiba");
   const titleHtml = firstS([data.title_html, data.title], "Tratamento <em>personalizado</em>.");
-  const paragraph = firstS([data.paragraph, data.subtitle, data.description]);
+   const paragraph = firstS(
+     [data.paragraph, data.subtitle, data.description],
+     "Protocolo de alta performance com dosagem calibrada para resultados naturais e sofisticados. Sem aspecto congelado, preservando a expressão que comunica autoridade e segurança. Avaliação clínica individualizada e técnica documentada para máxima previsibilidade."
+   );
   const imageUrl = s(data.image_url);
   const captionTop = s(data.caption_top);
   const captionBottom = s(data.caption_bottom);
@@ -182,9 +186,9 @@ function HeroBlock({ data }: { data: BlockData }) {
           )}
         </div>
         {imageUrl && (
-          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none" style={{ transitionDelay: "400ms" }}>
-            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group">
-              <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" loading="eager" />
+           <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none parallax-subtle" style={{ transitionDelay: "400ms" }}>
+             <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group border border-brand-gold/10">
+               <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[4s] group-hover:scale-110" loading="eager" />
               <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
             </div>
             <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
@@ -228,7 +232,7 @@ function BeneficiosGridBlock({ data }: { data: BlockData }) {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {cards.map((card, i) => (
-            <div key={i} style={{ transitionDelay:  }} className="reveal group bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 hover:border-brand-gold/40 transition-all duration-500">
+             <div key={i} style={{ transitionDelay: `${i * 100}ms` }} className="reveal group bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 hover:border-brand-gold/40 transition-all duration-500">
               <div className="flex flex-col h-full">
                 <Sparkles className="size-6 text-brand-gold/60 mb-6" strokeWidth={1} />
                 <h3 className="font-display text-2xl leading-tight mb-4">{s(card.title)}</h3>
@@ -248,9 +252,23 @@ function BeneficiosGridBlock({ data }: { data: BlockData }) {
 function ProcedimentoDetalhadoV2Block({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Etapas");
   const titleHtml = firstS([data.title_html, data.title], "O <em>procedimento</em> detalhado.");
-  const mainText = s(data.main_text);
-  const paragraphs = arr<string>(data.paragraphs);
-  const sideCards = arr<{ title?: string; text?: string; icon?: string }>(data.side_cards);
+   const mainText = s(data.main_text, "Nosso procedimento é estruturado em etapas claras para garantir segurança e resultados de excelência. Cada fase é documentada e acompanhada pela nossa responsável técnica.");
+   let paragraphs = arr<string>(data.paragraphs);
+   if (paragraphs.length === 0) {
+     paragraphs = [
+       "Iniciamos com uma análise detalhada da musculatura e dos vetores de expressão, definindo o plano de aplicação personalizado.",
+       "Utilizamos apenas toxinas de primeira linha, garantindo a pureza e a longevidade do tratamento.",
+       "O retorno em 14 dias é fundamental para avaliar a acomodação do produto e realizar qualquer ajuste fino necessário."
+     ];
+   }
+   let sideCards = arr<{ title?: string; text?: string; icon?: string }>(data.side_cards);
+   if (sideCards.length === 0) {
+     sideCards = [
+       { title: "Avaliação 360°", text: "Análise completa da face e histórico clínico." },
+       { title: "Técnica Refinada", text: "Aplicação precisa com agulhas ultrafinas." },
+       { title: "Suporte Pós", text: "Acompanhamento direto via canal exclusivo." }
+     ];
+   }
   const imageUrl = s(data.image_url);
   const cta = readCta(data.cta, { label: "", href: "" });
   const variant = s(data.layout_variant, "standard");
@@ -319,9 +337,9 @@ function AuthorityBlock({ data }: { data: BlockData }) {
   if (items.length > 0) {
     return (
       <section className="bg-brand-green-2 border-y border-brand-gold/15 relative z-[2]">
-        <div className="container-editorial py-10 md:py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 items-center">
-            {items.slice(0, 4).map((it, i) => (
+       <div className="container-editorial py-16 md:py-20">
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-6 items-center">
+           {items.slice(0, 4).map((it, i) => (
               <div key={i} className="text-center">
                 <span className="font-display text-3xl md:text-4xl text-brand-gold">{it.value}</span>
                 <p className="text-[10px] uppercase tracking-[0.22em] text-brand-text-muted mt-2">{it.label}</p>
@@ -333,9 +351,9 @@ function AuthorityBlock({ data }: { data: BlockData }) {
     );
   }
   return (
-    <section className="bg-brand-green-2 border-y border-brand-gold/15 relative z-[2]">
-      <div className="container-editorial py-10 md:py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 items-center">
+     <section className="bg-brand-green-2 border-y border-brand-gold/15 relative z-[2]">
+       <div className="container-editorial py-16 md:py-20">
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-6 items-center">
           <Stat label="Anos no Batel" value={years.val} suffix="+" innerRef={years.ref} />
           <Stat label="Pacientes" value={patients.val} suffix="+" innerRef={patients.ref} fmt />
           <Stat label="Aprovação Google" value={procedures.val} suffix="%" innerRef={procedures.ref} />
@@ -422,7 +440,26 @@ function ManifestoBlock({ data }: { data: BlockData }) {
 function MetodoBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Método");
   const titleHtml = firstS([data.title_html, data.title], "Três passos. <em>Documentados.</em>");
-  const steps = arr<{ title?: string; summary?: string; desc?: string; description?: string; detail?: string; n?: number | string }>(data.steps);
+   let steps = arr<{ title?: string; summary?: string; desc?: string; description?: string; detail?: string; n?: number | string }>(data.steps);
+   if (steps.length === 0) {
+     steps = [
+       { 
+         title: "Avaliação Clínica", 
+         summary: "Análise minuciosa da face, histórico e objetivos do paciente.", 
+         detail: "Nesta etapa, a Dra. Daniele mapeia os pontos de aplicação e define a dosagem ideal para um resultado natural." 
+       },
+       { 
+         title: "Aplicação Precisa", 
+         summary: "Procedimento realizado com agulhas ultrafinas e técnica indolor.", 
+         detail: "A aplicação leva cerca de 20 minutos e foca na preservação da expressão facial e dos vetores de movimento." 
+       },
+       { 
+         title: "Retorno e Ajuste", 
+         summary: "Acompanhamento em 14 dias para garantir o resultado perfeito.", 
+         detail: "O retorno é essencial para validar a simetria e realizar ajustes finos, garantindo a satisfação total." 
+       }
+     ];
+   }
   const icons = [ShieldCheck, Sparkles, Award, ShieldCheck];
   return (
     <section id="procedimentos" className="bg-brand-graphite section-pad bg-pattern-gold relative z-[2]">
@@ -437,7 +474,7 @@ function MetodoBlock({ data }: { data: BlockData }) {
             const Icon = icons[i % icons.length];
             const n = String(step.n ?? i + 1).padStart(2, "0");
             return (
-              <article key={i} style={{ transitionDelay:  }} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
+               <article key={i} style={{ transitionDelay: `${i * 100}ms` }} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
                 <div className="flex items-start justify-between gap-4">
                   <span className="font-display italic text-brand-gold text-xl md:text-2xl">{n}</span>
                   <Icon className="size-6 text-brand-gold/70" strokeWidth={1.3} />
@@ -723,17 +760,32 @@ function EquipeBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Responsável técnica");
   const titleHtml = firstS([data.title_html, data.title, data.name], "Dra. Daniele <em>Florencio</em>");
   const registerLabel = firstS([data.register_label, data.register], "CRBM 8242 PR");
-  const imageUrl = firstS([data.image_url, data.photo_url]);
-  const bio = firstS([data.bio, data.description]);
-  const accordions = arr<{ question?: string; answer?: string }>(data.accordions);
+   const imageUrl = firstS([data.image_url, data.photo_url], draRT);
+   const bio = firstS(
+     [data.bio, data.description],
+     "Biomédica esteta com mais de duas décadas dedicadas à harmonização facial. Desenvolveu, ao longo dos anos, um protocolo proprietário focado em resultados naturais e elegantes, respeitando a anatomia individual de cada paciente."
+   );
+   let accordions = arr<{ question?: string; answer?: string }>(data.accordions);
+   if (accordions.length === 0) {
+     accordions = [
+       { 
+         question: "Como a Dra. Daniele pensa cada protocolo", 
+         answer: "O caminho é dose progressiva, registrada, com acompanhamento minucioso. Não tratamos o paciente como uma versão genérica de um padrão; cada face exige um vetor e uma dosagem específica para manter a identidade." 
+       },
+       { 
+         question: "Especializações e formação", 
+         answer: "Especialista em Harmonização Orofacial com mais de 10.000 procedimentos documentados e atualizações constantes em congressos internacionais de medicina estética." 
+       }
+     ];
+   }
   const ctaLabel = s(data.cta_label, "Conhecer a equipe completa");
   return (
     <section id="equipe" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
       <div className="container-editorial grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-16 items-center">
-        {imageUrl && (
-          <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none">
-            <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2">
-              <img src={imageUrl} alt={titleHtml.replace(/<[^>]+>/g, "")} className="w-full h-full object-cover" loading="lazy" />
+         {imageUrl && (
+           <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none parallax-subtle">
+             <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2 border border-brand-gold/10 shadow-soft">
+               <img src={imageUrl} alt={titleHtml.replace(/<[^>]+>/g, "")} className="w-full h-full object-cover transition-transform duration-[4s] hover:scale-105" loading="lazy" />
             </div>
             <span className="absolute bottom-4 left-4 right-4 bg-brand-green text-brand-text-light px-5 py-3 text-[10px] font-body uppercase tracking-[0.2em]">{registerLabel}</span>
           </div>
@@ -789,8 +841,8 @@ function CursosBlock({ data }: { data: BlockData }) {
             {footnote && <p className="mt-4 text-brand-text-muted text-sm">{footnote}</p>}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map((c, i) => (
-              <article key={c.id} style={{ transitionDelay:  }} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
+             {courses.map((c, i) => (
+               <article key={c.id} style={{ transitionDelay: `${i * 100}ms` }} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
                 <GraduationCap className="size-7 text-brand-gold" strokeWidth={1.3} />
                 <h3 className="font-display text-xl mt-5 leading-snug">{c.title}</h3>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-brand-gold mt-3">{c.audience}</p>

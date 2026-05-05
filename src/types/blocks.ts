@@ -16,7 +16,8 @@ export type BlockType =
    | "faq"
    | "cta_final"
    | "beneficios_grid"
-   | "procedimento_detalhado_v2";
+    | "procedimento_detalhado_v2"
+     | "marquee_cards";
 
 export type BlockMode = "structured" | "html";
 
@@ -63,5 +64,6 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   faq: "Perguntas frequentes",
   cta_final: "CTA final",
   beneficios_grid: "Grid de benefícios (Premium)",
-  procedimento_detalhado_v2: "Procedimento detalhado v2 (Premium)",
+   procedimento_detalhado_v2: "Procedimento detalhado v2 (Premium)",
+   marquee_cards: "Carrossel infinito de cards",
 };

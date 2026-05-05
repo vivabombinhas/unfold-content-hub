@@ -116,9 +116,10 @@ const Index = () => {
     faq: () => renderFaq(),
     cta_final: () => renderCtaFinal(),
     beneficios_grid: () => null,
-    procedimento_detalhado_v2: () => null,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), []); // eslint-disable-line react-hooks/exhaustive-deps
+     procedimento_detalhado_v2: () => null,
+     marquee_cards: () => null,
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Renderers inline — cada um devolve o JSX da seção original.
   function renderHero() {
