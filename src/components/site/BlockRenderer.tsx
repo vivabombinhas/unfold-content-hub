@@ -847,21 +847,25 @@ function CtaFinalBlock({ data }: { data: BlockData }) {
   const paragraph = firstS([data.paragraph, data.subtitle, data.body], "Avaliação clínica individual, sem compromisso, com a responsável técnica.");
   const ctaPrimary = readCta(data.cta_primary, { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" });
   const ctaSecondary = readCta(data.cta_secondary, { label: "(41) 9999-9999", href: "tel:+554199999999" });
+  
   return (
-    <section id="avaliacao" className="bg-brand-green section-pad relative z-[2] overflow-hidden">
-      <div aria-hidden className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 100%, hsl(41 49% 58% / 0.2), transparent 70%)" }} />
-      <div className="container-editorial relative z-[2] max-w-3xl mx-auto text-center">
-        <Medal size={120} floating className="mx-auto" />
-        <h2 className="h-display-1 mt-10 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
-        <span className="gold-rule mx-auto mt-8" />
-        <p className="mt-7 text-brand-text-soft text-lg leading-relaxed">{paragraph}</p>
-        <div className="mt-10 flex flex-wrap gap-3 justify-center">
-          <GoldButton as="a" href={ctaPrimary.href} size="lg" withArrow>
-            <MessageCircle className="size-4" /> {ctaPrimary.label}
-          </GoldButton>
-          <GoldButton as="a" href={ctaSecondary.href} size="lg" variant="outline-light">
-            <Phone className="size-4" /> {ctaSecondary.label}
-          </GoldButton>
+    <section className="bg-brand-green-2 section-pad relative z-[2] overflow-hidden">
+      <div className="absolute inset-0 bg-radial-blur opacity-30 pointer-events-none" aria-hidden />
+      <div className="container-editorial text-center relative z-10">
+        <div className="max-w-3xl mx-auto space-y-8">
+          <div className="reveal">
+            <h2 className="h-display-2 text-brand-text-light" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+            <span className="gold-rule mx-auto mt-6" />
+          </div>
+          <p className="text-brand-text-soft text-lg reveal" style={{ transitionDelay: '200ms' }}>{paragraph}</p>
+          <div className="flex flex-wrap justify-center gap-4 reveal" style={{ transitionDelay: '400ms' }}>
+            <GoldButton as="a" href={ctaPrimary.href} withArrow size="lg">
+              <MessageCircle className="size-4" /> {ctaPrimary.label}
+            </GoldButton>
+            <GoldButton as="a" href={ctaSecondary.href} variant="outline-light" size="lg">
+              <Phone className="size-4" /> {ctaSecondary.label}
+            </GoldButton>
+          </div>
         </div>
       </div>
     </section>
