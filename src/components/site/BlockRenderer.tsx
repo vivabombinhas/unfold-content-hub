@@ -162,7 +162,7 @@ function HeroBlock({ data }: { data: BlockData }) {
           <h1 className="h-display-1 mt-6 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
           <span className="gold-rule mt-7" />
           {paragraph && (
-            <p className="mt-7 text-brand-text-soft text-lg leading-[1.7] max-w-xl text-pretty">{paragraph}</p>
+            <p className="mt-7 text-brand-text-soft text-base md:text-[17px] leading-[1.75] max-w-xl text-pretty">{paragraph}</p>
           )}
           <div className="mt-10 flex flex-wrap gap-3">
             <GoldButton as="a" href={ctaPrimary.href} withArrow size="lg">
@@ -382,7 +382,7 @@ function ManifestoBlock({ data }: { data: BlockData }) {
           <div className="reveal">
             {quoteHtml && (
               <p
-                className="font-display text-2xl md:text-3xl lg:text-[2rem] leading-[1.3] text-brand-text-light text-balance"
+                className="font-display text-2xl md:text-3xl lg:text-4xl leading-[1.3] text-brand-text-light text-balance"
                 dangerouslySetInnerHTML={{ __html: quoteHtml }}
               />
             )}
@@ -402,8 +402,8 @@ function ManifestoBlock({ data }: { data: BlockData }) {
         </div>
       </section>
       {longText && (
-        <SideSheet open={open} onClose={() => setOpen(false)} eyebrow={eyebrow} title={ctaLabel} width="lg">
-          <div className="space-y-6 font-display text-xl leading-[1.5] text-brand-text-light" dangerouslySetInnerHTML={{ __html: longText }} />
+        <SideSheet open={open} onClose={() => setOpen(false)} eyebrow={eyebrow} title={ctaLabel} width="lg" tone="dark">
+          <div className="space-y-6 font-display text-lg md:text-xl leading-[1.6] text-brand-text-light/90" dangerouslySetInnerHTML={{ __html: longText }} />
         </SideSheet>
       )}
     </>
