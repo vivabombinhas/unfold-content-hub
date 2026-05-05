@@ -113,6 +113,15 @@
 }
 
 @layer components {
+  .bg-pattern-gold {
+    background-image: radial-gradient(circle at 2px 2px, hsl(var(--gold) / 0.05) 1px, transparent 0);
+    background-size: 32px 32px;
+  }
+
+  .bg-radial-blur {
+    background: radial-gradient(circle at 50% 50%, hsl(var(--gold) / 0.03) 0%, transparent 70%);
+  }
+
   .font-display {
     font-family: 'Cormorant Garamond', 'Times New Roman', serif;
   }
@@ -228,7 +237,7 @@
   .reveal {
     opacity: 0;
     transform: translateY(24px);
-    transition: opacity 900ms var(--ease-editorial), transform 900ms var(--ease-editorial);
+    transition: opacity 1200ms var(--ease-editorial), transform 1200ms var(--ease-editorial);
   }
   .reveal.is-visible {
     opacity: 1;
@@ -248,6 +257,38 @@
   @keyframes marquee-scroll {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
+  }
+
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-shine::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 20%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transform: rotate(30deg);
+    transition: 0s;
+  }
+  .btn-shine:hover::after {
+    left: 120%;
+    transition: 0.8s;
+  }
+
+  .parallax-subtle {
+    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .parallax-subtle:hover {
+    transform: scale(1.02) translateY(-4px);
   }
 }
 
