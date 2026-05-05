@@ -252,9 +252,23 @@ function BeneficiosGridBlock({ data }: { data: BlockData }) {
 function ProcedimentoDetalhadoV2Block({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Etapas");
   const titleHtml = firstS([data.title_html, data.title], "O <em>procedimento</em> detalhado.");
-  const mainText = s(data.main_text);
-  const paragraphs = arr<string>(data.paragraphs);
-  const sideCards = arr<{ title?: string; text?: string; icon?: string }>(data.side_cards);
+   const mainText = s(data.main_text, "Nosso procedimento é estruturado em etapas claras para garantir segurança e resultados de excelência. Cada fase é documentada e acompanhada pela nossa responsável técnica.");
+   let paragraphs = arr<string>(data.paragraphs);
+   if (paragraphs.length === 0) {
+     paragraphs = [
+       "Iniciamos com uma análise detalhada da musculatura e dos vetores de expressão, definindo o plano de aplicação personalizado.",
+       "Utilizamos apenas toxinas de primeira linha, garantindo a pureza e a longevidade do tratamento.",
+       "O retorno em 14 dias é fundamental para avaliar a acomodação do produto e realizar qualquer ajuste fino necessário."
+     ];
+   }
+   let sideCards = arr<{ title?: string; text?: string; icon?: string }>(data.side_cards);
+   if (sideCards.length === 0) {
+     sideCards = [
+       { title: "Avaliação 360°", text: "Análise completa da face e histórico clínico." },
+       { title: "Técnica Refinada", text: "Aplicação precisa com agulhas ultrafinas." },
+       { title: "Suporte Pós", text: "Acompanhamento direto via canal exclusivo." }
+     ];
+   }
   const imageUrl = s(data.image_url);
   const cta = readCta(data.cta, { label: "", href: "" });
   const variant = s(data.layout_variant, "standard");
