@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
- import { Loader2, Download, Search, CheckCircle2, AlertCircle, ChevronDown } from "lucide-react";
+import { Loader2, Download, Search, CheckCircle2, AlertCircle, ChevronDown, Image as ImageIcon, Upload, X } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
  import { 
    DropdownMenu, 
    DropdownMenuContent, 
@@ -34,24 +35,74 @@ interface Props {
 
 export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, pageCategory }: Props) {
   const [source, setSource] = useState("");
-  const [isUrl, setIsUrl] = useState(true);
+  const [mode, setMode] = useState<"url" | "text" | "vision">("url");
+  const [visionImage, setVisionImage] = useState<string | null>(null);
+  const [visionOrigin, setVisionOrigin] = useState<"batel_legacy" | "external_reference">("batel_legacy");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"input" | "sections">("input");
   const [scanResult, setScanResult] = useState<ScannedPage | null>(null);
    const [selectedSections, setSelectedSections] = useState<Record<string, { selected: boolean; forcedType?: BlockType }>>({});
   const { toast } = useToast();
 
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Resize and compress
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 1200;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const base64 = canvas.toDataURL("image/jpeg", 0.7);
+        setVisionImage(base64);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function handleExtract() {
-    if (!source.trim()) return;
+    if (mode === "vision" && (!source.trim() || !visionImage)) {
+      toast({ title: "Imagem e texto são obrigatórios", variant: "destructive" });
+      return;
+    }
+    if (mode !== "vision" && !source.trim()) return;
+
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke("scanner-v1", {
-        body: { 
-          url: isUrl ? source : null,
-          text: isUrl ? null : source,
-        },
-      });
+      let data, error;
+
+      if (mode === "vision") {
+        const response = await supabase.functions.invoke("scanner-vision-v1", {
+          body: { 
+            image: visionImage,
+            text: source,
+            origin: visionOrigin
+          },
+        });
+        data = response.data;
+        error = response.error;
+      } else {
+        const response = await supabase.functions.invoke("scanner-v1", {
+          body: { 
+            url: mode === "url" ? source : null,
+            text: mode === "text" ? source : null,
+          },
+        });
+        data = response.data;
+        error = response.error;
+      }
 
       if (error) throw error;
       if (!data?.sections || data.sections.length === 0) {
@@ -105,31 +156,116 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
         <div className="flex-1 overflow-y-auto p-0 flex flex-col">
           <div className="p-6 border-b border-brand-gold/10">
             <div className="flex gap-4 mb-4">
-              <button 
-                onClick={() => setIsUrl(true)}
-                className={cn(
-                  "text-xs uppercase tracking-widest pb-2 px-2 transition-colors",
-                  isUrl ? "text-brand-gold border-b-2 border-brand-gold" : "text-brand-text-muted hover:text-brand-text-light"
-                )}
-              >
-                Por URL
-              </button>
-              <button 
-                onClick={() => setIsUrl(false)}
-                className={cn(
-                  "text-xs uppercase tracking-widest pb-2 px-2 transition-colors",
-                  !isUrl ? "text-brand-gold border-b-2 border-brand-gold" : "text-brand-text-muted hover:text-brand-text-light"
-                )}
-              >
-                Colar Texto
-              </button>
+              <div className="flex gap-4">
+                {(["url", "text", "vision"] as const).map((m) => (
+                  <button 
+                    key={m}
+                    onClick={() => {
+                      setMode(m);
+                      setStep("input");
+                    }}
+                    className={cn(
+                      "text-[10px] uppercase tracking-widest pb-2 px-2 transition-colors whitespace-nowrap",
+                      mode === m ? "text-brand-gold border-b-2 border-brand-gold" : "text-brand-text-muted hover:text-brand-text-light"
+                    )}
+                  >
+                    {m === "url" ? "Por URL" : m === "text" ? "Colar Texto" : "Print + Texto"}
+                  </button>
+                ))}
+              </div>
               {step === "input" && (
                  <div className="space-y-2 w-full">
-                  <Label className="text-xs text-brand-text-muted uppercase tracking-wider">
-                    {isUrl ? "URL da página antiga" : "Conteúdo bruto"}
-                  </Label>
-                  <div className="flex gap-2">
-                    {isUrl ? (
+                  <div className="flex flex-col gap-4">
+                    {mode === "vision" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs text-brand-text-muted uppercase tracking-wider">Print da Seção</Label>
+                          <div 
+                            onClick={() => fileInputRef.current?.click()}
+                            className={cn(
+                              "aspect-video bg-brand-graphite/40 border-2 border-dashed border-brand-gold/10 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-brand-gold/30 transition-all overflow-hidden relative",
+                              visionImage && "border-solid border-brand-gold/20"
+                            )}
+                          >
+                            {visionImage ? (
+                              <>
+                                <img src={visionImage} alt="Preview" className="w-full h-full object-cover" />
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); setVisionImage(null); }}
+                                  className="absolute top-2 right-2 size-6 bg-brand-black/80 rounded-full flex items-center justify-center text-brand-text-light hover:bg-brand-bordeaux transition-colors"
+                                >
+                                  <X className="size-3" />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="size-6 text-brand-gold/40 mb-2" />
+                                <span className="text-[10px] text-brand-text-muted uppercase tracking-wider">Upload Print</span>
+                              </>
+                            )}
+                          </div>
+                          <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageUpload} />
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-xs text-brand-text-muted uppercase tracking-wider">Origem do Conteúdo</Label>
+                            <RadioGroup 
+                              value={visionOrigin} 
+                              onValueChange={(v) => setVisionOrigin(v as any)}
+                              className="flex flex-col gap-2"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="batel_legacy" id="batel" className="border-brand-gold/40 text-brand-gold" />
+                                <Label htmlFor="batel" className="text-xs text-brand-text-light cursor-pointer">
+                                  Página Antiga Batel <span className="text-[9px] text-brand-gold/60 block">Preserva texto literal</span>
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="external_reference" id="external" className="border-brand-gold/40 text-brand-gold" />
+                                <Label htmlFor="external" className="text-xs text-brand-text-light cursor-pointer">
+                                  Referência Externa <span className="text-[9px] text-brand-text-muted block">Gera copy original</span>
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label className="text-xs text-brand-text-muted uppercase tracking-wider">
+                        {mode === "url" ? "URL da página antiga" : mode === "vision" ? "Texto da Seção" : "Conteúdo bruto"}
+                      </Label>
+                      <div className="flex gap-2">
+                        {mode === "url" ? (
+                          <Input 
+                            placeholder="https://esteticabatel.com.br/..." 
+                            value={source}
+                            onChange={e => setSource(e.target.value)}
+                            className="bg-brand-graphite/40 border-brand-gold/10 text-brand-text-light"
+                          />
+                        ) : (
+                          <Textarea 
+                            placeholder={mode === "vision" ? "Cole o texto literal desta seção aqui..." : "Cole aqui..."} 
+                            value={source}
+                            onChange={e => setSource(e.target.value)}
+                            rows={mode === "vision" ? 6 : 4}
+                            className="bg-brand-graphite/40 border-brand-gold/10 text-brand-text-light"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      onClick={handleExtract} 
+                      disabled={loading || !source.trim() || (mode === "vision" && !visionImage)}
+                      className="bg-brand-gold text-brand-green hover:bg-brand-gold/90 w-full mt-2"
+                    >
+                      {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : <ImageIcon className="size-4 mr-2" />}
+                      {mode === "vision" ? "Analisar Print + Texto" : "Scanear"}
+                    </Button>
+                  </div>
                       <Input 
                         placeholder="https://esteticabatel.com.br/..." 
                         value={source}
