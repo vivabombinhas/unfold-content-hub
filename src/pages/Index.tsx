@@ -634,7 +634,7 @@ function Stat({
   const display = fmt ? value.toLocaleString("pt-BR") : value;
   return (
     <div className="text-center">
-      <span ref={innerRef} className="font-display text-4xl md:text-5xl text-brand-gold">
+      <span ref={innerRef} className="font-display text-3xl md:text-4xl text-brand-gold">
         {display}
         {suffix}
       </span>
@@ -687,7 +687,7 @@ function MethodSection() {
           {steps.map((s) => (
             <article key={s.n} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
               <div className="flex items-start justify-between gap-4">
-                <span className="font-display italic text-brand-gold text-2xl">{s.n}</span>
+                <span className="font-display italic text-brand-gold text-xl md:text-2xl">{s.n}</span>
                 <s.icon className="size-6 text-brand-gold/70" strokeWidth={1.3} />
               </div>
               <h3 className="font-display text-2xl mt-5 leading-snug">{s.title}</h3>
