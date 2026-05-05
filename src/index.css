@@ -53,9 +53,9 @@
     --radius: 0.25rem;
 
     /* Type scale */
-    --h1: clamp(44px, 6.4vw, 80px);
-    --h2: clamp(32px, 4.4vw, 52px);
-    --h3: clamp(22px, 2.2vw, 28px);
+    --h1: clamp(38px, 5.5vw, 68px);
+    --h2: clamp(28px, 3.8vw, 44px);
+    --h3: clamp(20px, 2.2vw, 26px);
 
     /* Motion */
     --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
@@ -90,7 +90,7 @@
     @apply bg-background text-foreground;
     font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 16px;
-    line-height: 1.65;
+    line-height: 1.6;
     overflow-x: hidden;
   }
 

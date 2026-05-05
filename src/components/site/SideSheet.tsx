@@ -123,8 +123,8 @@ export const SideSheet = ({
           "absolute flex flex-col shadow-2xl",
           // Mobile: bottom sheet
           "inset-x-0 bottom-0 max-h-[92vh] rounded-t-[20px]",
-          // Desktop: right side sheet, full height
-          "md:inset-y-0 md:right-0 md:left-auto md:bottom-auto md:max-h-none md:rounded-none md:w-full",
+          // Desktop: right side sheet, full height constrained
+          "md:inset-y-0 md:right-0 md:left-auto md:bottom-auto md:h-full md:max-h-none md:rounded-none md:w-full",
           widths[width],
           toneCls,
           "transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
