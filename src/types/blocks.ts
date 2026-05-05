@@ -16,7 +16,9 @@ export type BlockType =
    | "faq"
    | "cta_final"
    | "beneficios_grid"
-   | "procedimento_detalhado_v2";
+    | "procedimento_detalhado_v2"
+    | "marquee_cards";
+   marquee_cards: "Carrossel infinito de cards",
 
 export type BlockMode = "structured" | "html";
 
