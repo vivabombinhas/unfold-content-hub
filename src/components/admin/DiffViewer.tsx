@@ -126,7 +126,7 @@
                  <Edit2 className="size-2.5 mr-1" />
                  Editar
                </Button>
-               {onSelectText && !isCustom && (
+               {onSelectText && (
                  <Button 
                    size="sm" 
                    className={cn(
