@@ -42,7 +42,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"input" | "sections">("input");
   const [scanResult, setScanResult] = useState<ScannedPage | null>(null);
-  const [selectedSections, setSelectedSections] = useState<Record<string, { selected: boolean; forcedType?: BlockType }>>({});
+   const [selectedSections, setSelectedSections] = useState<Record<string, { selected: boolean; forcedType?: BlockType; editedContent?: string }>>({});
  const [expandedDiffs, setExpandedDiffs] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
@@ -149,6 +149,13 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
      setExpandedDiffs(prev => ({
        ...prev,
        [id]: !prev[id]
+     }));
+   }
+ 
+   function updateSectionContent(id: string, content: string) {
+     setSelectedSections(prev => ({
+       ...prev,
+       [id]: { ...prev[id], editedContent: content, selected: true }
      }));
    }
  
@@ -339,9 +346,11 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
                      <p className="mt-2 text-xs text-brand-text-light/70 whitespace-pre-wrap">{section.raw_content}</p>
                    ) : (
                      <div className="mt-4 pt-4 border-t border-brand-gold/10">
-                       <DiffViewer 
-                         oldText={mode === "vision" ? source : section.raw_html_snippet || ""} 
-                         newText={section.raw_content} 
+                       <DiffViewer
+                         oldText={mode === "vision" ? source : section.raw_html_snippet || ""}
+                         newText={section.raw_content}
+                         onSelectText={(text) => updateSectionContent(section.id, text)}
+                         selectedText={selectedSections[section.id]?.editedContent || section.raw_content}
                        />
                      </div>
                    )}
