@@ -141,7 +141,7 @@ function HeroBlock({ data }: { data: BlockData }) {
   const captionTop = s(data.caption_top);
   const captionBottom = s(data.caption_bottom);
   const footnote = s(data.footnote, "Resposta em até 30 minutos · Atendimento confidencial");
-  // Suporta tanto cta_primary={label,href} quanto cta_label/cta_href soltos.
+  
   const ctaPrimary = readCta(
     data.cta_primary ?? { label: data.cta_label, href: data.cta_href },
     { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" },
@@ -160,14 +160,16 @@ function HeroBlock({ data }: { data: BlockData }) {
         }}
       />
       <div className="container-editorial relative z-[2] grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-20 items-center pt-16 pb-20 md:pt-24 md:pb-28 lg:py-32">
-        <div className="reveal">
-          <span className="eyebrow">{eyebrow}</span>
-          <h1 className="h-display-1 mt-6 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
-          <span className="gold-rule mt-7" />
+        <div className="space-y-8">
+          <div className="reveal" style={{ transitionDelay: "100ms" }}>
+            <span className="eyebrow">{eyebrow}</span>
+          </div>
+          <h1 className="h-display-1 text-balance reveal" style={{ transitionDelay: "200ms" }} dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule reveal" style={{ transitionDelay: "300ms" }} />
           {paragraph && (
-            <p className="mt-7 text-brand-text-soft text-base md:text-[17px] leading-[1.75] max-w-xl text-pretty">{paragraph}</p>
+            <p className="text-brand-text-soft text-base md:text-[17px] leading-[1.75] max-w-xl text-pretty reveal" style={{ transitionDelay: "400ms" }}>{paragraph}</p>
           )}
-          <div className="mt-10 flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 reveal" style={{ transitionDelay: "500ms" }}>
             <GoldButton as="a" href={ctaPrimary.href} withArrow size="lg">
               <MessageCircle className="size-4" /> {ctaPrimary.label}
             </GoldButton>
@@ -176,11 +178,11 @@ function HeroBlock({ data }: { data: BlockData }) {
             </GoldButton>
           </div>
           {footnote && (
-            <p className="mt-6 text-[11px] tracking-[0.2em] uppercase text-brand-text-muted">{footnote}</p>
+            <p className="text-[11px] tracking-[0.2em] uppercase text-brand-text-muted reveal" style={{ transitionDelay: "600ms" }}>{footnote}</p>
           )}
         </div>
         {imageUrl && (
-          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none">
+          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none" style={{ transitionDelay: "400ms" }}>
             <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group">
               <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" loading="eager" />
               <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
@@ -200,6 +202,7 @@ function HeroBlock({ data }: { data: BlockData }) {
     </section>
   );
 }
+
 
 /* ============================================================
    BENEFÍCIOS GRID (Premium)
