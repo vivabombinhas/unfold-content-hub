@@ -25,9 +25,13 @@
      }
    }, [selectedText, newText, isEditing]);
  
+   const currentDisplayTarget = selectedText || newText;
+ 
    const diffResult = useMemo(() => {
-     return diff.diffWords(oldText, newText);
-   }, [oldText, newText]);
+     return diff.diffWords(oldText, currentDisplayTarget);
+   }, [oldText, currentDisplayTarget]);
+ 
+   const isCustom = selectedText !== undefined && selectedText !== oldText && selectedText !== newText;
  
    return (
      <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", className)}>
@@ -106,7 +110,9 @@
        ) : (
          <div className="space-y-2">
            <div className="flex items-center justify-between">
-             <Label className="text-[10px] text-brand-text-muted uppercase tracking-wider">Texto Processado (IA)</Label>
+           <Label className="text-[10px] text-brand-text-muted uppercase tracking-wider">
+             {isCustom ? "Texto Personalizado" : "Texto Processado (IA)"}
+           </Label>
              <div className="flex gap-2">
                <Button 
                  size="sm" 
@@ -120,7 +126,7 @@
                  <Edit2 className="size-2.5 mr-1" />
                  Editar
                </Button>
-               {onSelectText && (
+               {onSelectText && !isCustom && (
                  <Button 
                    size="sm" 
                    className={cn(
@@ -132,6 +138,12 @@
                    {selectedText === newText ? <Check className="size-2.5 mr-1" /> : null}
                    Aplicar IA
                  </Button>
+               )}
+               {isCustom && (
+                 <div className="flex items-center bg-brand-gold/20 px-2 py-0.5 rounded border border-brand-gold/30">
+                   <Check className="size-2.5 mr-1 text-brand-gold" />
+                   <span className="text-[9px] text-brand-gold uppercase font-bold">Personalizado</span>
+                 </div>
                )}
              </div>
            </div>
