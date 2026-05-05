@@ -317,7 +317,7 @@ function AuthorityBlock({ data }: { data: BlockData }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 items-center">
             {items.slice(0, 4).map((it, i) => (
               <div key={i} className="text-center">
-                <span className="font-display text-4xl md:text-5xl text-brand-gold">{it.value}</span>
+                <span className="font-display text-3xl md:text-4xl text-brand-gold">{it.value}</span>
                 <p className="text-[10px] uppercase tracking-[0.22em] text-brand-text-muted mt-2">{it.label}</p>
               </div>
             ))}
@@ -351,7 +351,7 @@ function Stat({ label, value, suffix, innerRef, fmt }: { label: string; value: n
   const display = fmt ? value.toLocaleString("pt-BR") : value;
   return (
     <div className="text-center">
-      <span ref={innerRef} className="font-display text-4xl md:text-5xl text-brand-gold">
+      <span ref={innerRef} className="font-display text-3xl md:text-4xl text-brand-gold">
         {display}
         {suffix}
       </span>
@@ -433,7 +433,7 @@ function MetodoBlock({ data }: { data: BlockData }) {
             return (
               <article key={i} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
                 <div className="flex items-start justify-between gap-4">
-                  <span className="font-display italic text-brand-gold text-2xl">{n}</span>
+                  <span className="font-display italic text-brand-gold text-xl md:text-2xl">{n}</span>
                   <Icon className="size-6 text-brand-gold/70" strokeWidth={1.3} />
                 </div>
                 <h3 className="font-display text-2xl mt-5 leading-snug">{step.title}</h3>
