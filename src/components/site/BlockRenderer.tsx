@@ -289,11 +289,17 @@ function ProcedimentoDetalhadoV2Block({ data }: { data: BlockData }) {
               ))}
             </div>
 
-            {imageUrl && (
-              <div className="mt-12 aspect-video overflow-hidden bg-brand-cream-2 border border-brand-gold/10">
-                <img src={imageUrl} alt={s(data.image_alt)} className="w-full h-full object-cover" loading="lazy" />
-              </div>
-            )}
+             {imageUrl && (
+               <div className="mt-16 relative group">
+                 <div className="absolute -inset-4 bg-brand-gold/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" aria-hidden />
+                 <div className="relative aspect-video overflow-hidden bg-brand-cream-2 border border-brand-gold/10 shadow-soft">
+                   <img src={imageUrl} alt={s(data.image_alt)} className="w-full h-full object-cover transition-transform duration-[5s] group-hover:scale-105" loading="lazy" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-brand-cream/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                 </div>
+                 <div className="absolute -bottom-6 -left-6 size-24 border-l border-b border-brand-gold/30 hidden md:block" />
+                 <div className="absolute -top-6 -right-6 size-24 border-r border-t border-brand-gold/30 hidden md:block" />
+               </div>
+             )}
 
             {cta.label && cta.href && (
               <div className="mt-10">
