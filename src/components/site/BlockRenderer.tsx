@@ -24,7 +24,8 @@ import {
   Award,
   Star,
 } from "lucide-react";
-import { useState } from "react";
+ import { useState, useEffect } from "react";
+ import draRT from "@/assets/dra-rt.jpg";
 import { GoldButton } from "@/components/site/GoldButton";
 import { Medal } from "@/components/site/Medal";
 import { InlineExpand } from "@/components/site/InlineExpand";
@@ -723,9 +724,24 @@ function EquipeBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Responsável técnica");
   const titleHtml = firstS([data.title_html, data.title, data.name], "Dra. Daniele <em>Florencio</em>");
   const registerLabel = firstS([data.register_label, data.register], "CRBM 8242 PR");
-  const imageUrl = firstS([data.image_url, data.photo_url]);
-  const bio = firstS([data.bio, data.description]);
-  const accordions = arr<{ question?: string; answer?: string }>(data.accordions);
+   const imageUrl = firstS([data.image_url, data.photo_url], draRT);
+   const bio = firstS(
+     [data.bio, data.description],
+     "Biomédica esteta com mais de duas décadas dedicadas à harmonização facial. Desenvolveu, ao longo dos anos, um protocolo proprietário focado em resultados naturais e elegantes, respeitando a anatomia individual de cada paciente."
+   );
+   let accordions = arr<{ question?: string; answer?: string }>(data.accordions);
+   if (accordions.length === 0) {
+     accordions = [
+       { 
+         question: "Como a Dra. Daniele pensa cada protocolo", 
+         answer: "O caminho é dose progressiva, registrada, com acompanhamento minucioso. Não tratamos o paciente como uma versão genérica de um padrão; cada face exige um vetor e uma dosagem específica para manter a identidade." 
+       },
+       { 
+         question: "Especializações e formação", 
+         answer: "Especialista em Harmonização Orofacial com mais de 10.000 procedimentos documentados e atualizações constantes em congressos internacionais de medicina estética." 
+       }
+     ];
+   }
   const ctaLabel = s(data.cta_label, "Conhecer a equipe completa");
   return (
     <section id="equipe" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
