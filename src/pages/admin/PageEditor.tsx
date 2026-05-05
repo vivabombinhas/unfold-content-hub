@@ -246,10 +246,7 @@ export default function PageEditor() {
         }));
       let insertedMap: Record<string, string> = {};
       if (inserts.length) {
-        const { data: ins, error: ie } = await supabase
-          .from("page_blocks")
-          .insert(inserts)
-          .select("id, position, type");
+         const { data: ins, error: ie } = await supabase.from("page_blocks").insert(inserts as any).select("id, position, type");
         if (ie) throw ie;
         // Mapear pelo par (position+type) — único o suficiente neste lote
         const newBlocks = blocks.filter((b) => b._new);
@@ -367,8 +364,8 @@ export default function PageEditor() {
       data: asJson(b.data),
       html_content: b.html_content,
     }));
-    if (reinserts.length) {
-      const { error: ie } = await supabase.from("page_blocks").insert(reinserts);
+     if (reinserts.length) {
+       const { error: ie } = await supabase.from("page_blocks").insert(reinserts as any);
       if (ie) {
         toast({ title: "Erro ao reverter", description: ie.message, variant: "destructive" });
         return;

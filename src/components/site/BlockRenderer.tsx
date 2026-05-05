@@ -137,7 +137,10 @@ export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData
 function HeroBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Estética Batel · Curitiba");
   const titleHtml = firstS([data.title_html, data.title], "Tratamento <em>personalizado</em>.");
-  const paragraph = firstS([data.paragraph, data.subtitle, data.description]);
+   const paragraph = firstS(
+     [data.paragraph, data.subtitle, data.description],
+     "Protocolo de alta performance com dosagem calibrada para resultados naturais e sofisticados. Sem aspecto congelado, preservando a expressão que comunica autoridade e segurança. Avaliação clínica individualizada e técnica documentada para máxima previsibilidade."
+   );
   const imageUrl = s(data.image_url);
   const captionTop = s(data.caption_top);
   const captionBottom = s(data.caption_bottom);
