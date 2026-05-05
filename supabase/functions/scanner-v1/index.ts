@@ -69,14 +69,7 @@ export const handler = async (req: Request) => {
     let source_origin = "manual_paste";
     let usage_policy = "preserve_literal";
 
-     if (url && !rawText) {
-     } else if (rawText) {
-       // 2. Preservar quebras de linha e tentar separar palavras coladas (ex: "CaídoBigode")
-       content = rawText
-         .replace(/([a-zà-ÿ])([A-ZÀ-Ÿ])/g, '$1 / $2') // Separa CaídoBigode em Caído / Bigode
-         .trim();
-     }
-
+    if (url && !rawText) {
       const isBatel = url.includes("esteticabatel.com.br");
       source_origin = isBatel ? "batel_legacy" : "external_reference";
       usage_policy = isBatel ? "preserve_literal" : "inspiration_only";
@@ -87,6 +80,13 @@ export const handler = async (req: Request) => {
       } else {
         throw new Error("Falha ao acessar a URL.");
       }
+    } else if (rawText) {
+      source_origin = "manual_paste";
+      usage_policy = "preserve_literal";
+      // 2. Preservar quebras de linha e tentar separar palavras coladas (ex: "CaídoBigode")
+      content = rawText
+        .replace(/([a-zà-ÿ])([A-ZÀ-Ÿ])/g, '$1 / $2') // Separa CaídoBigode em Caído / Bigode
+        .trim();
     }
 
     if (!content.trim()) {
