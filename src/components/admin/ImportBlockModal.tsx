@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Download, Search, CheckCircle2, AlertCircle, ChevronDown, Image as ImageIcon, Upload, X } from "lucide-react";
+ import { Loader2, Download, Search, CheckCircle2, AlertCircle, ChevronDown, Image as ImageIcon, Upload, X, Diff } from "lucide-react";
+ import { DiffViewer } from "./DiffViewer";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   DropdownMenu, 
@@ -42,6 +43,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
   const [step, setStep] = useState<"input" | "sections">("input");
   const [scanResult, setScanResult] = useState<ScannedPage | null>(null);
   const [selectedSections, setSelectedSections] = useState<Record<string, { selected: boolean; forcedType?: BlockType }>>({});
+ const [expandedDiffs, setExpandedDiffs] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -143,6 +145,13 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
     }));
   }
 
+   function toggleDiff(id: string) {
+     setExpandedDiffs(prev => ({
+       ...prev,
+       [id]: !prev[id]
+     }));
+   }
+ 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 bg-brand-black border-brand-gold/20 text-brand-text-light overflow-hidden">
@@ -326,10 +335,27 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
                        </DropdownMenuContent>
                      </DropdownMenu>
                    </div>
-                   <p className="mt-2 text-xs text-brand-text-light/70 whitespace-pre-wrap">{section.raw_content}</p>
+                   {!expandedDiffs[section.id] ? (
+                     <p className="mt-2 text-xs text-brand-text-light/70 whitespace-pre-wrap">{section.raw_content}</p>
+                   ) : (
+                     <div className="mt-4 pt-4 border-t border-brand-gold/10">
+                       <DiffViewer 
+                         oldText={mode === "vision" ? source : section.raw_html_snippet || ""} 
+                         newText={section.raw_content} 
+                       />
+                     </div>
+                   )}
+ 
                   <div className="flex gap-2 mt-2">
-                    <span className="text-[9px] px-1.5 py-0.5 bg-brand-graphite rounded text-brand-gold uppercase">{section.usage_policy}</span>
-                    <span className="text-[9px] px-1.5 py-0.5 bg-brand-graphite rounded text-brand-text-muted uppercase">{section.source_origin}</span>
+                     <span className="text-[9px] px-1.5 py-0.5 bg-brand-graphite rounded text-brand-gold uppercase">{section.usage_policy}</span>
+                     <span className="text-[9px] px-1.5 py-0.5 bg-brand-graphite rounded text-brand-text-muted uppercase">{section.source_origin}</span>
+                     <button 
+                       onClick={() => toggleDiff(section.id)}
+                       className="text-[9px] px-1.5 py-0.5 bg-brand-gold/10 hover:bg-brand-gold/20 rounded text-brand-gold uppercase flex items-center gap-1 transition-colors"
+                     >
+                       <Diff className="size-2.5" />
+                       {expandedDiffs[section.id] ? "Esconder Diff" : "Ver Diff/Comparação"}
+                     </button>
                   </div>
                 </div>
               ))}
