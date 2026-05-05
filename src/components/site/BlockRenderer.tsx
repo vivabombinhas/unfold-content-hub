@@ -337,9 +337,9 @@ function AuthorityBlock({ data }: { data: BlockData }) {
   if (items.length > 0) {
     return (
       <section className="bg-brand-green-2 border-y border-brand-gold/15 relative z-[2]">
-        <div className="container-editorial py-10 md:py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 items-center">
-            {items.slice(0, 4).map((it, i) => (
+       <div className="container-editorial py-16 md:py-20">
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-6 items-center">
+           {items.slice(0, 4).map((it, i) => (
               <div key={i} className="text-center">
                 <span className="font-display text-3xl md:text-4xl text-brand-gold">{it.value}</span>
                 <p className="text-[10px] uppercase tracking-[0.22em] text-brand-text-muted mt-2">{it.label}</p>
@@ -351,9 +351,9 @@ function AuthorityBlock({ data }: { data: BlockData }) {
     );
   }
   return (
-    <section className="bg-brand-green-2 border-y border-brand-gold/15 relative z-[2]">
-      <div className="container-editorial py-10 md:py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6 items-center">
+     <section className="bg-brand-green-2 border-y border-brand-gold/15 relative z-[2]">
+       <div className="container-editorial py-16 md:py-20">
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-6 items-center">
           <Stat label="Anos no Batel" value={years.val} suffix="+" innerRef={years.ref} />
           <Stat label="Pacientes" value={patients.val} suffix="+" innerRef={patients.ref} fmt />
           <Stat label="Aprovação Google" value={procedures.val} suffix="%" innerRef={procedures.ref} />
