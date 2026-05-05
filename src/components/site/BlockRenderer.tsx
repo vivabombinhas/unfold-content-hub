@@ -593,19 +593,38 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
   const { reviews } = usePools();
   const eyebrow = s(data.eyebrow, "Reputação · Google");
   const titleHtml = firstS([data.title_html, data.title, data.subtitle], "<em>4,9</em> de 5 · centenas de avaliações públicas.");
-  const showCount = typeof data.show_count === "number" ? data.show_count : 5;
+   const showCount = typeof data.show_count === "number" ? data.show_count : 6;
+   const tagFilter = s(data.tag_filter).toLowerCase();
   // Fase 1.2: se a página tiver depoimentos próprios (extraídos de página antiga
   // da clínica), eles têm prioridade sobre o pool global de Google reviews.
   const ownItems = arr<{ name?: string; text?: string; rating?: number; date_label?: string; source?: string }>(data.items);
-  const list = ownItems.length > 0
-    ? ownItems.slice(0, showCount).map((it, i) => ({
-        id: `own-${i}`,
-        name: s(it.name, "Paciente"),
-        text: s(it.text),
-        rating: typeof it.rating === "number" ? Math.max(1, Math.min(5, it.rating)) : 5,
-        date_label: s(it.date_label, ""),
-      }))
-    : reviews.slice(0, showCount);
+   let list: any[] = [];
+ 
+   if (ownItems.length > 0) {
+     list = ownItems.map((it, i) => ({
+       id: `own-${i}`,
+       name: s(it.name, "Paciente"),
+       text: s(it.text),
+       rating: typeof it.rating === "number" ? Math.max(1, Math.min(5, it.rating)) : 5,
+       date_label: s(it.date_label, ""),
+     }));
+   } else {
+     // Fallback para pool global inteligente
+     list = [...reviews];
+     
+     // 1. Filtrar por tag se houver (futuro: cruzar com categoria da página)
+     if (tagFilter) {
+       // Implementar filtro por tags se a tabela tiver tags (atualmente reviews não tem explicitamente, mas podemos inferir do texto ou categoria)
+     }
+     
+     // 2. Priorizar melhores notas e posição
+     list.sort((a, b) => {
+       if (b.rating !== a.rating) return b.rating - a.rating;
+       return (a.position || 0) - (b.position || 0);
+     });
+   }
+ 
+   list = list.slice(0, showCount);
   if (list.length === 0) return null;
   return (
     <section className="bg-brand-black section-pad relative z-[2] overflow-hidden">
