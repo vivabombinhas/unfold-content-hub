@@ -379,7 +379,21 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
           {step === "sections" && (
             <Button 
               onClick={() => {
-                toast({ title: "Funcionalidade em desenvolvimento", description: "A conversão de seções selecionadas para blocos será implementada na próxima fase." });
+                if (!scanResult) return;
+                const chosen = scanResult.sections.filter((s) => selectedSections[s.id]?.selected);
+                if (chosen.length === 0) return;
+                chosen.forEach((section) => {
+                  const sel = selectedSections[section.id];
+                  const type = (sel?.forcedType || section.suggested_type) as BlockType;
+                  const finalText = sel?.editedContent ?? section.raw_content;
+                  const data = buildBlockData(type, section, finalText);
+                  onImport(type, data);
+                });
+                toast({
+                  title: `${chosen.length} bloco(s) importado(s)`,
+                  description: "Adicionados como rascunho no final da página.",
+                });
+                onOpenChange(false);
               }} 
               disabled={selectedCount === 0}
               className="bg-brand-gold text-brand-green hover:bg-brand-gold/90"
@@ -392,4 +406,37 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
       </DialogContent>
     </Dialog>
   );
+}
+
+function buildBlockData(type: BlockType, section: ExtractedSection, finalText: string): any {
+  const title = section.raw_title || "";
+  const ed = section.extracted_data || {};
+  switch (type) {
+    case "beneficios_grid":
+      return {
+        title,
+        subtitle: ed.subtitle || "",
+        items: Array.isArray(ed.items) && ed.items.length > 0
+          ? ed.items
+          : finalText
+              .split(/\n+/)
+              .filter((l) => l.trim())
+              .slice(0, 8)
+              .map((line) => {
+                const [t, ...rest] = line.split(/[:–-]/);
+                return { title: t.trim(), description: rest.join("-").trim() };
+              }),
+      };
+    case "procedimento_detalhado_v2":
+      return {
+        title,
+        intro: ed.intro || finalText,
+        steps: Array.isArray(ed.steps) ? ed.steps : [],
+        duration: ed.duration || "",
+        recovery: ed.recovery || "",
+      };
+    case "texto_livre" as BlockType:
+    default:
+      return { title, content: finalText };
+  }
 }
