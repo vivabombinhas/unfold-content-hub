@@ -1,0 +1,81 @@
+*** Begin Patch
+*** Update File: src/index.css
+@@
+@@
+ @layer utilities {
++  .marquee-infinite {
++    display: flex;
++    width: max-content;
++    animation: marquee-scroll var(--duration, 40s) linear infinite;
++  }
++  .marquee-infinite:hover {
++    animation-play-state: paused;
++  }
++
++  @keyframes marquee-scroll {
++    from { transform: translateX(0); }
++    to { transform: translateX(-50%); }
++  }
++
+   .text-balance { text-wrap: balance; }
+*** Update File: src/components/site/BlockRenderer.tsx
+@@
+@@
+     case "faq":
+       return <FaqBlock data={data} />;
++    case "marquee_cards":
++      return <MarqueeCardsBlock data={data} />;
+     case "cta_final":
+*** Update File: src/components/site/BlockRenderer.tsx
+@@
+@@
++/* ============================================================
++   MARQUEE CARDS / QUOTES (Infinito)
++   ============================================================ */
++function MarqueeCardsBlock({ data }: { data: BlockData }) {
++  const title = s(data.title);
++  const items = arr<{ text?: string; author?: string; company?: string }>(data.items);
++  const duration = s(data.speed, "60s");
++  
++  if (!items.length) return null;
++
++  const displayItems = [...items, ...items];
++
++  return (
++    <section className="bg-brand-black py-16 overflow-hidden relative z-[2]">
++      {title && (
++        <div className="container-editorial mb-12 text-center reveal">
++          <h2 className="h-display-3 text-brand-text-light">{title}</h2>
++          <span className="gold-rule mx-auto mt-4" />
++        </div>
++      )}
++      
++      <div className="relative flex overflow-hidden">
++        <div 
++          className="marquee-infinite gap-6 px-3" 
++          style={{ "--duration": duration } as React.CSSProperties}
++        >
++          {displayItems.map((item, i) => (
++            <div 
++              key={i} 
++              className="w-[300px] md:w-[400px] shrink-0 bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 backdrop-blur-sm"
++            >
++              <Quote className="size-6 text-brand-gold/40 mb-6" strokeWidth={1} />
++              <p className="text-brand-text-soft italic leading-relaxed text-[16px] md:text-[18px]">
++                "{s(item.text)}"
++              </p>
++              {(item.author || item.company) && (
++                <div className="mt-8">
++                  <p className="font-display text-brand-gold text-lg">{s(item.author)}</p>
++                  <p className="text-[10px] uppercase tracking-[0.2em] text-brand-text-muted mt-1">{s(item.company)}</p>
++                </div>
++              )}
++            </div>
++          ))}
++        </div>
++      </div>
++    </section>
++  );
++}
++
+*** End Patch
