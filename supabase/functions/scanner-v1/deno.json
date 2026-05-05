@@ -1,0 +1,8 @@
+{
+  "import_map": {
+    "imports": {
+      "https://deno.land/std@0.168.0/": "https://deno.land/std@0.168.0/",
+      "https://esm.sh/": "https://esm.sh/"
+    }
+  }
+}
