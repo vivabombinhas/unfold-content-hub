@@ -979,15 +979,17 @@ function ProcedimentoDetalhadoBlock({ data }: { data: BlockData }) {
               const title = typeof b === "string" ? "" : s(b.title);
               const text = typeof b === "string" ? b : s(b.text);
               return (
-                <div key={i} className="bg-brand-black/40 border border-brand-gold/15 p-6">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="size-5 text-brand-gold shrink-0 mt-0.5" strokeWidth={1.5} />
-                    <div>
-                      {title && <h3 className="font-display text-lg leading-snug">{title}</h3>}
-                      {text && <p className={cn("text-[14px] text-brand-text-soft leading-relaxed", title && "mt-2")}>{text}</p>}
-                    </div>
-                  </div>
-                </div>
+                 <div key={i} className="group bg-brand-black/60 border border-brand-gold/15 p-8 transition-all duration-500 hover:border-brand-gold/40 hover:bg-brand-black/80">
+                   <div className="flex items-start gap-4">
+                     <div className="size-10 rounded-full bg-brand-gold/10 flex items-center justify-center shrink-0 group-hover:bg-brand-gold/20 transition-colors">
+                       <CheckCircle2 className="size-5 text-brand-gold" strokeWidth={1} />
+                     </div>
+                     <div>
+                       {title && <h3 className="font-display text-xl leading-snug text-brand-text-light">{title}</h3>}
+                       {text && <p className={cn("text-[15px] text-brand-text-soft leading-relaxed", title && "mt-3")}>{text}</p>}
+                     </div>
+                   </div>
+                 </div>
               );
             })}
           </div>
