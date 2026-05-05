@@ -440,7 +440,26 @@ function ManifestoBlock({ data }: { data: BlockData }) {
 function MetodoBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Método");
   const titleHtml = firstS([data.title_html, data.title], "Três passos. <em>Documentados.</em>");
-  const steps = arr<{ title?: string; summary?: string; desc?: string; description?: string; detail?: string; n?: number | string }>(data.steps);
+   let steps = arr<{ title?: string; summary?: string; desc?: string; description?: string; detail?: string; n?: number | string }>(data.steps);
+   if (steps.length === 0) {
+     steps = [
+       { 
+         title: "Avaliação Clínica", 
+         summary: "Análise minuciosa da face, histórico e objetivos do paciente.", 
+         detail: "Nesta etapa, a Dra. Daniele mapeia os pontos de aplicação e define a dosagem ideal para um resultado natural." 
+       },
+       { 
+         title: "Aplicação Precisa", 
+         summary: "Procedimento realizado com agulhas ultrafinas e técnica indolor.", 
+         detail: "A aplicação leva cerca de 20 minutos e foca na preservação da expressão facial e dos vetores de movimento." 
+       },
+       { 
+         title: "Retorno e Ajuste", 
+         summary: "Acompanhamento em 14 dias para garantir o resultado perfeito.", 
+         detail: "O retorno é essencial para validar a simetria e realizar ajustes finos, garantindo a satisfação total." 
+       }
+     ];
+   }
   const icons = [ShieldCheck, Sparkles, Award, ShieldCheck];
   return (
     <section id="procedimentos" className="bg-brand-graphite section-pad bg-pattern-gold relative z-[2]">
