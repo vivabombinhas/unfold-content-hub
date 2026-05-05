@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Search, Wand2, Loader2, ChevronLeft, CheckCircle2, AlertTriangle } from "lucide-react";
+ import { Sparkles, Search, Wand2, Loader2, ChevronLeft, CheckCircle2, AlertTriangle, RefreshCw, PenLine } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -61,6 +61,28 @@ function slugify(s: string) {
     .replace(/-+/g, "-");
 }
 
+ const AI_NOTES_TEMPLATE = `Público-alvo:
+ [quem é a pessoa que procura esse procedimento]
+ 
+ Ângulo da página:
+ [qual promessa/benefício principal deve conduzir a copy]
+ 
+ Destacar:
+ * [ponto 1]
+ * [ponto 2]
+ * [ponto 3]
+ 
+ Evitar:
+ * [termo ou promessa que não deve aparecer]
+ * [confusão com outro procedimento]
+ * [informação técnica não confirmada]
+ 
+ Tom:
+ [premium, técnico, acolhedor, direto, educativo, etc.]
+ 
+ Observação:
+ [qualquer regra específica da clínica]`;
+ 
 export default function NewPageFromTopic() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -78,6 +100,10 @@ export default function NewPageFromTopic() {
   const [oldPageContent, setOldPageContent] = useState<OldPageContent | null>(null);
   const [confirmIntent, setConfirmIntent] = useState(false);
   const [confirmEmpty, setConfirmEmpty] = useState(false);
+   const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+   const [isImprovingNotes, setIsImprovingNotes] = useState(false);
+   const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
+   const [pendingNotesAction, setPendingNotesAction] = useState<"generate" | null>(null);
 
   const links = useMemo(
     () => linksRaw.split(/\s+/).map((s) => s.trim()).filter((s) => /^https?:\/\//.test(s)),
@@ -95,10 +121,60 @@ export default function NewPageFromTopic() {
     }
   }, [hasOwnDomainLink]); // eslint-disable-line
 
-  const onTemaChange = (v: string) => {
-    setTema(v);
-    if (!slug || slug === slugify(tema)) setSlug(slugify(v));
-  };
+   const onTemaChange = (v: string) => {
+     setTema(v);
+     if (!slug || slug === slugify(tema)) setSlug(slugify(v));
+     
+     // Auto-fill template if empty
+     if (!aiNotes.trim() && v.trim().length > 3) {
+       setAiNotes(AI_NOTES_TEMPLATE);
+     }
+   };
+ 
+   const callGenerateNotes = async (mode: "generate" | "improve") => {
+     if (mode === "generate" && !tema) {
+       toast({ title: "Informe o tema primeiro", variant: "destructive" });
+       return;
+     }
+ 
+     if (mode === "generate" && aiNotes.trim() && aiNotes !== AI_NOTES_TEMPLATE) {
+       setPendingNotesAction("generate");
+       setShowOverwriteConfirm(true);
+       return;
+     }
+ 
+     executeAiNotes(mode);
+   };
+ 
+   const executeAiNotes = async (mode: "generate" | "improve") => {
+     const setLoading = mode === "generate" ? setIsGeneratingNotes : setIsImprovingNotes;
+     setLoading(true);
+     try {
+       const { data, error } = await supabase.functions.invoke("generate-ai-notes", {
+         body: { 
+           mode, 
+           tema, 
+           currentValue: aiNotes,
+           extraContext: linksRaw // Use links as extra context
+         }
+       });
+ 
+       if (error) throw error;
+       if (data.error) throw new Error(data.error);
+ 
+       setAiNotes(data.text);
+       toast({ title: mode === "generate" ? "Notas geradas!" : "Notas melhoradas!" });
+     } catch (err) {
+       console.error(err);
+       toast({ 
+         title: "Erro na IA", 
+         description: err instanceof Error ? err.message : "Erro desconhecido", 
+         variant: "destructive" 
+       });
+     } finally {
+       setLoading(false);
+     }
+   };
 
   const runFlow = async (allowAiOnlyFallback: boolean) => {
     setError(null);
@@ -251,23 +327,47 @@ export default function NewPageFromTopic() {
           </label>
         </div>
 
-        <div>
-          <Label htmlFor="ai_notes" className="text-brand-text-light text-xs uppercase tracking-wider">
-            Notas para a IA <span className="text-brand-text-muted normal-case tracking-normal">(opcional)</span>
-          </Label>
-          <Textarea
-            id="ai_notes"
-            value={aiNotes}
-            onChange={(e) => setAiNotes(e.target.value)}
-            placeholder={"Direcionamentos extras: público-alvo, ângulo editorial, o que evitar, palavras a usar.\nEx.: focar em mulheres 35+, evitar comparação com toxina, destacar abordagem progressiva."}
-            disabled={isWorking}
-            rows={3}
-            className="mt-1.5"
-          />
-          <p className="text-[11px] text-brand-text-muted mt-1">
-            A IA prioriza essas instruções sobre a pesquisa automática.
-          </p>
-        </div>
+         <div className="space-y-3">
+           <div className="flex items-center justify-between">
+             <Label htmlFor="ai_notes" className="text-brand-text-light text-xs uppercase tracking-wider">
+               Notas para a IA <span className="text-brand-text-muted normal-case tracking-normal">(opcional)</span>
+             </Label>
+             <div className="flex gap-2">
+               <Button 
+                 variant="ghost" 
+                 size="sm" 
+                 onClick={() => callGenerateNotes("generate")}
+                 disabled={isWorking || isGeneratingNotes || isImprovingNotes || !tema}
+                 className="h-7 px-2 text-[10px] text-brand-text-muted hover:text-brand-gold transition-colors"
+               >
+                 {isGeneratingNotes ? <Loader2 className="size-3 animate-spin mr-1" /> : <RefreshCw className="size-3 mr-1" />}
+                 Gerar notas com IA
+               </Button>
+               <Button 
+                 variant="ghost" 
+                 size="sm" 
+                 onClick={() => callGenerateNotes("improve")}
+                 disabled={isWorking || isGeneratingNotes || isImprovingNotes || !aiNotes.trim()}
+                 className="h-7 px-2 text-[10px] text-brand-text-muted hover:text-brand-gold transition-colors"
+               >
+                 {isImprovingNotes ? <Loader2 className="size-3 animate-spin mr-1" /> : <PenLine className="size-3 mr-1" />}
+                 Melhorar notas com IA
+               </Button>
+             </div>
+           </div>
+           <Textarea
+             id="ai_notes"
+             value={aiNotes}
+             onChange={(e) => setAiNotes(e.target.value)}
+             placeholder={"Direcionamentos extras: público-alvo, ângulo editorial, o que evitar, palavras a usar."}
+             disabled={isWorking}
+             rows={10}
+             className="mt-1.5 font-sans text-sm leading-relaxed"
+           />
+           <p className="text-[11px] text-brand-text-muted mt-1">
+             A IA prioriza essas instruções sobre a pesquisa automática. Use o template para melhores resultados.
+           </p>
+         </div>
 
         <div className="pt-2">
           {step === "form" || step === "error" ? (
@@ -367,6 +467,31 @@ export default function NewPageFromTopic() {
         )}
       </div>
 
+       {/* Confirma sobrescrever notas */}
+       <AlertDialog open={showOverwriteConfirm} onOpenChange={setShowOverwriteConfirm}>
+         <AlertDialogContent>
+           <AlertDialogHeader>
+             <AlertDialogTitle>Substituir notas atuais?</AlertDialogTitle>
+             <AlertDialogDescription>
+               Você já editou as notas manualmente. Você quer substituir as notas atuais por uma nova sugestão da IA?
+               Essa ação não pode ser desfeita.
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter>
+             <AlertDialogCancel onClick={() => { setShowOverwriteConfirm(false); setPendingNotesAction(null); }}>
+               Manter atuais
+             </AlertDialogCancel>
+             <AlertDialogAction onClick={() => { 
+               setShowOverwriteConfirm(false); 
+               if (pendingNotesAction === "generate") executeAiNotes("generate");
+               setPendingNotesAction(null);
+             }}>
+               Substituir por IA
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+       </AlertDialog>
+ 
       {/* Confirma intenção quando há URL mas checkbox desmarcado */}
       <AlertDialog open={confirmIntent} onOpenChange={setConfirmIntent}>
         <AlertDialogContent>
