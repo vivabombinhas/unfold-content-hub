@@ -140,7 +140,7 @@ const Index = () => {
               <br className="hidden sm:block" /> não para parecer <em>outra pessoa</em>.
             </h1>
             <span className="gold-rule mt-7" />
-            <p className="mt-7 text-brand-text-soft text-lg leading-[1.7] max-w-xl text-pretty">
+            <p className="mt-7 text-brand-text-soft text-base md:text-[17px] leading-[1.75] max-w-xl text-pretty">
               Protocolo de toxina botulínica com dosagem calibrada para a anatomia masculina. Sem aspecto congelado, sem perder a expressão que comunica autoridade. Avaliação individual, técnica documentada, resultado em 14 dias.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
@@ -187,7 +187,7 @@ const Index = () => {
             <span className="gold-rule mt-6 gold-rule-animated" style={{ width: 60 }} />
           </div>
           <div className="reveal">
-            <p className="font-display text-2xl md:text-3xl lg:text-[2rem] leading-[1.3] text-brand-text-light text-balance">
+            <p className="font-display text-2xl md:text-3xl lg:text-4xl leading-[1.3] text-brand-text-light text-balance">
               "Não tratamos o homem como uma versão masculina do protocolo feminino. <em>Anatomia diferente, dose diferente, vetor diferente.</em> Trinta anos depois, o que entregamos é coerência: a mesma cara, só sem a marca do cansaço."
             </p>
             <p className="mt-6 text-sm text-brand-text-muted uppercase tracking-[0.2em]">Dra. Daniele Florencio · RT</p>
@@ -470,8 +470,9 @@ const Index = () => {
         eyebrow="Manifesto"
         title="Por que tratamos o homem diferente"
         width="lg"
+        tone="dark"
       >
-        <div className="space-y-6 font-display text-xl leading-[1.5] text-brand-text-light">
+        <div className="space-y-6 font-display text-lg md:text-xl leading-[1.6] text-brand-text-light/90">
           <p>
             Quando comecei, há trinta anos, o Botox era praticamente um
             procedimento feminino. Doses padronizadas, vetores padronizados,
