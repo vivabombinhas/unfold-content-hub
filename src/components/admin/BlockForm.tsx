@@ -175,7 +175,12 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
         <div className="space-y-4">
           <Field label="Eyebrow" value={field(data.eyebrow)} onChange={(v) => set("eyebrow", v)} />
           <AIField label="Título (HTML)" fieldKey="title_html" value={field(data.title_html)} onChange={(v) => set("title_html", v)} ctx={aiCtx} />
-          {type === "depoimentos" && <Field label="Quantos exibir" value={String(data.show_count ?? 5)} onChange={(v) => set("show_count", parseInt(v) || 5)} />}
+           {type === "depoimentos" && (
+             <div className="grid grid-cols-2 gap-4">
+               <Field label="Quantos exibir" value={String(data.show_count ?? 6)} onChange={(v) => set("show_count", parseInt(v) || 6)} />
+               <Field label="Filtro por Tag (opcional)" value={field(data.tag_filter)} onChange={(v) => set("tag_filter", v)} />
+             </div>
+           )}
           {type === "ai_opinions" && <AIField label="Subtítulo" fieldKey="subtitle" value={field(data.subtitle)} onChange={(v) => set("subtitle", v)} ctx={aiCtx} />}
           {type === "cursos" && (
             <>
