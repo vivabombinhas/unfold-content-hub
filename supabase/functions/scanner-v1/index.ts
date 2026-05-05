@@ -64,12 +64,19 @@ export const handler = async (req: Request) => {
     const { data: roleRows } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin");
     if (!roleRows?.length) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
 
-    const { url, text: userText } = await req.json();
-    let content = userText || "";
+     const { url, text: rawText } = await req.json();
+     let content = "";
     let source_origin = "manual_paste";
     let usage_policy = "preserve_literal";
 
-    if (url) {
+     if (url && !rawText) {
+     } else if (rawText) {
+       // 2. Preservar quebras de linha e tentar separar palavras coladas (ex: "CaídoBigode")
+       content = rawText
+         .replace(/([a-zà-ÿ])([A-ZÀ-Ÿ])/g, '$1 / $2') // Separa CaídoBigode em Caído / Bigode
+         .trim();
+     }
+
       const isBatel = url.includes("esteticabatel.com.br");
       source_origin = isBatel ? "batel_legacy" : "external_reference";
       usage_policy = isBatel ? "preserve_literal" : "inspiration_only";
@@ -152,8 +159,36 @@ SCHEMA DE SAÍDA:
       })
     });
 
-    const aiData = await aiRes.json();
-    const result = JSON.parse(aiData?.choices?.[0]?.message?.content || "{}");
+     let aiData;
+     let result: any = {};
+
+     try {
+       aiData = await aiRes.json();
+       result = JSON.parse(aiData?.choices?.[0]?.message?.content || "{}");
+     } catch (e) {
+       console.error("AI parse error", e);
+     }
+
+     // 1. Fallback obrigatório para texto colado
+     if ((!result.sections || result.sections.length === 0) && rawText && rawText.length > 30) {
+       result.page_metadata = result.page_metadata || {
+         detected_title: "Conteúdo Importado",
+         source_url: "",
+         source_origin: "manual_paste",
+         default_usage_policy: "preserve_literal"
+       };
+       result.sections = [{
+         id: crypto.randomUUID(),
+         raw_title: "Seção Importada Manualmente",
+         raw_content: content,
+         suggested_type: content.includes('\n') || content.includes('*') ? "beneficios_grid" : "texto_livre",
+         confidence: 0.4,
+         usage_policy: "preserve_literal",
+         source_origin: "manual_paste",
+         images: [],
+         extracted_data: {}
+       }];
+     }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
