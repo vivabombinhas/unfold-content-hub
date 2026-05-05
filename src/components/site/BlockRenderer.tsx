@@ -274,7 +274,9 @@ function ProcedimentoDetalhadoV2Block({ data }: { data: BlockData }) {
   const variant = s(data.layout_variant, "standard");
 
   return (
-    <section className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
+     <section className="bg-brand-cream text-brand-text-dark section-pad relative z-[2] overflow-hidden">
+       <div className="absolute top-0 right-0 w-1/3 h-full bg-brand-gold/5 blur-[120px] pointer-events-none" aria-hidden />
+       <div className="absolute bottom-0 left-0 w-1/4 h-1/2 bg-brand-gold/5 blur-[100px] pointer-events-none" aria-hidden />
       <div className="container-editorial">
         <div className="grid lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-20 items-start">
           <div className="reveal">
