@@ -11,7 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Download, Search, CheckCircle2, AlertCircle } from "lucide-react";
+ import { Loader2, Download, Search, CheckCircle2, AlertCircle, ChevronDown } from "lucide-react";
+ import { 
+   DropdownMenu, 
+   DropdownMenuContent, 
+   DropdownMenuItem, 
+   DropdownMenuTrigger 
+ } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BLOCK_LABELS, type BlockType } from "@/types/blocks";
@@ -32,7 +38,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"input" | "sections">("input");
   const [scanResult, setScanResult] = useState<ScannedPage | null>(null);
-  const [selectedSections, setSelectedSections] = useState<string[]>([]);
+   const [selectedSections, setSelectedSections] = useState<Record<string, { selected: boolean; forcedType?: BlockType }>>({});
   const { toast } = useToast();
 
   async function handleExtract() {
@@ -53,7 +59,12 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
         return;
       }
 
-      setScanResult(data);
+       setScanResult(data);
+       const initialSelected: Record<string, { selected: boolean; forcedType?: BlockType }> = {};
+       data.sections.forEach((s: any) => {
+         initialSelected[s.id] = { selected: false };
+       });
+       setSelectedSections(initialSelected);
       setStep("sections");
     } catch (e) {
       console.error(e);
@@ -63,11 +74,23 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
     }
   }
 
-  function toggleSection(id: string) {
-    setSelectedSections(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  }
+   const selectedCount = useMemo(() => 
+     Object.values(selectedSections).filter(s => s.selected).length
+   , [selectedSections]);
+
+   function toggleSection(id: string) {
+     setSelectedSections(prev => ({
+       ...prev,
+       [id]: { ...prev[id], selected: !prev[id]?.selected }
+     }));
+   }
+
+   function setSectionType(id: string, type: BlockType) {
+     setSelectedSections(prev => ({
+       ...prev,
+       [id]: { ...prev[id], forcedType: type, selected: true }
+     }));
+   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,24 +174,46 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
           {step === "sections" && scanResult && (
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {scanResult.sections.map((section: ExtractedSection) => (
-                <div 
-                  key={section.id}
-                  className={cn(
-                    "p-4 rounded border transition-all cursor-pointer",
-                    selectedSections.includes(section.id) 
-                      ? "bg-brand-gold/10 border-brand-gold/40" 
-                      : "bg-brand-graphite/20 border-transparent hover:border-brand-gold/20"
-                  )}
-                  onClick={() => toggleSection(section.id)}
-                >
-                  <div className="flex items-center gap-3">
-                    <input type="checkbox" checked={selectedSections.includes(section.id)} className="accent-brand-gold" readOnly />
-                    <div>
-                      <h4 className="text-sm font-bold text-brand-gold">{section.raw_title}</h4>
-                      <p className="text-[10px] text-brand-text-muted uppercase">{section.suggested_type} • Confiança: {Math.round(section.confidence * 100)}%</p>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-xs text-brand-text-light/70 line-clamp-2">{section.raw_content}</p>
+                 <div
+                   key={section.id}
+                   className={cn(
+                     "p-4 rounded border transition-all",
+                     selectedSections[section.id]?.selected 
+                       ? "bg-brand-gold/10 border-brand-gold/40" 
+                       : "bg-brand-graphite/20 border-transparent hover:border-brand-gold/20"
+                   )}
+                 >
+                   <div className="flex items-start justify-between gap-3">
+                     <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => toggleSection(section.id)}>
+                       <input type="checkbox" checked={selectedSections[section.id]?.selected} className="accent-brand-gold" readOnly />
+                       <div>
+                         <h4 className="text-sm font-bold text-brand-gold">{section.raw_title}</h4>
+                         <p className="text-[10px] text-brand-text-muted uppercase">
+                           {BLOCK_LABELS[selectedSections[section.id]?.forcedType || (section.suggested_type as BlockType)] || section.suggested_type} • Confiança: {Math.round(section.confidence * 100)}%
+                         </p>
+                       </div>
+                     </div>
+
+                     <DropdownMenu>
+                       <DropdownMenuTrigger asChild>
+                         <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-brand-gold/70 border border-brand-gold/20 hover:text-brand-gold hover:bg-brand-gold/10">
+                           Trocar Tipo <ChevronDown className="ml-1 size-3" />
+                         </Button>
+                       </DropdownMenuTrigger>
+                       <DropdownMenuContent className="bg-brand-graphite border-brand-gold/20 text-brand-text-light max-h-[300px] overflow-y-auto">
+                         {Object.entries(BLOCK_LABELS).map(([type, label]) => (
+                           <DropdownMenuItem 
+                             key={type} 
+                             onClick={() => setSectionType(section.id, type as BlockType)}
+                             className="text-xs hover:bg-brand-gold/10 cursor-pointer"
+                           >
+                             {label}
+                           </DropdownMenuItem>
+                         ))}
+                       </DropdownMenuContent>
+                     </DropdownMenu>
+                   </div>
+                   <p className="mt-2 text-xs text-brand-text-light/70 whitespace-pre-wrap">{section.raw_content}</p>
                   <div className="flex gap-2 mt-2">
                     <span className="text-[9px] px-1.5 py-0.5 bg-brand-graphite rounded text-brand-gold uppercase">{section.usage_policy}</span>
                     <span className="text-[9px] px-1.5 py-0.5 bg-brand-graphite rounded text-brand-text-muted uppercase">{section.source_origin}</span>
@@ -188,11 +233,11 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
               onClick={() => {
                 toast({ title: "Funcionalidade em desenvolvimento", description: "A conversão de seções selecionadas para blocos será implementada na próxima fase." });
               }} 
-              disabled={selectedSections.length === 0}
+               disabled={selectedCount === 0}
               className="bg-brand-gold text-brand-green hover:bg-brand-gold/90"
             >
               <CheckCircle2 className="size-4 mr-2" />
-              Confirmar Seleção ({selectedSections.length})
+               Confirmar Seleção ({selectedCount})
             </Button>
           )}
         </DialogFooter>
