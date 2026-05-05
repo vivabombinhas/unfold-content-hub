@@ -674,23 +674,30 @@ function AIOpinionsBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Reputação digital · LLMs");
   const titleHtml = firstS([data.title_html, data.title], "O que as principais <em>inteligências artificiais</em> dizem sobre nós.");
   const subtitle = s(data.subtitle, "Quando ChatGPT, Claude, Gemini, Perplexity e Grok são consultadas sobre clínicas de estética em Curitiba, este é o consenso.");
+  
   if (aiOpinions.length === 0) return null;
+
+  // Duplicar para o marquee
+  const displayItems = [...aiOpinions, ...aiOpinions];
+
   return (
     <section className="bg-brand-cream text-brand-text-dark section-pad relative z-[2] overflow-hidden">
-      <div className="container-editorial">
-        <div className="reveal max-w-2xl mb-12">
+      <div className="absolute inset-0 bg-radial-blur opacity-50 pointer-events-none" aria-hidden />
+      <div className="container-editorial relative z-10">
+        <div className="reveal max-w-2xl mb-14">
           <span className="eyebrow" style={{ color: "hsl(var(--gold-deep))" }}>{eyebrow}</span>
           <h2 className="h-display-2 mt-5 text-brand-text-dark text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
           <span className="gold-rule mt-7" />
           {subtitle && <p className="mt-6 text-brand-text-dark/70 leading-relaxed">{subtitle}</p>}
         </div>
       </div>
-      <div className="overflow-x-auto scrollbar-hide pb-6">
-        <div className="flex gap-5 px-[max(20px,5vw)] snap-x snap-mandatory">
-          {aiOpinions.map((o) => (
-            <article key={o.id} className="snap-start shrink-0 w-[88vw] sm:w-[460px] bg-brand-text-dark text-brand-text-light p-8 md:p-9 border border-brand-gold/30 flex flex-col">
+      
+      <div className="relative flex overflow-hidden">
+        <div className="marquee-infinite gap-6 px-4" style={{ "--duration": "80s" } as React.CSSProperties}>
+          {displayItems.map((o, i) => (
+            <article key={`${o.id}-${i}`} className="shrink-0 w-[300px] md:w-[460px] bg-brand-text-dark text-brand-text-light p-8 md:p-10 border border-brand-gold/30 flex flex-col transition-all duration-500 hover:border-brand-gold hover:shadow-2xl">
               <div className="flex items-center justify-between">
-                <span className="font-display text-3xl text-brand-gold">{o.ai_name}</span>
+                <span className="font-display text-2xl md:text-3xl text-brand-gold">{o.ai_name}</span>
                 <span className="text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">{o.company}</span>
               </div>
               <span className="gold-rule mt-5" />
@@ -704,6 +711,7 @@ function AIOpinionsBlock({ data }: { data: BlockData }) {
     </section>
   );
 }
+
 
 /* ============================================================
    EQUIPE RT
