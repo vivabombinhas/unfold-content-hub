@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import { Loader2, Download, Search, CheckCircle2, AlertCircle } from "lucide-rea
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BLOCK_LABELS, type BlockType } from "@/types/blocks";
+import { type ScannedPage, type ExtractedSection } from "@/types/scanner";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -29,74 +30,43 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
   const [source, setSource] = useState("");
   const [isUrl, setIsUrl] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [sections, setSections] = useState<any[]>([]);
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [step, setStep] = useState<"input" | "sections">("input");
+  const [scanResult, setScanResult] = useState<ScannedPage | null>(null);
+  const [selectedSections, setSelectedSections] = useState<string[]>([]);
   const { toast } = useToast();
 
   async function handleExtract() {
     if (!source.trim()) return;
     setLoading(true);
-    setSections([]);
-    setSelectedIdx(null);
-
+    
     try {
-      const { data, error } = await supabase.functions.invoke("extract-block-content", {
+      const { data, error } = await supabase.functions.invoke("scanner-v1", {
         body: { 
           url: isUrl ? source : null,
           text: isUrl ? null : source,
-          page_title: pageTitle,
-          page_category: pageCategory
         },
       });
 
       if (error) throw error;
       if (!data?.sections || data.sections.length === 0) {
-        toast({ 
-          title: "Nenhum bloco encontrado", 
-          description: "A IA não conseguiu identificar seções compatíveis com os blocos premium.",
-          variant: "destructive"
-        });
+        toast({ title: "Nenhum conteúdo detectado", variant: "destructive" });
         return;
       }
 
-      setSections(data.sections);
-      setSelectedIdx(0);
+      setScanResult(data);
+      setStep("sections");
     } catch (e) {
       console.error(e);
-      toast({ 
-        title: "Erro na extração", 
-        description: "Verifique a URL ou tente colar o texto manualmente.",
-        variant: "destructive"
-      });
+      toast({ title: "Erro na extração", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   }
 
-  const selectedSection = selectedIdx !== null ? sections[selectedIdx] : null;
-
-  function updateSelectedData(field: string, value: any) {
-    if (selectedIdx === null) return;
-    setSections(prev => {
-      const next = [...prev];
-      next[selectedIdx] = {
-        ...next[selectedIdx],
-        data: {
-          ...next[selectedIdx].data,
-          [field]: value
-        }
-      };
-      return next;
-    });
-  }
-
-  function updateCard(idx: number, field: string, value: string) {
-    if (selectedIdx === null) return;
-    const currentData = sections[selectedIdx].data;
-    const key = selectedSection.target_type === "beneficios_grid" ? "cards" : "side_cards";
-    const cards = [...(currentData[key] || [])];
-    cards[idx] = { ...cards[idx], [field]: value };
-    updateSelectedData(key, cards);
+  function toggleSection(id: string) {
+    setSelectedSections(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
   }
 
   return (
@@ -109,9 +79,9 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
-          <div className="space-y-4">
-            <div className="flex gap-4 border-b border-brand-gold/10 pb-2">
+        <div className="flex-1 overflow-y-auto p-0 flex flex-col">
+          <div className="p-6 border-b border-brand-gold/10">
+            <div className="flex gap-4 mb-4">
               <button 
                 onClick={() => setIsUrl(true)}
                 className={cn(
@@ -130,155 +100,81 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
               >
                 Colar Texto
               </button>
-            </div>
+              {step === "input" && (
+                 <div className="space-y-2 w-full">
+                  <Label className="text-xs text-brand-text-muted uppercase tracking-wider">
+                    {isUrl ? "URL da página antiga" : "Conteúdo bruto"}
+                  </Label>
+                  <div className="flex gap-2">
+                    {isUrl ? (
+                      <Input 
+                        placeholder="https://esteticabatel.com.br/..." 
+                        value={source}
+                        onChange={e => setSource(e.target.value)}
+                        className="bg-brand-graphite/40 border-brand-gold/10 text-brand-text-light"
+                      />
+                    ) : (
+                      <Textarea 
+                        placeholder="Cole aqui..." 
+                        value={source}
+                        onChange={e => setSource(e.target.value)}
+                        rows={4}
+                        className="bg-brand-graphite/40 border-brand-gold/10 text-brand-text-light"
+                      />
+                    )}
+                    <Button 
+                      onClick={handleExtract} 
+                      disabled={loading || !source.trim()}
+                      className="bg-brand-gold text-brand-green hover:bg-brand-gold/90 shrink-0"
+                    >
+                      {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4 mr-2" />}
+                      Scanear
+                    </Button>
+                  </div>
+                 </div>
+              )}
 
-            <div className="space-y-2">
-              <Label className="text-xs text-brand-text-muted uppercase tracking-wider">
-                {isUrl ? "URL da página antiga" : "Conteúdo da seção"}
-              </Label>
-              <div className="flex gap-2">
-                {isUrl ? (
-                  <Input 
-                    placeholder="https://esteticabatel.com.br/..." 
-                    value={source}
-                    onChange={e => setSource(e.target.value)}
-                    className="bg-brand-graphite/40 border-brand-gold/10 focus:border-brand-gold/40 text-brand-text-light"
-                  />
-                ) : (
-                  <Textarea 
-                    placeholder="Cole aqui o texto dos benefícios ou da descrição do procedimento..." 
-                    value={source}
-                    onChange={e => setSource(e.target.value)}
-                    rows={4}
-                    className="bg-brand-graphite/40 border-brand-gold/10 focus:border-brand-gold/40 text-brand-text-light"
-                  />
-                )}
-                <Button 
-                  onClick={handleExtract} 
-                  disabled={loading || !source.trim()}
-                  className="bg-brand-gold text-brand-green hover:bg-brand-gold/90 shrink-0"
-                >
-                  {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4 mr-2" />}
-                  Extrair
-                </Button>
-              </div>
+              {step === "sections" && scanResult && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm text-brand-gold font-display">{scanResult.page_metadata.detected_title}</h3>
+                    <p className="text-[10px] text-brand-text-muted">{scanResult.sections.length} seções detectadas</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setStep("input")} className="text-xs border-brand-gold/20 text-brand-text-light">
+                    Scanear outra página
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
-          {sections.length > 0 && (
-            <div className="grid grid-cols-[200px_1fr] gap-6 border-t border-brand-gold/10 pt-6 animate-in fade-in slide-in-from-top-4">
-              <div className="space-y-2">
-                <Label className="text-[10px] text-brand-text-muted uppercase tracking-widest">Seções Detectadas</Label>
-                <div className="space-y-1">
-                  {sections.map((s, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedIdx(i)}
-                      className={cn(
-                        "w-full text-left p-3 rounded text-xs transition-all border",
-                        selectedIdx === i 
-                          ? "bg-brand-gold/10 border-brand-gold/40 text-brand-gold" 
-                          : "bg-brand-graphite/20 border-transparent text-brand-text-muted hover:border-brand-gold/20"
-                      )}
-                    >
-                      <div className="font-bold mb-1">{s.suggested_label || "Seção Detectada"}</div>
-                      <div className="text-[10px] opacity-70">Tipo: {BLOCK_LABELS[s.target_type as BlockType] || s.target_type}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {selectedSection && (
-                <div className="space-y-4">
-                  <Label className="text-[10px] text-brand-text-muted uppercase tracking-widest">Preview dos Dados</Label>
-                  <div className="bg-brand-graphite/40 rounded-lg border border-brand-gold/10 p-4 max-h-[300px] overflow-y-auto">
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-[10px] text-brand-gold uppercase tracking-wider">Eyebrow</Label>
-                          <Input 
-                            value={selectedSection.data.eyebrow || ""} 
-                            onChange={e => updateSelectedData("eyebrow", e.target.value)}
-                            className="bg-brand-graphite/60 border-brand-gold/10 text-xs h-8"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] text-brand-gold uppercase tracking-wider">Título (HTML permitido)</Label>
-                          <Input 
-                            value={selectedSection.data.title_html || ""} 
-                            onChange={e => updateSelectedData("title_html", e.target.value)}
-                            className="bg-brand-graphite/60 border-brand-gold/10 text-xs h-8"
-                          />
-                        </div>
-                      </div>
-
-                      {selectedSection.target_type === "beneficios_grid" && (
-                        <div className="space-y-3">
-                          <Label className="text-[10px] text-brand-gold uppercase tracking-wider block">Benefícios ({selectedSection.data.cards?.length})</Label>
-                          <div className="grid grid-cols-1 gap-3">
-                            {selectedSection.data.cards?.map((c: any, i: number) => (
-                              <div key={i} className="space-y-2 p-3 bg-brand-graphite/20 rounded border border-brand-gold/5">
-                                <Input 
-                                  value={c.title || ""} 
-                                  onChange={e => updateCard(i, "title", e.target.value)}
-                                  className="bg-transparent border-none p-0 h-auto font-bold text-xs focus-visible:ring-0"
-                                  placeholder="Título do card"
-                                />
-                                <Textarea 
-                                  value={c.text || ""} 
-                                  onChange={e => updateCard(i, "text", e.target.value)}
-                                  className="bg-transparent border-none p-0 min-h-0 text-[11px] text-brand-text-muted focus-visible:ring-0 resize-none"
-                                  placeholder="Texto do card"
-                                  rows={2}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {selectedSection.target_type === "procedimento_detalhado_v2" && (
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label className="text-[10px] text-brand-gold uppercase tracking-wider">Descrição Principal</Label>
-                            <Textarea 
-                              value={selectedSection.data.paragraphs?.[0] || ""} 
-                              onChange={e => {
-                                const paras = [...(selectedSection.data.paragraphs || [])];
-                                paras[0] = e.target.value;
-                                updateSelectedData("paragraphs", paras);
-                              }}
-                              className="bg-brand-graphite/60 border-brand-gold/10 text-[11px] min-h-[80px]"
-                            />
-                          </div>
-
-                          <div className="space-y-3">
-                            <Label className="text-[10px] text-brand-gold uppercase tracking-wider block">Cards Laterais ({selectedSection.data.side_cards?.length})</Label>
-                            <div className="grid grid-cols-1 gap-3">
-                              {selectedSection.data.side_cards?.map((c: any, i: number) => (
-                                <div key={i} className="space-y-2 p-3 bg-brand-graphite/20 rounded border border-brand-gold/5">
-                                  <Input 
-                                    value={c.title || ""} 
-                                    onChange={e => updateCard(i, "title", e.target.value)}
-                                    className="bg-transparent border-none p-0 h-auto font-bold text-xs focus-visible:ring-0"
-                                    placeholder="Título do destaque"
-                                  />
-                                  <Textarea 
-                                    value={c.text || ""} 
-                                    onChange={e => updateCard(i, "text", e.target.value)}
-                                    className="bg-transparent border-none p-0 min-h-0 text-[11px] text-brand-text-muted focus-visible:ring-0 resize-none"
-                                    placeholder="Texto do destaque"
-                                    rows={2}
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+          {step === "sections" && scanResult && (
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {scanResult.sections.map((section: ExtractedSection) => (
+                <div 
+                  key={section.id}
+                  className={cn(
+                    "p-4 rounded border transition-all cursor-pointer",
+                    selectedSections.includes(section.id) 
+                      ? "bg-brand-gold/10 border-brand-gold/40" 
+                      : "bg-brand-graphite/20 border-transparent hover:border-brand-gold/20"
+                  )}
+                  onClick={() => toggleSection(section.id)}
+                >
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" checked={selectedSections.includes(section.id)} className="accent-brand-gold" readOnly />
+                    <div>
+                      <h4 className="text-sm font-bold text-brand-gold">{section.raw_title}</h4>
+                      <p className="text-[10px] text-brand-text-muted uppercase">{section.suggested_type} • Confiança: {Math.round(section.confidence * 100)}%</p>
                     </div>
                   </div>
+                  <p className="mt-2 text-xs text-brand-text-light/70 line-clamp-2">{section.raw_content}</p>
+                  <div className="flex gap-2 mt-2">
+                    <span className="text-[9px] px-1.5 py-0.5 bg-brand-graphite rounded text-brand-gold uppercase">{section.usage_policy}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-brand-graphite rounded text-brand-text-muted uppercase">{section.source_origin}</span>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
           )}
         </div>
