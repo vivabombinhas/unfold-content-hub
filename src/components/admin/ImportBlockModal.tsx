@@ -183,14 +183,18 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-brand-text-muted hover:text-brand-text-light">
             Cancelar
           </Button>
-          <Button 
-            onClick={() => selectedSection && onImport(selectedSection.target_type, selectedSection.data)} 
-            disabled={selectedIdx === null}
-            className="bg-brand-gold text-brand-green hover:bg-brand-gold/90"
-          >
-            <CheckCircle2 className="size-4 mr-2" />
-            Inserir na página
-          </Button>
+          {step === "sections" && (
+            <Button 
+              onClick={() => {
+                toast({ title: "Funcionalidade em desenvolvimento", description: "A conversão de seções selecionadas para blocos será implementada na próxima fase." });
+              }} 
+              disabled={selectedSections.length === 0}
+              className="bg-brand-gold text-brand-green hover:bg-brand-gold/90"
+            >
+              <CheckCircle2 className="size-4 mr-2" />
+              Confirmar Seleção ({selectedSections.length})
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
