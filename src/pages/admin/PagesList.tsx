@@ -72,12 +72,17 @@ export default function PagesList() {
           <h1 className="font-display text-3xl text-brand-text-light">Páginas</h1>
           <p className="text-sm text-brand-text-muted mt-1">Crie e edite landings. A IA gera o rascunho a partir de um tema.</p>
         </div>
-        <Button asChild className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90">
-          <Link to="/admin/paginas/nova">
-            <Sparkles className="size-4" />
-            Nova página por tema
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" className="border-brand-gold/30 text-brand-gold hover:bg-brand-gold/5">
+            <Link to="/admin/paginas/nova-legado">Pesquisa Web</Link>
+          </Button>
+          <Button asChild className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90">
+            <Link to="/admin/paginas/nova">
+              <Sparkles className="size-4 mr-2" />
+              Nova Página (Wizard)
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
