@@ -181,8 +181,8 @@ function HeroBlock({ data }: { data: BlockData }) {
         </div>
         {imageUrl && (
           <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none">
-            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative">
-              <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover" loading="eager" />
+            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group">
+              <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" loading="eager" />
               <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
             </div>
             <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
