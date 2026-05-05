@@ -64,7 +64,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
     const { data: roleRows } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin");
     if (!roleRows?.length) return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
 
-     const { url, text: userText } = await req.json();
+      const { url, text: userText, page_title, page_category } = await req.json();
      let content = userText || "";
      let stats = {
        url_accessed: false,
@@ -112,8 +112,8 @@ async function firecrawlScrape(apiKey: string, url: string) {
              target_type: "beneficios_grid",
              confidence: 0.8,
              data: {
-               eyebrow: "Diferenciais",
-               title_html: "Por que nos <em>escolher</em>",
+                eyebrow: page_category ? `Diferenciais ${page_category}` : "Diferenciais",
+                title_html: page_title ? `Por que escolher o <em>${page_title}</em>` : "Por que nos <em>escolher</em>",
                cards
              }
            });
@@ -133,8 +133,18 @@ async function firecrawlScrape(apiKey: string, url: string) {
         messages: [
           {
             role: "system",
-             content: `Você é uma editora especializada em estruturação de landing pages premium da Estética Batel.
+             content: `Você é uma editora especializada em estruturação de landing pages premium da Estética Batel. 
  Seu objetivo é analisar o conteúdo bruto e mapeá-lo para os blocos premium disponíveis.
+ 
+ CONTEXTO DA PÁGINA ATUAL:
+ - Título: ${page_title || "Não informado"}
+ - Categoria/Procedimento: ${page_category || "Não informado"}
+ 
+ DIRETRIZES DE TÍTULOS:
+ - NÃO use títulos genéricos como "Por que nos escolher" a menos que não haja contexto.
+ - Sugira títulos contextuais baseados no procedimento. 
+ - Exemplos para beneficios_grid: "Benefícios do ${page_title}", "Resultados que você pode perceber", "Diferenciais do nosso protocolo".
+ - title_html deve ser elegante e usar <em> para destaque.
  
  TIPOS DE BLOCOS DISPONÍVEIS:
  1. beneficios_grid: Use para listas de vantagens, benefícios, diferenciais ou "por que fazer".

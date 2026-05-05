@@ -21,9 +21,11 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImport: (type: BlockType, data: any) => void;
+  pageTitle?: string;
+  pageCategory?: string;
 }
 
-export function ImportBlockModal({ open, onOpenChange, onImport }: Props) {
+export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, pageCategory }: Props) {
   const [source, setSource] = useState("");
   const [isUrl, setIsUrl] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,9 @@ export function ImportBlockModal({ open, onOpenChange, onImport }: Props) {
       const { data, error } = await supabase.functions.invoke("extract-block-content", {
         body: { 
           url: isUrl ? source : null,
-          text: isUrl ? null : source
+          text: isUrl ? null : source,
+          page_title: pageTitle,
+          page_category: pageCategory
         },
       });
 
@@ -71,17 +75,41 @@ export function ImportBlockModal({ open, onOpenChange, onImport }: Props) {
 
   const selectedSection = selectedIdx !== null ? sections[selectedIdx] : null;
 
+  function updateSelectedData(field: string, value: any) {
+    if (selectedIdx === null) return;
+    setSections(prev => {
+      const next = [...prev];
+      next[selectedIdx] = {
+        ...next[selectedIdx],
+        data: {
+          ...next[selectedIdx].data,
+          [field]: value
+        }
+      };
+      return next;
+    });
+  }
+
+  function updateCard(idx: number, field: string, value: string) {
+    if (selectedIdx === null) return;
+    const currentData = sections[selectedIdx].data;
+    const key = selectedSection.target_type === "beneficios_grid" ? "cards" : "side_cards";
+    const cards = [...(currentData[key] || [])];
+    cards[idx] = { ...cards[idx], [field]: value };
+    updateSelectedData(key, cards);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-brand-black border-brand-gold/20 text-brand-text-light">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 bg-brand-black border-brand-gold/20 text-brand-text-light overflow-hidden">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle className="font-display text-xl text-brand-gold">Importar Bloco com IA</DialogTitle>
           <DialogDescription className="text-brand-text-muted">
             Extraia conteúdo de uma URL ou texto e converta automaticamente para blocos Premium.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">
           <div className="space-y-4">
             <div className="flex gap-4 border-b border-brand-gold/10 pb-2">
               <button 
@@ -165,30 +193,85 @@ export function ImportBlockModal({ open, onOpenChange, onImport }: Props) {
                   <Label className="text-[10px] text-brand-text-muted uppercase tracking-widest">Preview dos Dados</Label>
                   <div className="bg-brand-graphite/40 rounded-lg border border-brand-gold/10 p-4 max-h-[300px] overflow-y-auto">
                     <div className="space-y-4">
-                      <div>
-                        <span className="text-[10px] text-brand-gold uppercase block mb-1">Título Extraído</span>
-                        <p className="text-sm font-display text-brand-text-light" dangerouslySetInnerHTML={{ __html: selectedSection.data.title_html }} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] text-brand-gold uppercase tracking-wider">Eyebrow</Label>
+                          <Input 
+                            value={selectedSection.data.eyebrow || ""} 
+                            onChange={e => updateSelectedData("eyebrow", e.target.value)}
+                            className="bg-brand-graphite/60 border-brand-gold/10 text-xs h-8"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] text-brand-gold uppercase tracking-wider">Título (HTML permitido)</Label>
+                          <Input 
+                            value={selectedSection.data.title_html || ""} 
+                            onChange={e => updateSelectedData("title_html", e.target.value)}
+                            className="bg-brand-graphite/60 border-brand-gold/10 text-xs h-8"
+                          />
+                        </div>
                       </div>
+
                       {selectedSection.target_type === "beneficios_grid" && (
-                        <div className="grid grid-cols-1 gap-2">
-                          <span className="text-[10px] text-brand-gold uppercase block">Benefícios ({selectedSection.data.cards?.length})</span>
-                          {selectedSection.data.cards?.map((c: any, i: number) => (
-                            <div key={i} className="text-[11px] border-l border-brand-gold/30 pl-2 py-1">
-                              <strong className="text-brand-text-light">{c.title}:</strong> <span className="text-brand-text-muted">{c.text}</span>
-                            </div>
-                          ))}
+                        <div className="space-y-3">
+                          <Label className="text-[10px] text-brand-gold uppercase tracking-wider block">Benefícios ({selectedSection.data.cards?.length})</Label>
+                          <div className="grid grid-cols-1 gap-3">
+                            {selectedSection.data.cards?.map((c: any, i: number) => (
+                              <div key={i} className="space-y-2 p-3 bg-brand-graphite/20 rounded border border-brand-gold/5">
+                                <Input 
+                                  value={c.title || ""} 
+                                  onChange={e => updateCard(i, "title", e.target.value)}
+                                  className="bg-transparent border-none p-0 h-auto font-bold text-xs focus-visible:ring-0"
+                                  placeholder="Título do card"
+                                />
+                                <Textarea 
+                                  value={c.text || ""} 
+                                  onChange={e => updateCard(i, "text", e.target.value)}
+                                  className="bg-transparent border-none p-0 min-h-0 text-[11px] text-brand-text-muted focus-visible:ring-0 resize-none"
+                                  placeholder="Texto do card"
+                                  rows={2}
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                       {selectedSection.target_type === "procedimento_detalhado_v2" && (
-                        <div className="space-y-3">
-                          <span className="text-[10px] text-brand-gold uppercase block">Destaques ({selectedSection.data.side_cards?.length})</span>
-                          <p className="text-[11px] text-brand-text-muted line-clamp-2">{selectedSection.data.paragraphs?.[0]}</p>
-                          <div className="grid grid-cols-1 gap-2">
-                            {selectedSection.data.side_cards?.map((c: any, i: number) => (
-                              <div key={i} className="text-[11px] border-l border-brand-gold/30 pl-2 py-1">
-                                <strong className="text-brand-text-light">{c.title}:</strong> <span className="text-brand-text-muted">{c.text}</span>
-                              </div>
-                            ))}
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] text-brand-gold uppercase tracking-wider">Descrição Principal</Label>
+                            <Textarea 
+                              value={selectedSection.data.paragraphs?.[0] || ""} 
+                              onChange={e => {
+                                const paras = [...(selectedSection.data.paragraphs || [])];
+                                paras[0] = e.target.value;
+                                updateSelectedData("paragraphs", paras);
+                              }}
+                              className="bg-brand-graphite/60 border-brand-gold/10 text-[11px] min-h-[80px]"
+                            />
+                          </div>
+
+                          <div className="space-y-3">
+                            <Label className="text-[10px] text-brand-gold uppercase tracking-wider block">Cards Laterais ({selectedSection.data.side_cards?.length})</Label>
+                            <div className="grid grid-cols-1 gap-3">
+                              {selectedSection.data.side_cards?.map((c: any, i: number) => (
+                                <div key={i} className="space-y-2 p-3 bg-brand-graphite/20 rounded border border-brand-gold/5">
+                                  <Input 
+                                    value={c.title || ""} 
+                                    onChange={e => updateCard(i, "title", e.target.value)}
+                                    className="bg-transparent border-none p-0 h-auto font-bold text-xs focus-visible:ring-0"
+                                    placeholder="Título do destaque"
+                                  />
+                                  <Textarea 
+                                    value={c.text || ""} 
+                                    onChange={e => updateCard(i, "text", e.target.value)}
+                                    className="bg-transparent border-none p-0 min-h-0 text-[11px] text-brand-text-muted focus-visible:ring-0 resize-none"
+                                    placeholder="Texto do destaque"
+                                    rows={2}
+                                  />
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       )}
@@ -200,7 +283,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport }: Props) {
           )}
         </div>
 
-        <DialogFooter className="border-t border-brand-gold/10 pt-4">
+        <DialogFooter className="p-4 border-t border-brand-gold/10 bg-brand-graphite/60 backdrop-blur shrink-0">
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-brand-text-muted hover:text-brand-text-light">
             Cancelar
           </Button>

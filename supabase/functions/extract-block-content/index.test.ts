@@ -1,3 +1,35 @@
+
+ Deno.test({
+   name: "extract-block-content: uses page context for titles (fallback)",
+   sanitizeResources: false,
+   sanitizeOps: false,
+   async fn() {
+     mockFetch({
+       "/auth/v1/user": { data: { user: { id: "user-1" } } },
+       "/rest/v1/user_roles": [{ role: "admin" }],
+       "ai.gateway.lovable.dev": {
+         choices: [{
+           message: {
+             tool_calls: [{
+               function: {
+                 name: "registrar_blocos",
+                 arguments: JSON.stringify({ sections: [] })
+               }
+             }]
+           }
+         }]
+       }
+     });
+ 
+     const text = `Titulo 1\nDescricao 1`;
+     const req = createReq({ text, page_title: "Skinbooster", page_category: "Estética" });
+     const res = await handler(req);
+     const data = await res.json();
+ 
+     assertEquals(data.sections[0].data.eyebrow, "Diferenciais Estética");
+     assertEquals(data.sections[0].data.title_html, "Por que escolher o <em>Skinbooster</em>");
+   }
+ });
  Deno.test({
    name: "extract-block-content: merges fallback and AI sections",
    sanitizeResources: false,
