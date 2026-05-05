@@ -305,3 +305,16 @@
   0%, 100% { transform: translateY(0) rotate(-3deg); }
   50% { transform: translateY(-6px) rotate(-3deg); }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .gold-rule-animated,
+  .marquee-infinite,
+  .btn-shine::after,
+  .parallax-subtle {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
