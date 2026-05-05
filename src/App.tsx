@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
  import PagesList from "./pages/admin/PagesList.tsx";
  import Faqs from "./pages/admin/Faqs.tsx";
 import Reviews from "./pages/admin/Reviews.tsx";
+import Courses from "./pages/admin/Courses.tsx";
 import PageEditor from "./pages/admin/PageEditor.tsx";
 import NewPageFromTopic from "./pages/admin/NewPageFromTopic.tsx";
 import PageCreationWizard from "./pages/admin/PageCreationWizard.tsx";
@@ -38,6 +39,7 @@ const App = () => (
              <Route path="paginas/:slug" element={<PageEditor />} />
               <Route path="faqs" element={<Faqs />} />
               <Route path="depoimentos" element={<Reviews />} />
+              <Route path="cursos" element={<Courses />} />
             <Route path="configuracoes" element={<Settings />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
