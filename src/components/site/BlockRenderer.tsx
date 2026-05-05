@@ -150,6 +150,7 @@ function HeroBlock({ data }: { data: BlockData }) {
 
   return (
     <section className="relative overflow-hidden bg-brand-black">
+      <div className="absolute inset-0 bg-pattern-gold opacity-10 pointer-events-none" aria-hidden />
       <div
         aria-hidden
         className="absolute inset-0 opacity-50 pointer-events-none"
@@ -213,7 +214,7 @@ function BeneficiosGridBlock({ data }: { data: BlockData }) {
   if (!cards.length) return null;
 
   return (
-    <section className="bg-brand-black section-pad relative z-[2]">
+    <section className="bg-brand-black section-pad bg-pattern-gold bg-pattern-gold bg-pattern-gold relative z-[2]">
       <div className="container-editorial">
         <div className={cn("reveal mb-12", variant === "centered" ? "text-center mx-auto max-w-2xl" : "max-w-2xl")}>
           <span className={cn("eyebrow", variant === "centered" && "mx-auto justify-center")}>{eyebrow}</span>
@@ -421,7 +422,7 @@ function MetodoBlock({ data }: { data: BlockData }) {
   const steps = arr<{ title?: string; summary?: string; desc?: string; description?: string; detail?: string; n?: number | string }>(data.steps);
   const icons = [ShieldCheck, Sparkles, Award, ShieldCheck];
   return (
-    <section id="procedimentos" className="bg-brand-graphite section-pad relative z-[2]">
+    <section id="procedimentos" className="bg-brand-graphite section-pad bg-pattern-gold relative z-[2]">
       <div className="container-editorial">
         <div className="text-center reveal max-w-2xl mx-auto">
           <span className="eyebrow mx-auto justify-center">{eyebrow}</span>
@@ -766,7 +767,7 @@ function CursosBlock({ data }: { data: BlockData }) {
   const footnote = s(data.footnote);
   if (courses.length === 0) return null;
   return (
-    <section id="cursos" className="bg-brand-bordeaux section-pad relative z-[2]">
+    <section id="cursos" className="bg-brand-bordeaux section-pad bg-pattern-gold relative z-[2]">
       <div className="container-editorial">
         <div className="grid lg:grid-cols-[1fr_2fr] gap-10 lg:gap-16">
           <div className="reveal">
