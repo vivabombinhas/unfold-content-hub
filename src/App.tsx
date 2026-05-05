@@ -14,6 +14,7 @@ import PagesList from "./pages/admin/PagesList.tsx";
 import PageEditor from "./pages/admin/PageEditor.tsx";
 import NewPageFromTopic from "./pages/admin/NewPageFromTopic.tsx";
 import PageCreationWizard from "./pages/admin/PageCreationWizard.tsx";
+import Settings from "./pages/admin/Settings.tsx";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="paginas/nova" element={<PageCreationWizard />} />
             <Route path="paginas/nova-legado" element={<NewPageFromTopic />} />
             <Route path="paginas/:slug" element={<PageEditor />} />
+            <Route path="configuracoes" element={<Settings />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
