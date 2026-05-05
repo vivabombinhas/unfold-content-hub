@@ -304,21 +304,37 @@ function ProcedimentoDetalhadoV2Block({ data }: { data: BlockData }) {
             )}
           </div>
 
-          <div className="space-y-4">
-            {sideCards.map((card, i) => (
-              <div key={i} className="reveal bg-brand-cream-2 border border-brand-gold/15 p-7 md:p-8">
-                <div className="flex gap-4 items-start">
-                  <div className="size-10 rounded-full bg-brand-gold/10 flex items-center justify-center shrink-0 mt-1">
-                    <CheckCircle2 className="size-5 text-brand-gold" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-xl leading-tight mb-2 text-brand-text-dark">{s(card.title)}</h3>
-                    <p className="text-brand-text-dark/70 text-sm leading-relaxed">{s(card.text)}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+           <div className="relative space-y-8 lg:pl-10">
+             {/* Timeline Line */}
+             <div className="absolute left-0 lg:left-10 top-2 bottom-2 w-px bg-brand-gold/20 hidden lg:block" aria-hidden />
+             
+             {sideCards.map((card, i) => (
+               <div 
+                 key={i} 
+                 style={{ transitionDelay: `${i * 150}ms` }}
+                 className="reveal relative group"
+               >
+                 {/* Number Bubble (Timeline point) */}
+                 <div className="absolute -left-4 lg:-left-14 top-0 size-8 rounded-full bg-brand-cream border border-brand-gold/30 flex items-center justify-center z-10 group-hover:bg-brand-gold group-hover:border-brand-gold transition-colors duration-500 hidden lg:flex">
+                   <span className="font-display italic text-sm text-brand-gold group-hover:text-brand-cream transition-colors duration-500">
+                     {(i + 1).toString().padStart(2, '0')}
+                   </span>
+                 </div>
+
+                 <div className="bg-brand-cream-2/50 backdrop-blur-sm border border-brand-gold/15 p-8 md:p-10 transition-all duration-500 group-hover:border-brand-gold/40 group-hover:bg-brand-cream-2/80">
+                   <div className="flex gap-5 items-start">
+                     <div className="size-12 rounded-full bg-brand-gold/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500">
+                       <CheckCircle2 className="size-6 text-brand-gold" strokeWidth={1} />
+                     </div>
+                     <div>
+                       <h3 className="font-display text-2xl leading-tight mb-3 text-brand-text-dark">{s(card.title)}</h3>
+                       <p className="text-brand-text-dark/70 text-[15px] leading-relaxed">{s(card.text)}</p>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
         </div>
       </div>
     </section>
