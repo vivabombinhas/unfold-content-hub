@@ -237,15 +237,41 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
                         </div>
                       )}
                       {selectedSection.target_type === "procedimento_detalhado_v2" && (
-                        <div className="space-y-3">
-                          <span className="text-[10px] text-brand-gold uppercase block">Destaques ({selectedSection.data.side_cards?.length})</span>
-                          <p className="text-[11px] text-brand-text-muted line-clamp-2">{selectedSection.data.paragraphs?.[0]}</p>
-                          <div className="grid grid-cols-1 gap-2">
-                            {selectedSection.data.side_cards?.map((c: any, i: number) => (
-                              <div key={i} className="text-[11px] border-l border-brand-gold/30 pl-2 py-1">
-                                <strong className="text-brand-text-light">{c.title}:</strong> <span className="text-brand-text-muted">{c.text}</span>
-                              </div>
-                            ))}
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-[10px] text-brand-gold uppercase tracking-wider">Descrição Principal</Label>
+                            <Textarea 
+                              value={selectedSection.data.paragraphs?.[0] || ""} 
+                              onChange={e => {
+                                const paras = [...(selectedSection.data.paragraphs || [])];
+                                paras[0] = e.target.value;
+                                updateSelectedData("paragraphs", paras);
+                              }}
+                              className="bg-brand-graphite/60 border-brand-gold/10 text-[11px] min-h-[80px]"
+                            />
+                          </div>
+
+                          <div className="space-y-3">
+                            <Label className="text-[10px] text-brand-gold uppercase tracking-wider block">Cards Laterais ({selectedSection.data.side_cards?.length})</Label>
+                            <div className="grid grid-cols-1 gap-3">
+                              {selectedSection.data.side_cards?.map((c: any, i: number) => (
+                                <div key={i} className="space-y-2 p-3 bg-brand-graphite/20 rounded border border-brand-gold/5">
+                                  <Input 
+                                    value={c.title || ""} 
+                                    onChange={e => updateCard(i, "title", e.target.value)}
+                                    className="bg-transparent border-none p-0 h-auto font-bold text-xs focus-visible:ring-0"
+                                    placeholder="Título do destaque"
+                                  />
+                                  <Textarea 
+                                    value={c.text || ""} 
+                                    onChange={e => updateCard(i, "text", e.target.value)}
+                                    className="bg-transparent border-none p-0 min-h-0 text-[11px] text-brand-text-muted focus-visible:ring-0 resize-none"
+                                    placeholder="Texto do destaque"
+                                    rows={2}
+                                  />
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       )}
