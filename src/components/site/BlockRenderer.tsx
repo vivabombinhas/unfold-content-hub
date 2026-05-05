@@ -186,9 +186,9 @@ function HeroBlock({ data }: { data: BlockData }) {
           )}
         </div>
         {imageUrl && (
-          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none" style={{ transitionDelay: "400ms" }}>
-            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group">
-              <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" loading="eager" />
+           <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none parallax-subtle" style={{ transitionDelay: "400ms" }}>
+             <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group border border-brand-gold/10">
+               <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[4s] group-hover:scale-110" loading="eager" />
               <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
             </div>
             <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
@@ -749,10 +749,10 @@ function EquipeBlock({ data }: { data: BlockData }) {
   return (
     <section id="equipe" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
       <div className="container-editorial grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-16 items-center">
-        {imageUrl && (
-          <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none">
-            <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2">
-              <img src={imageUrl} alt={titleHtml.replace(/<[^>]+>/g, "")} className="w-full h-full object-cover" loading="lazy" />
+         {imageUrl && (
+           <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none parallax-subtle">
+             <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2 border border-brand-gold/10 shadow-soft">
+               <img src={imageUrl} alt={titleHtml.replace(/<[^>]+>/g, "")} className="w-full h-full object-cover transition-transform duration-[4s] hover:scale-105" loading="lazy" />
             </div>
             <span className="absolute bottom-4 left-4 right-4 bg-brand-green text-brand-text-light px-5 py-3 text-[10px] font-body uppercase tracking-[0.2em]">{registerLabel}</span>
           </div>
