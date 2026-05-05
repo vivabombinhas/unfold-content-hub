@@ -233,6 +233,7 @@
   .reveal.is-visible {
     opacity: 1;
     transform: translateY(0);
+  }
 
   .marquee-infinite {
     display: flex;
@@ -253,22 +254,7 @@
 /* Keyframes */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0);
-  }
-
-  .marquee-infinite {
-    display: flex;
-    width: max-content;
-    animation: marquee-scroll var(--duration, 40s) linear infinite;
-  }
-
-  .marquee-infinite:hover {
-    animation-play-state: paused;
-  }
-
-  @keyframes marquee-scroll {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); } }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes shimmer {
   0% { background-position: -200% 0; }
