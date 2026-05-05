@@ -225,7 +225,7 @@ function BeneficiosGridBlock({ data }: { data: BlockData }) {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {cards.map((card, i) => (
-            <div key={i} className="reveal group bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 hover:border-brand-gold/40 transition-all duration-500">
+            <div key={i} style={{ transitionDelay:  }} className="reveal group bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 hover:border-brand-gold/40 transition-all duration-500">
               <div className="flex flex-col h-full">
                 <Sparkles className="size-6 text-brand-gold/60 mb-6" strokeWidth={1} />
                 <h3 className="font-display text-2xl leading-tight mb-4">{s(card.title)}</h3>
@@ -434,7 +434,7 @@ function MetodoBlock({ data }: { data: BlockData }) {
             const Icon = icons[i % icons.length];
             const n = String(step.n ?? i + 1).padStart(2, "0");
             return (
-              <article key={i} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
+              <article key={i} style={{ transitionDelay:  }} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
                 <div className="flex items-start justify-between gap-4">
                   <span className="font-display italic text-brand-gold text-xl md:text-2xl">{n}</span>
                   <Icon className="size-6 text-brand-gold/70" strokeWidth={1.3} />
@@ -786,8 +786,8 @@ function CursosBlock({ data }: { data: BlockData }) {
             {footnote && <p className="mt-4 text-brand-text-muted text-sm">{footnote}</p>}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map((c) => (
-              <article key={c.id} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
+            {courses.map((c, i) => (
+              <article key={c.id} style={{ transitionDelay:  }} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
                 <GraduationCap className="size-7 text-brand-gold" strokeWidth={1.3} />
                 <h3 className="font-display text-xl mt-5 leading-snug">{c.title}</h3>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-brand-gold mt-3">{c.audience}</p>
