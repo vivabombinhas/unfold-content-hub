@@ -1,0 +1,69 @@
+function HeroBlock({ data }: { data: BlockData }) {
+  const eyebrow = s(data.eyebrow, "Estética Batel · Curitiba");
+  const titleHtml = firstS([data.title_html, data.title], "Tratamento <em>personalizado</em>.");
+  const paragraph = firstS([data.paragraph, data.subtitle, data.description]);
+  const imageUrl = s(data.image_url);
+  const captionTop = s(data.caption_top);
+  const captionBottom = s(data.caption_bottom);
+  const footnote = s(data.footnote, "Resposta em até 30 minutos · Atendimento confidencial");
+  
+  const ctaPrimary = readCta(
+    data.cta_primary ?? { label: data.cta_label, href: data.cta_href },
+    { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" },
+  );
+  const ctaSecondary = readCta(data.cta_secondary, { label: "Avaliação clínica", href: "#avaliacao" });
+
+  return (
+    <section className="relative overflow-hidden bg-brand-black">
+      <div className="absolute inset-0 bg-pattern-gold opacity-10 pointer-events-none" aria-hidden />
+      <div
+        aria-hidden
+        className="absolute inset-0 opacity-50 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 50% at 80% 20%, hsl(41 49% 58% / 0.12), transparent 60%), radial-gradient(ellipse 60% 50% at 0% 100%, hsl(168 59% 9% / 0.6), transparent 60%)",
+        }}
+      />
+      <div className="container-editorial relative z-[2] grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-20 items-center pt-16 pb-20 md:pt-24 md:pb-28 lg:py-32">
+        <div className="space-y-8">
+          <div className="reveal" style={{ transitionDelay: "100ms" }}>
+            <span className="eyebrow">{eyebrow}</span>
+          </div>
+          <h1 className="h-display-1 text-balance reveal" style={{ transitionDelay: "200ms" }} dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule reveal" style={{ transitionDelay: "300ms" }} />
+          {paragraph && (
+            <p className="text-brand-text-soft text-base md:text-[17px] leading-[1.75] max-w-xl text-pretty reveal" style={{ transitionDelay: "400ms" }}>{paragraph}</p>
+          )}
+          <div className="flex flex-wrap gap-3 reveal" style={{ transitionDelay: "500ms" }}>
+            <GoldButton as="a" href={ctaPrimary.href} withArrow size="lg">
+              <MessageCircle className="size-4" /> {ctaPrimary.label}
+            </GoldButton>
+            <GoldButton as="a" href={ctaSecondary.href} variant="outline-light" size="lg" withArrow>
+              {ctaSecondary.label}
+            </GoldButton>
+          </div>
+          {footnote && (
+            <p className="text-[11px] tracking-[0.2em] uppercase text-brand-text-muted reveal" style={{ transitionDelay: "600ms" }}>{footnote}</p>
+          )}
+        </div>
+        {imageUrl && (
+          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none" style={{ transitionDelay: "400ms" }}>
+            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group">
+              <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" loading="eager" />
+              <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
+            </div>
+            <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
+              <Medal size={130} floating className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]" />
+            </div>
+            {(captionTop || captionBottom) && (
+              <div className="absolute bottom-5 left-5 right-5">
+                {captionTop && <p className="text-[10px] uppercase tracking-[0.22em] text-brand-gold">{captionTop}</p>}
+                {captionBottom && <p className="font-display italic text-xl text-brand-text-light mt-1">{captionBottom}</p>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

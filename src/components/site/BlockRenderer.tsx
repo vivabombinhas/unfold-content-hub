@@ -141,7 +141,7 @@ function HeroBlock({ data }: { data: BlockData }) {
   const captionTop = s(data.caption_top);
   const captionBottom = s(data.caption_bottom);
   const footnote = s(data.footnote, "Resposta em até 30 minutos · Atendimento confidencial");
-  // Suporta tanto cta_primary={label,href} quanto cta_label/cta_href soltos.
+  
   const ctaPrimary = readCta(
     data.cta_primary ?? { label: data.cta_label, href: data.cta_href },
     { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" },
@@ -150,6 +150,7 @@ function HeroBlock({ data }: { data: BlockData }) {
 
   return (
     <section className="relative overflow-hidden bg-brand-black">
+      <div className="absolute inset-0 bg-pattern-gold opacity-10 pointer-events-none" aria-hidden />
       <div
         aria-hidden
         className="absolute inset-0 opacity-50 pointer-events-none"
@@ -159,14 +160,16 @@ function HeroBlock({ data }: { data: BlockData }) {
         }}
       />
       <div className="container-editorial relative z-[2] grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-20 items-center pt-16 pb-20 md:pt-24 md:pb-28 lg:py-32">
-        <div className="reveal">
-          <span className="eyebrow">{eyebrow}</span>
-          <h1 className="h-display-1 mt-6 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
-          <span className="gold-rule mt-7" />
+        <div className="space-y-8">
+          <div className="reveal" style={{ transitionDelay: "100ms" }}>
+            <span className="eyebrow">{eyebrow}</span>
+          </div>
+          <h1 className="h-display-1 text-balance reveal" style={{ transitionDelay: "200ms" }} dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className="gold-rule reveal" style={{ transitionDelay: "300ms" }} />
           {paragraph && (
-            <p className="mt-7 text-brand-text-soft text-base md:text-[17px] leading-[1.75] max-w-xl text-pretty">{paragraph}</p>
+            <p className="text-brand-text-soft text-base md:text-[17px] leading-[1.75] max-w-xl text-pretty reveal" style={{ transitionDelay: "400ms" }}>{paragraph}</p>
           )}
-          <div className="mt-10 flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 reveal" style={{ transitionDelay: "500ms" }}>
             <GoldButton as="a" href={ctaPrimary.href} withArrow size="lg">
               <MessageCircle className="size-4" /> {ctaPrimary.label}
             </GoldButton>
@@ -175,13 +178,13 @@ function HeroBlock({ data }: { data: BlockData }) {
             </GoldButton>
           </div>
           {footnote && (
-            <p className="mt-6 text-[11px] tracking-[0.2em] uppercase text-brand-text-muted">{footnote}</p>
+            <p className="text-[11px] tracking-[0.2em] uppercase text-brand-text-muted reveal" style={{ transitionDelay: "600ms" }}>{footnote}</p>
           )}
         </div>
         {imageUrl && (
-          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none">
-            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative">
-              <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover" loading="eager" />
+          <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none" style={{ transitionDelay: "400ms" }}>
+            <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group">
+              <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[3s] group-hover:scale-105" loading="eager" />
               <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
             </div>
             <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
@@ -200,6 +203,7 @@ function HeroBlock({ data }: { data: BlockData }) {
   );
 }
 
+
 /* ============================================================
    BENEFÍCIOS GRID (Premium)
    ============================================================ */
@@ -213,7 +217,7 @@ function BeneficiosGridBlock({ data }: { data: BlockData }) {
   if (!cards.length) return null;
 
   return (
-    <section className="bg-brand-black section-pad relative z-[2]">
+    <section className="bg-brand-black section-pad bg-pattern-gold bg-pattern-gold bg-pattern-gold relative z-[2]">
       <div className="container-editorial">
         <div className={cn("reveal mb-12", variant === "centered" ? "text-center mx-auto max-w-2xl" : "max-w-2xl")}>
           <span className={cn("eyebrow", variant === "centered" && "mx-auto justify-center")}>{eyebrow}</span>
@@ -224,7 +228,7 @@ function BeneficiosGridBlock({ data }: { data: BlockData }) {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {cards.map((card, i) => (
-            <div key={i} className="reveal group bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 hover:border-brand-gold/40 transition-all duration-500">
+            <div key={i} style={{ transitionDelay:  }} className="reveal group bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 hover:border-brand-gold/40 transition-all duration-500">
               <div className="flex flex-col h-full">
                 <Sparkles className="size-6 text-brand-gold/60 mb-6" strokeWidth={1} />
                 <h3 className="font-display text-2xl leading-tight mb-4">{s(card.title)}</h3>
@@ -421,7 +425,7 @@ function MetodoBlock({ data }: { data: BlockData }) {
   const steps = arr<{ title?: string; summary?: string; desc?: string; description?: string; detail?: string; n?: number | string }>(data.steps);
   const icons = [ShieldCheck, Sparkles, Award, ShieldCheck];
   return (
-    <section id="procedimentos" className="bg-brand-graphite section-pad relative z-[2]">
+    <section id="procedimentos" className="bg-brand-graphite section-pad bg-pattern-gold relative z-[2]">
       <div className="container-editorial">
         <div className="text-center reveal max-w-2xl mx-auto">
           <span className="eyebrow mx-auto justify-center">{eyebrow}</span>
@@ -433,7 +437,7 @@ function MetodoBlock({ data }: { data: BlockData }) {
             const Icon = icons[i % icons.length];
             const n = String(step.n ?? i + 1).padStart(2, "0");
             return (
-              <article key={i} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
+              <article key={i} style={{ transitionDelay:  }} className="reveal bg-brand-black/60 border border-brand-gold/15 p-7 md:p-9 hover:border-brand-gold/40 transition-colors">
                 <div className="flex items-start justify-between gap-4">
                   <span className="font-display italic text-brand-gold text-xl md:text-2xl">{n}</span>
                   <Icon className="size-6 text-brand-gold/70" strokeWidth={1.3} />
@@ -673,23 +677,30 @@ function AIOpinionsBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Reputação digital · LLMs");
   const titleHtml = firstS([data.title_html, data.title], "O que as principais <em>inteligências artificiais</em> dizem sobre nós.");
   const subtitle = s(data.subtitle, "Quando ChatGPT, Claude, Gemini, Perplexity e Grok são consultadas sobre clínicas de estética em Curitiba, este é o consenso.");
+  
   if (aiOpinions.length === 0) return null;
+
+  // Duplicar para o marquee
+  const displayItems = [...aiOpinions, ...aiOpinions];
+
   return (
     <section className="bg-brand-cream text-brand-text-dark section-pad relative z-[2] overflow-hidden">
-      <div className="container-editorial">
-        <div className="reveal max-w-2xl mb-12">
+      <div className="absolute inset-0 bg-radial-blur opacity-50 pointer-events-none" aria-hidden />
+      <div className="container-editorial relative z-10">
+        <div className="reveal max-w-2xl mb-14">
           <span className="eyebrow" style={{ color: "hsl(var(--gold-deep))" }}>{eyebrow}</span>
           <h2 className="h-display-2 mt-5 text-brand-text-dark text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
           <span className="gold-rule mt-7" />
           {subtitle && <p className="mt-6 text-brand-text-dark/70 leading-relaxed">{subtitle}</p>}
         </div>
       </div>
-      <div className="overflow-x-auto scrollbar-hide pb-6">
-        <div className="flex gap-5 px-[max(20px,5vw)] snap-x snap-mandatory">
-          {aiOpinions.map((o) => (
-            <article key={o.id} className="snap-start shrink-0 w-[88vw] sm:w-[460px] bg-brand-text-dark text-brand-text-light p-8 md:p-9 border border-brand-gold/30 flex flex-col">
+      
+      <div className="relative flex overflow-hidden">
+        <div className="marquee-infinite gap-6 px-4" style={{ "--duration": "80s" } as React.CSSProperties}>
+          {displayItems.map((o, i) => (
+            <article key={`${o.id}-${i}`} className="shrink-0 w-[300px] md:w-[460px] bg-brand-text-dark text-brand-text-light p-8 md:p-10 border border-brand-gold/30 flex flex-col transition-all duration-500 hover:border-brand-gold hover:shadow-2xl">
               <div className="flex items-center justify-between">
-                <span className="font-display text-3xl text-brand-gold">{o.ai_name}</span>
+                <span className="font-display text-2xl md:text-3xl text-brand-gold">{o.ai_name}</span>
                 <span className="text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">{o.company}</span>
               </div>
               <span className="gold-rule mt-5" />
@@ -703,6 +714,7 @@ function AIOpinionsBlock({ data }: { data: BlockData }) {
     </section>
   );
 }
+
 
 /* ============================================================
    EQUIPE RT
@@ -766,7 +778,7 @@ function CursosBlock({ data }: { data: BlockData }) {
   const footnote = s(data.footnote);
   if (courses.length === 0) return null;
   return (
-    <section id="cursos" className="bg-brand-bordeaux section-pad relative z-[2]">
+    <section id="cursos" className="bg-brand-bordeaux section-pad bg-pattern-gold relative z-[2]">
       <div className="container-editorial">
         <div className="grid lg:grid-cols-[1fr_2fr] gap-10 lg:gap-16">
           <div className="reveal">
@@ -777,8 +789,8 @@ function CursosBlock({ data }: { data: BlockData }) {
             {footnote && <p className="mt-4 text-brand-text-muted text-sm">{footnote}</p>}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map((c) => (
-              <article key={c.id} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
+            {courses.map((c, i) => (
+              <article key={c.id} style={{ transitionDelay:  }} className="reveal group bg-brand-black/40 border border-brand-gold/15 p-7 hover:border-brand-gold/50 hover:bg-brand-black/60 transition-all duration-500">
                 <GraduationCap className="size-7 text-brand-gold" strokeWidth={1.3} />
                 <h3 className="font-display text-xl mt-5 leading-snug">{c.title}</h3>
                 <p className="text-[10px] uppercase tracking-[0.18em] text-brand-gold mt-3">{c.audience}</p>
@@ -835,21 +847,25 @@ function CtaFinalBlock({ data }: { data: BlockData }) {
   const paragraph = firstS([data.paragraph, data.subtitle, data.body], "Avaliação clínica individual, sem compromisso, com a responsável técnica.");
   const ctaPrimary = readCta(data.cta_primary, { label: "Agendar pelo WhatsApp", href: "https://wa.me/5541999999999" });
   const ctaSecondary = readCta(data.cta_secondary, { label: "(41) 9999-9999", href: "tel:+554199999999" });
+  
   return (
-    <section id="avaliacao" className="bg-brand-green section-pad relative z-[2] overflow-hidden">
-      <div aria-hidden className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 100%, hsl(41 49% 58% / 0.2), transparent 70%)" }} />
-      <div className="container-editorial relative z-[2] max-w-3xl mx-auto text-center">
-        <Medal size={120} floating className="mx-auto" />
-        <h2 className="h-display-1 mt-10 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
-        <span className="gold-rule mx-auto mt-8" />
-        <p className="mt-7 text-brand-text-soft text-lg leading-relaxed">{paragraph}</p>
-        <div className="mt-10 flex flex-wrap gap-3 justify-center">
-          <GoldButton as="a" href={ctaPrimary.href} size="lg" withArrow>
-            <MessageCircle className="size-4" /> {ctaPrimary.label}
-          </GoldButton>
-          <GoldButton as="a" href={ctaSecondary.href} size="lg" variant="outline-light">
-            <Phone className="size-4" /> {ctaSecondary.label}
-          </GoldButton>
+    <section className="bg-brand-green-2 section-pad relative z-[2] overflow-hidden">
+      <div className="absolute inset-0 bg-radial-blur opacity-30 pointer-events-none" aria-hidden />
+      <div className="container-editorial text-center relative z-10">
+        <div className="max-w-3xl mx-auto space-y-8">
+          <div className="reveal">
+            <h2 className="h-display-2 text-brand-text-light" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+            <span className="gold-rule mx-auto mt-6" />
+          </div>
+          <p className="text-brand-text-soft text-lg reveal" style={{ transitionDelay: '200ms' }}>{paragraph}</p>
+          <div className="flex flex-wrap justify-center gap-4 reveal" style={{ transitionDelay: '400ms' }}>
+            <GoldButton as="a" href={ctaPrimary.href} withArrow size="lg">
+              <MessageCircle className="size-4" /> {ctaPrimary.label}
+            </GoldButton>
+            <GoldButton as="a" href={ctaSecondary.href} variant="outline-light" size="lg">
+              <Phone className="size-4" /> {ctaSecondary.label}
+            </GoldButton>
+          </div>
         </div>
       </div>
     </section>
