@@ -191,6 +191,7 @@ export default function NewPageFromTopic() {
       // Step 1: research
       setStep("researching");
       const { data: researchData, error: researchErr } = await supabase.functions.invoke("research-topic", {
+        timeout: 60000,
         body: { tema, links_referencia: links, own_old_page: linksAreOwnOldPage && links.length > 0 },
       });
       if (researchErr) throw new Error(researchErr.message);
@@ -203,6 +204,7 @@ export default function NewPageFromTopic() {
       // Step 2: generate
       setStep("generating");
       const { data: pageData, error: pageErr } = await supabase.functions.invoke("generate-page-from-topic", {
+        timeout: 120000,
         body: {
           tema,
           slug,
