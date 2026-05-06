@@ -21,8 +21,9 @@ import {
    Download,
    Search,
    Loader2,
-   Image as ImageIcon,
- } from "lucide-react";
+    Image as ImageIcon,
+    AlertTriangle,
+  } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
