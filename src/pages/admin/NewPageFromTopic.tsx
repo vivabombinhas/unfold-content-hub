@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
- import { Sparkles, Search, Wand2, Loader2, ChevronLeft, CheckCircle2, AlertTriangle, RefreshCw, PenLine } from "lucide-react";
+import { Sparkles, Search, Wand2, Loader2, ChevronLeft, CheckCircle2, AlertTriangle, RefreshCw, PenLine } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -96,6 +96,7 @@ export default function NewPageFromTopic() {
   const [research, setResearch] = useState<ResearchData | null>(null);
   const [sources, setSources] = useState<{ url: string; title: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<{ url?: string; status?: number; message: string } | null>(null);
   const [diagnostics, setDiagnostics] = useState<ScrapeDiagnostic[]>([]);
   const [oldPageContent, setOldPageContent] = useState<OldPageContent | null>(null);
   const [confirmIntent, setConfirmIntent] = useState(false);

@@ -115,6 +115,7 @@ export default function PageEditor() {
    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
    const [extractingImages, setExtractingImages] = useState(false);
    const [scanUrl, setScanUrl] = useState("");
+   const [extractError, setExtractError] = useState<{ url: string; message: string; status?: number } | null>(null);
  
    async function handleExtractImages() {
      if (!scanUrl || !scanUrl.includes("esteticabatel.com.br")) {
