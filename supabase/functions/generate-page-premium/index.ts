@@ -142,6 +142,15 @@ REGRAS:
           { title: "Protocolo Premium", text: "Uso de tecnologias e ativos de última geração." }
         ]
       };
+      if (type === "beneficios_grid") data = {
+        eyebrow: "Diferenciais",
+        title_html: `Benefícios do <em>${name}</em>.`,
+        cards: [
+          { title: "Resultado Natural", text: "Foco na preservação da sua expressão e harmonia facial." },
+          { title: "Tecnologia de Ponta", text: "Equipamentos e insumos certificados e de alta performance." },
+          { title: "Segurança Clínica", text: "Protocolos rigorosos e acompanhamento especializado." }
+        ]
+      };
       if (type === "faq" && faqBase) data = { title: "Dúvidas Frequentes", items: faqBase.split("\n").map(q => ({ question: q, answer: "..." })) };
       
       return {

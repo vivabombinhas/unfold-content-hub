@@ -33,6 +33,7 @@ const BLOCK_ORDER = [
   "manifesto_curto",
   "metodo",
   "procedimento_detalhado",
+  "beneficios_grid",
   "casos",
   "preco_ancora",
   "depoimentos",
@@ -111,6 +112,30 @@ const generatePageSchema = {
           },
           required: ["eyebrow", "title_html", "paragraphs", "bullets"],
           additionalProperties: false,
+        },
+        beneficios_grid: {
+          type: "object",
+          properties: {
+            eyebrow: { type: "string" },
+            title_html: { type: "string" },
+            subtitle: { type: "string" },
+            cards: {
+              type: "array",
+              minItems: 3,
+              maxItems: 4,
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  text: { type: "string" }
+                },
+                required: ["title", "text"],
+                additionalProperties: false
+              }
+            }
+          },
+          required: ["eyebrow", "title_html", "cards"],
+          additionalProperties: false
         },
         metodo: {
           type: "object",
@@ -217,7 +242,7 @@ const generatePageSchema = {
           additionalProperties: false,
         },
       },
-      required: ["hero", "manifesto_curto", "metodo", "procedimento_detalhado", "preco_ancora", "cta_final", "faq_items", "collective_headers"],
+      required: ["hero", "manifesto_curto", "metodo", "procedimento_detalhado", "beneficios_grid", "preco_ancora", "cta_final", "faq_items", "collective_headers"],
       additionalProperties: false,
     },
   },
@@ -611,6 +636,9 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           break;
         case "metodo":
           data = generated.blocks.metodo;
+          break;
+        case "beneficios_grid":
+          data = generated.blocks.beneficios_grid;
           break;
         case "procedimento_detalhado":
           // Fase C: sempre vem com conteúdo. Ativo se veio da página antiga,
