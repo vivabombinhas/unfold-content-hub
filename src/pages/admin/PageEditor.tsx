@@ -22,56 +22,7 @@ import {
    Search,
    Loader2,
    Image as ImageIcon,
-   const [extractingImages, setExtractingImages] = useState(false);
-   const [scanUrl, setScanUrl] = useState("");
- 
-   async function handleExtractImages() {
-     if (!scanUrl || !scanUrl.includes("esteticabatel.com.br")) {
-       toast({ title: "URL inválida", description: "Use uma URL da clínica Batel.", variant: "destructive" });
-       return;
-     }
- 
-     setExtractingImages(true);
-     try {
-       const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
-         body: { 
-           url: scanUrl, 
-           page_title: pageMeta.title, 
-           page_category: (pageMeta.metadata?.categoria as string) || "" 
-         },
-       });
- 
-       if (error) throw error;
- 
-       const candidates = res.image_candidates || [];
-       setPageMeta(prev => ({
-         ...prev,
-         metadata: {
-           ...prev.metadata,
-           image_candidates: candidates,
-           old_url: scanUrl
-         }
-       }));
- 
-       // Auto-fill hero if a good candidate is found
-       const heroCandidate = candidates.find((c: any) => c.suggested_usage === "hero" && c.confidence_score > 0.8);
-       if (heroCandidate) {
-         const heroBlock = blocks.find(b => b.type === 'hero');
-         if (heroBlock && !heroBlock.data.image_url) {
-           markDirty(heroBlock.id, { data: { ...heroBlock.data, image_url: heroCandidate.url } });
-           toast({ title: "Imagem sugerida", description: "Identificamos uma imagem ideal para o Hero." });
-         }
-       }
- 
-       toast({ title: "Busca concluída", description: `${candidates.length} imagens encontradas.` });
-     } catch (e: any) {
-       toast({ title: "Erro na busca", description: e.message, variant: "destructive" });
-     } finally {
-       setExtractingImages(false);
-     }
-   }
- 
-} from "lucide-react";
+ } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
@@ -161,7 +112,55 @@ export default function PageEditor() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+   const [extractingImages, setExtractingImages] = useState(false);
+   const [scanUrl, setScanUrl] = useState("");
+ 
+   async function handleExtractImages() {
+     if (!scanUrl || !scanUrl.includes("esteticabatel.com.br")) {
+       toast({ title: "URL inválida", description: "Use uma URL da clínica Batel.", variant: "destructive" });
+       return;
+     }
+ 
+     setExtractingImages(true);
+     try {
+       const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
+         body: { 
+           url: scanUrl, 
+           page_title: pageMeta.title, 
+           page_category: (pageMeta.metadata?.categoria as string) || "" 
+         },
+       });
+ 
+       if (error) throw error;
+ 
+       const candidates = res.image_candidates || [];
+       setPageMeta(prev => ({
+         ...prev,
+         metadata: {
+           ...prev.metadata,
+           image_candidates: candidates,
+           old_url: scanUrl
+         }
+       }));
+ 
+       // Auto-fill hero if a good candidate is found
+       const heroCandidate = candidates.find((c: any) => c.suggested_usage === "hero" && c.confidence_score > 0.8);
+       if (heroCandidate) {
+         const heroBlock = blocks.find(b => b.type === 'hero');
+         if (heroBlock && !heroBlock.data.image_url) {
+           markDirty(heroBlock.id, { data: { ...heroBlock.data, image_url: heroCandidate.url } });
+           toast({ title: "Imagem sugerida", description: "Identificamos uma imagem ideal para o Hero." });
+         }
+       }
+ 
+       toast({ title: "Busca concluída", description: `${candidates.length} imagens encontradas.` });
+     } catch (e: any) {
+       toast({ title: "Erro na busca", description: e.message, variant: "destructive" });
+     } finally {
+       setExtractingImages(false);
+     }
+   }
 
   useEffect(() => {
     if (!data?.page) return;
