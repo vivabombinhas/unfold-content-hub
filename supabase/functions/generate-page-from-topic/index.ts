@@ -79,7 +79,35 @@ const generatePageSchema = {
           properties: {
             eyebrow: { type: "string" },
             title: { type: "string" },
-            body: { type: "string", description: "2-4 frases, voz Batel: direto, técnico-acessível." },
+            body: { type: "string", description: "Texto longo, profundo e impactante (mínimo 1500 caracteres), dividido em 4-6 parágrafos substanciais. Deve ser um manifesto real sobre a filosofia do procedimento, técnica e visão da Estética Batel, com alta qualidade literária, autoridade e sofisticação." },
+        procedimento_detalhado: {
+          type: "object",
+          properties: {
+            eyebrow: { type: "string" },
+            title_html: { type: "string" },
+            paragraphs: { 
+              type: "array", 
+              items: { type: "string" },
+              minItems: 3,
+              description: "3-5 parágrafos detalhados sobre o procedimento."
+            },
+            bullets: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  title: { type: "string" },
+                  text: { type: "string" }
+                },
+                required: ["title", "text"]
+              },
+              minItems: 4,
+              maxItems: 8
+            }
+          },
+          required: ["eyebrow", "title_html", "paragraphs", "bullets"],
+          additionalProperties: false
+        },
           },
           required: ["title", "body"],
           additionalProperties: false,
@@ -189,7 +217,7 @@ const generatePageSchema = {
           additionalProperties: false,
         },
       },
-      required: ["hero", "manifesto_curto", "metodo", "preco_ancora", "cta_final", "faq_items", "collective_headers"],
+      required: ["hero", "manifesto_curto", "metodo", "procedimento_detalhado", "preco_ancora", "cta_final", "faq_items", "collective_headers"],
       additionalProperties: false,
     },
   },
