@@ -132,7 +132,16 @@ REGRAS:
       let data: any = {};
       
       // Basic initialization for some types
-      if (type === "hero") data = { title: name, eyebrow: "Estética Batel", cta_label: "Agendar Consulta" };
+      if (type === "hero") data = { title: name, eyebrow: "Estética Batel", cta_label: "Agendar Consulta", subtitle: "Excelência e resultados naturais em Curitiba." };
+      if (type === "procedimento_detalhado") data = { 
+        eyebrow: "Como é o procedimento", 
+        title_html: `Como é, na prática, o <em>${name}</em>.`,
+        paragraphs: ["O procedimento é realizado em ambiente clínico seguro, seguindo protocolos internacionais de excelência.", "A Dra. Daniele Florencio realiza cada etapa com foco na naturalidade e no conforto do paciente."],
+        bullets: [
+          { title: "Avaliação Individual", text: "Estudo detalhado da anatomia e objetivos do paciente." },
+          { title: "Protocolo Premium", text: "Uso de tecnologias e ativos de última geração." }
+        ]
+      };
       if (type === "faq" && faqBase) data = { title: "Dúvidas Frequentes", items: faqBase.split("\n").map(q => ({ question: q, answer: "..." })) };
       
       return {
