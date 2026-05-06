@@ -239,7 +239,12 @@ function HeroBlock({ data }: { data: BlockData }) {
            )}
          </div>
  
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+        <div className={cn(
+          "grid gap-6 md:gap-10",
+          cards.length === 4 
+            ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" 
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        )}>
            {cards.map((card, i) => (
              <div 
                key={i} 
@@ -249,7 +254,10 @@ function HeroBlock({ data }: { data: BlockData }) {
                {/* Card Background & Glow Effect */}
                <div className="absolute inset-0 bg-brand-gold/5 opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-700 pointer-events-none" aria-hidden />
                
-                <div className="relative h-full bg-brand-graphite/30 backdrop-blur-md border border-brand-gold/10 p-8 md:p-12 hover:border-brand-gold/30 transition-all duration-700 flex flex-col items-start overflow-hidden group/card">
+                 <div className={cn(
+                   "relative h-full bg-brand-graphite/30 backdrop-blur-md border border-brand-gold/10 transition-all duration-700 flex flex-col items-start overflow-hidden group/card",
+                   cards.length === 4 ? "p-6 md:p-8 xl:p-10" : "p-8 md:p-12"
+                 )}>
                  {/* Decorative background number */}
                   <span className="absolute -bottom-4 -right-2 md:-bottom-6 md:-right-4 font-display italic text-7xl md:text-8xl text-brand-gold/5 select-none pointer-events-none group-hover:text-brand-gold/10 transition-colors duration-700">
                    {(i + 1).toString().padStart(2, '0')}
