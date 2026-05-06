@@ -531,49 +531,33 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       typeof sec?.body === "string" && sec.body.trim().length > 120
     );
 
-     let procedimentoDetalhadoData: { eyebrow: string; title_html: string; paragraphs: string[]; bullets: string[] };
-    let procedimentoDetalhadoEnabled = false;
-     if (detailedSection) {
-       procedimentoDetalhadoData = {
-         eyebrow: "Como é o procedimento",
-         title_html: detailedSection.title || "Como é o procedimento",
-         paragraphs: (detailedSection.body || "")
-           .split(/\n\s*\n/)
-           .map((p: string) => p.trim())
-           .filter((p: string) => p.length > 0)
-           .slice(0, 6),
-         bullets: Array.isArray((detailedSection as any).bullets)
-             ? (detailedSection as any).bullets.map((b: any) => {
-                 if (typeof b === 'object' && b !== null && b.title && b.text) {
-                   return { title: b.title, text: b.text };
-                 }
-                 // Fallback para caso a estrutura antiga ainda esteja em cache ou venha errada
-                 const str = String(b);
-                 const hasColon = str.includes(":");
-                 return {
-                   title: hasColon ? str.split(":")[0].trim() : "Destaque",
-                   text: hasColon ? str.split(":").slice(1).join(":").trim() : str.trim()
-                 };
-               }).slice(0, 8)
-           : [],
-       };
-       procedimentoDetalhadoEnabled = true;
-     } else {
-      // Fallback: monta um esboço a partir do manifesto e dos detalhes do método.
-      const manifestoBody = (generated.blocks?.manifesto_curto?.body as string | undefined) || "";
-      const stepDetails = (generated.blocks?.metodo?.steps || [])
-        .map((s: { title?: string; detail?: string }) => s?.detail)
-        .filter((d: unknown): d is string => typeof d === "string" && d.trim().length > 0);
-      const seedParagraphs = [manifestoBody, ...stepDetails]
-        .filter((p) => p && p.trim().length > 0)
-        .slice(0, 4);
+    let procedimentoDetalhadoData = generated.blocks.procedimento_detalhado;
+    let procedimentoDetalhadoEnabled = true; // Agora habilitado por padrão pois a IA gera conteúdo de qualidade
+
+    // Se houver conteúdo real da página antiga, ele ainda tem prioridade total
+    if (detailedSection) {
       procedimentoDetalhadoData = {
         eyebrow: "Como é o procedimento",
-        title_html: "Como é, na prática, esse <em>procedimento</em>.",
-        paragraphs: seedParagraphs,
-        bullets: [],
+        title_html: detailedSection.title || "Como é o procedimento",
+        paragraphs: (detailedSection.body || "")
+          .split(/\n\s*\n/)
+          .map((p: string) => p.trim())
+          .filter((p: string) => p.length > 0)
+          .slice(0, 6),
+        bullets: Array.isArray((detailedSection as any).bullets)
+          ? (detailedSection as any).bullets.map((b: any) => {
+              if (typeof b === 'object' && b !== null && b.title && b.text) {
+                return { title: b.title, text: b.text };
+              }
+              const str = String(b);
+              const hasColon = str.includes(":");
+              return {
+                title: hasColon ? str.split(":")[0].trim() : "Destaque",
+                text: hasColon ? str.split(":").slice(1).join(":").trim() : str.trim()
+              };
+            }).slice(0, 8)
+          : [],
       };
-      procedimentoDetalhadoEnabled = false;
     }
 
     const candidateImages = (oldPageContent?.images || [])
