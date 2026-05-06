@@ -179,6 +179,7 @@ export default function NewPageFromTopic() {
 
   const runFlow = async (allowAiOnlyFallback: boolean) => {
     setError(null);
+    setErrorDetail(null);
     if (tema.trim().length < 3) {
       toast({ title: "Tema muito curto", variant: "destructive" });
       return;
@@ -235,6 +236,11 @@ export default function NewPageFromTopic() {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Erro desconhecido";
       setError(msg);
+      setErrorDetail({
+        url: links[0] || undefined,
+        status: (e as any).status,
+        message: msg
+      });
       setStep("error");
       toast({ title: "Falhou", description: msg, variant: "destructive" });
     }
@@ -389,8 +395,36 @@ export default function NewPageFromTopic() {
         </div>
 
         {error && (
-          <div className="border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
+          <div className="border border-brand-bordeaux/30 bg-brand-bordeaux/5 p-5 rounded-lg space-y-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 text-brand-bordeaux">
+              <AlertTriangle className="size-5" />
+              <h3 className="font-display text-sm uppercase tracking-widest font-bold">Erro no Processamento</h3>
+            </div>
+            
+            <div className="space-y-2 text-xs font-mono">
+              {errorDetail?.url && (
+                <p className="text-brand-text-light truncate">
+                  <span className="text-brand-text-muted">Target:</span> {errorDetail.url}
+                </p>
+              )}
+              {errorDetail?.status && (
+                <p className="text-brand-text-light">
+                  <span className="text-brand-text-muted">Status:</span> {errorDetail.status}
+                </p>
+              )}
+              <div className="bg-brand-black/40 p-3 rounded border border-brand-bordeaux/20 text-brand-bordeaux break-words whitespace-pre-wrap leading-relaxed">
+                {errorDetail?.message || error}
+              </div>
+            </div>
+            
+            <div className="pt-2 flex gap-3">
+              <Button variant="outline" size="sm" onClick={handleStart} className="h-8 text-[10px] uppercase tracking-wider border-brand-gold/20 text-brand-text-light">
+                Tentar Novamente
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setStep("form")} className="h-8 text-[10px] uppercase tracking-wider text-brand-text-muted">
+                Ajustar URL/Tema
+              </Button>
+            </div>
           </div>
         )}
 

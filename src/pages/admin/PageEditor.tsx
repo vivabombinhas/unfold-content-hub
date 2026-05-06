@@ -124,6 +124,7 @@ export default function PageEditor() {
      }
  
      setExtractingImages(true);
+     setExtractError(null);
      try {
         const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
           timeout: 60000,
@@ -157,9 +158,14 @@ export default function PageEditor() {
        }
  
        toast({ title: "Busca concluída", description: `${candidates.length} imagens encontradas.` });
-     } catch (e: any) {
-       toast({ title: "Erro na busca", description: e.message, variant: "destructive" });
-     } finally {
+      } catch (e: any) {
+        setExtractError({
+          url: scanUrl,
+          message: e.message || "Erro desconhecido na Edge Function",
+          status: e.status
+        });
+        toast({ title: "Erro na busca", description: e.message, variant: "destructive" });
+      } finally {
        setExtractingImages(false);
      }
    }
@@ -693,9 +699,28 @@ export default function PageEditor() {
                        >
                          {extractingImages ? <Loader2 className="size-3 animate-spin" /> : <Search className="size-3" />}
                        </Button>
-                     </div>
- 
-                     {(() => {
+                      </div>
+
+                      {extractError && (
+                        <div className="mt-4 p-3 bg-brand-bordeaux/10 border border-brand-bordeaux/20 rounded-lg animate-in fade-in slide-in-from-top-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className="size-4 text-brand-bordeaux" />
+                            <span className="text-xs font-bold uppercase tracking-widest text-brand-bordeaux">Falha na Extração</span>
+                          </div>
+                          <div className="space-y-1 text-[11px] font-mono">
+                            <p className="text-brand-text-light truncate"><span className="text-brand-text-muted">URL:</span> {extractError.url}</p>
+                            {extractError.status && <p className="text-brand-text-light"><span className="text-brand-text-muted">Status:</span> {extractError.status}</p>}
+                            <p className="text-brand-bordeaux bg-brand-bordeaux/5 p-2 rounded border border-brand-bordeaux/10 break-words whitespace-pre-wrap mt-2">
+                              {extractError.message}
+                            </p>
+                            <p className="text-[10px] text-brand-text-muted mt-2">
+                              Dica: Verifique se a URL está acessível ou se há bloqueio de bot (WAF).
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {(() => {
                        const meta = pageMeta.metadata as Record<string, unknown>;
                        const candidates = Array.isArray(meta?.image_candidates) 
                          ? (meta.image_candidates as any[]) 
