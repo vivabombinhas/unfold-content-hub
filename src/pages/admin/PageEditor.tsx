@@ -124,7 +124,8 @@ export default function PageEditor() {
  
      setExtractingImages(true);
      try {
-       const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
+        const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
+          headers: { "x-request-timeout": "60000" },
          body: { 
            url: scanUrl, 
            page_title: pageMeta.title, 
