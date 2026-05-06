@@ -87,7 +87,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
 
       if (mode === "vision") {
         const response = await supabase.functions.invoke("scanner-vision-v1", {
-          headers: { "x-request-timeout": "60000" },
+          timeout: 60000,
           body: { 
             image: visionImage,
             text: source,
@@ -98,7 +98,7 @@ export function ImportBlockModal({ open, onOpenChange, onImport, pageTitle, page
         error = response.error;
       } else {
         const response = await supabase.functions.invoke("scanner-v1", {
-          headers: { "x-request-timeout": "60000" },
+          timeout: 60000,
           body: { 
             url: mode === "url" ? source : null,
             text: mode === "text" ? source : null,
