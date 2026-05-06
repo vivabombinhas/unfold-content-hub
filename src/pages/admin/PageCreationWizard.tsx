@@ -32,7 +32,7 @@ const ALL_BLOCKS: BlockType[] = [
   "authority_strip",
   "manifesto_curto",
   "metodo",
-  "procedimento_detalhado_v2",
+  "procedimento_detalhado",
   "beneficios_grid",
   "casos",
   "preco_ancora",
