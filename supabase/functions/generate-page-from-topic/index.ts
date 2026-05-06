@@ -78,7 +78,7 @@ const generatePageSchema = {
           type: "object",
           properties: {
             eyebrow: { type: "string" },
-            title: { type: "string" },
+            title: { type: "string", description: "Frase de impacto curta (até 15 palavras) que resume o manifesto. Serve como o texto visível na página principal." },
             body: { type: "string", description: "Texto longo, profundo e impactante (mínimo 1500 caracteres), dividido em 4-6 parágrafos substanciais. Deve ser um manifesto real sobre a filosofia do procedimento, técnica e visão da Estética Batel, com alta qualidade literária, autoridade e sofisticação." },
           },
           required: ["title", "body"],
