@@ -259,7 +259,7 @@ export default function NewPageFromTopic() {
         Nova página por tema
       </h1>
       <p className="text-sm text-brand-text-muted mt-1 mb-8">
-        A IA pesquisa o tema na web, segue o tom da página Botox Masculino e gera os 11 blocos como rascunho.
+        A IA pesquisa o tema na web, segue o tom da página Botox Masculino e gera os 14 blocos como rascunho.
       </p>
 
       <div className="space-y-5">
@@ -399,7 +399,7 @@ export default function NewPageFromTopic() {
               done={step === "done"}
               active={step === "generating"}
               icon={Wand2}
-              label="Geração dos 11 blocos (IA)"
+              label="Geração dos 14 blocos (IA)"
             />
           </div>
         )}
