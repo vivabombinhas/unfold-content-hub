@@ -239,7 +239,12 @@ function HeroBlock({ data }: { data: BlockData }) {
            )}
          </div>
  
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+        <div className={cn(
+          "grid gap-6 md:gap-10",
+          cards.length === 4 
+            ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" 
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        )}>
            {cards.map((card, i) => (
              <div 
                key={i} 
