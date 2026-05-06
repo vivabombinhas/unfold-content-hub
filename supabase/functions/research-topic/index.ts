@@ -6,8 +6,7 @@
 //  2. Web-search top questions/articles about the theme via Firecrawl
 //  3. Pass everything to Lovable AI which returns structured JSON via tool calling
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -114,8 +113,10 @@ function truncate(s: string | null | undefined, n: number) {
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+ Deno.serve(async (req) => {
+   if (req.method === 'OPTIONS') {
+     return new Response('ok', { headers: corsHeaders })
+   }
 
   try {
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
@@ -130,7 +131,7 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization") || "";
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
-    });
+ });
     const { data: userData } = await userClient.auth.getUser();
     if (!userData?.user) {
       return new Response(JSON.stringify({ error: "Não autenticado" }), {
