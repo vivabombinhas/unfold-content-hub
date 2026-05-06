@@ -228,18 +228,18 @@ function HeroBlock({ data }: { data: BlockData }) {
        <div className="absolute -bottom-24 -left-24 size-96 bg-brand-gold/5 blur-[120px] rounded-full pointer-events-none" aria-hidden />
  
        <div className="container-editorial relative z-10">
-         <div className={cn("reveal mb-16", variant === "centered" ? "text-center mx-auto max-w-3xl" : "max-w-3xl")}>
+        <div className={cn("reveal mb-10 md:mb-16", variant === "centered" ? "text-center mx-auto max-w-3xl" : "max-w-3xl")}>
            <span className={cn("eyebrow", variant === "centered" && "mx-auto justify-center")}>{eyebrow}</span>
-           <h2 className="h-display-2 mt-6 text-balance leading-[1.1]" dangerouslySetInnerHTML={{ __html: titleHtml }} />
-           <span className={cn("gold-rule mt-8", variant === "centered" && "mx-auto")} />
+          <h2 className="h-display-2 mt-4 md:mt-6 text-balance leading-[1.1]" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+          <span className={cn("gold-rule mt-6 md:mt-8", variant === "centered" && "mx-auto")} />
            {subtitle && (
-             <p className="mt-8 text-brand-text-soft text-lg md:text-xl leading-relaxed max-w-2xl">
+            <p className="mt-6 md:mt-8 text-brand-text-soft text-base md:text-xl leading-relaxed max-w-2xl">
                {subtitle}
              </p>
            )}
          </div>
  
-         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
            {cards.map((card, i) => (
              <div 
                key={i} 
@@ -249,23 +249,23 @@ function HeroBlock({ data }: { data: BlockData }) {
                {/* Card Background & Glow Effect */}
                <div className="absolute inset-0 bg-brand-gold/5 opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-700 pointer-events-none" aria-hidden />
                
-               <div className="relative h-full bg-brand-graphite/30 backdrop-blur-md border border-brand-gold/10 p-10 md:p-12 hover:border-brand-gold/30 transition-all duration-700 flex flex-col items-start overflow-hidden">
+                <div className="relative h-full bg-brand-graphite/30 backdrop-blur-md border border-brand-gold/10 p-8 md:p-12 hover:border-brand-gold/30 transition-all duration-700 flex flex-col items-start overflow-hidden group/card">
                  {/* Decorative background number */}
-                 <span className="absolute -bottom-6 -right-4 font-display italic text-8xl text-brand-gold/5 select-none pointer-events-none group-hover:text-brand-gold/10 transition-colors duration-700">
+                  <span className="absolute -bottom-4 -right-2 md:-bottom-6 md:-right-4 font-display italic text-7xl md:text-8xl text-brand-gold/5 select-none pointer-events-none group-hover:text-brand-gold/10 transition-colors duration-700">
                    {(i + 1).toString().padStart(2, '0')}
                  </span>
  
                  {/* Icon Container */}
-                 <div className="size-14 rounded-full bg-brand-gold/10 flex items-center justify-center mb-8 relative group-hover:scale-110 transition-transform duration-700">
+                  <div className="size-12 md:size-14 rounded-full bg-brand-gold/10 flex items-center justify-center mb-6 md:mb-8 relative group-hover:scale-110 transition-transform duration-700">
                    <div className="absolute inset-0 rounded-full border border-brand-gold/20 animate-pulse" aria-hidden />
                    <Sparkles className="size-6 text-brand-gold" strokeWidth={1} />
                  </div>
  
-                 <h3 className="font-display text-2xl md:text-3xl leading-tight mb-5 text-brand-text-light group-hover:text-brand-gold transition-colors duration-500">
+                  <h3 className="font-display text-xl md:text-3xl leading-tight mb-4 md:mb-5 text-brand-text-light group-hover:text-brand-gold transition-colors duration-500">
                    {s(card.title)}
                  </h3>
                  
-                 <p className="text-brand-text-soft leading-relaxed text-[15px] md:text-base relative z-10">
+                  <p className="text-brand-text-soft leading-relaxed text-sm md:text-base relative z-10">
                    {s(card.text)}
                  </p>
  
