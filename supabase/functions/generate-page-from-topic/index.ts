@@ -110,10 +110,6 @@ const generatePageSchema = {
             }
           },
           required: ["eyebrow", "title_html", "paragraphs", "bullets"],
-          additionalProperties: false
-        },
-          },
-          required: ["title", "body"],
           additionalProperties: false,
         },
         metodo: {
