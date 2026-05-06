@@ -35,7 +35,7 @@ const FIELD_HINTS: Record<string, string> = {
   subtitle: "Frase curta de apoio (até 14 palavras).",
   paragraph: "1-3 frases. Direto, sem hype, sem promessa garantida. Português do Brasil.",
   description: "1-2 frases descritivas, claras, sem adjetivos vagos.",
-  body: "2-4 frases, voz Batel: técnico-acessível.",
+  body: "Texto profundo, longo e sofisticado (mínimo 1000 caracteres se for manifesto). Dividido em parágrafos claros, com alta qualidade literária e autoridade.",
   quote_html: "Citação curta de 1-2 frases. Pode usar <em>...</em>.",
   long_text: "3-5 parágrafos curtos para um side-sheet. HTML simples permitido (<p>, <strong>).",
   bio: "2-4 frases biográficas, terceira pessoa, sem superlativos.",
