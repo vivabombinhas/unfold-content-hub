@@ -19,7 +19,10 @@ import {
    Plus,
    Trash2,
    Download,
-} from "lucide-react";
+   Search,
+   Loader2,
+   Image as ImageIcon,
+ } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
@@ -109,7 +112,55 @@ export default function PageEditor() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+   const [extractingImages, setExtractingImages] = useState(false);
+   const [scanUrl, setScanUrl] = useState("");
+ 
+   async function handleExtractImages() {
+     if (!scanUrl || !scanUrl.includes("esteticabatel.com.br")) {
+       toast({ title: "URL inválida", description: "Use uma URL da clínica Batel.", variant: "destructive" });
+       return;
+     }
+ 
+     setExtractingImages(true);
+     try {
+       const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
+         body: { 
+           url: scanUrl, 
+           page_title: pageMeta.title, 
+           page_category: (pageMeta.metadata?.categoria as string) || "" 
+         },
+       });
+ 
+       if (error) throw error;
+ 
+       const candidates = res.image_candidates || [];
+       setPageMeta(prev => ({
+         ...prev,
+         metadata: {
+           ...prev.metadata,
+           image_candidates: candidates,
+           old_url: scanUrl
+         }
+       }));
+ 
+       // Auto-fill hero if a good candidate is found
+       const heroCandidate = candidates.find((c: any) => c.suggested_usage === "hero" && c.confidence_score > 0.8);
+       if (heroCandidate) {
+         const heroBlock = blocks.find(b => b.type === 'hero');
+         if (heroBlock && !heroBlock.data.image_url) {
+           markDirty(heroBlock.id, { data: { ...heroBlock.data, image_url: heroCandidate.url } });
+           toast({ title: "Imagem sugerida", description: "Identificamos uma imagem ideal para o Hero." });
+         }
+       }
+ 
+       toast({ title: "Busca concluída", description: `${candidates.length} imagens encontradas.` });
+     } catch (e: any) {
+       toast({ title: "Erro na busca", description: e.message, variant: "destructive" });
+     } finally {
+       setExtractingImages(false);
+     }
+   }
 
   useEffect(() => {
     if (!data?.page) return;
@@ -621,109 +672,131 @@ export default function PageEditor() {
                       placeholder="Direcionamentos editoriais, o que evitar, ângulo desejado…"
                     />
                   </div>
-                  {(() => {
-                    const meta = pageMeta.metadata as Record<string, unknown>;
-                    const refType = String(meta?.reference_type ?? "");
-                    const images = Array.isArray(meta?.old_page_images) 
-                      ? (meta.old_page_images as { url?: string; alt?: string; source_url?: string }[]) 
-                      : [];
-
-                    const setHeroImage = (url: string) => {
-                      const hero = blocks.find(b => b.type === 'hero');
-                      if (hero) {
-                        markDirty(hero.id, { data: { ...hero.data, image_url: url } });
-                        toast({ title: "Hero atualizado", description: "A imagem foi aplicada ao bloco Hero." });
-                        // Opcionalmente seleciona o hero para o usuário ver
-                        setSelectedId(hero.id);
-                      } else {
-                        toast({ title: "Hero não encontrado", description: "Adicione um bloco Hero primeiro.", variant: "destructive" });
-                      }
-                    };
-
-                    const extracted = (meta?.old_page_extracted ?? null) as
-                      | { testimonials_count?: number; faqs_count?: number; sections_count?: number; used_section_for_detalhado?: boolean }
-                      | null;
-                    if (refType !== "own_old_page" && images.length === 0 && !extracted) return null;
-                    return (
-                      <div className="border-t border-brand-gold/15 pt-4 mt-2 space-y-3">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/80">
-                          Página antiga aproveitada
-                        </p>
-                        {extracted && (
-                          <ul className="text-[11px] text-brand-text-muted space-y-1">
-                            <li>Depoimentos importados: <strong className="text-brand-text-light">{extracted.testimonials_count ?? 0}</strong></li>
-                            <li>FAQs importadas: <strong className="text-brand-text-light">{extracted.faqs_count ?? 0}</strong></li>
-                            <li>Seções identificadas: <strong className="text-brand-text-light">{extracted.sections_count ?? 0}</strong></li>
-                            <li>Bloco "procedimento detalhado": <strong className="text-brand-text-light">{extracted.used_section_for_detalhado ? "ativo" : "vazio"}</strong></li>
-                          </ul>
-                        )}
-                        {images.length > 0 && (
-                          <div>
-                            <Label className="text-xs uppercase tracking-wider text-brand-text-muted">
-                              Imagens candidatas ({images.length})
-                            </Label>
-                            <p className="text-[10px] text-brand-text-muted mb-2">
-                              URLs encontradas na página antiga. Clique para copiar e cole no campo de imagem do bloco desejado.
-                            </p>
-                            <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1">
-                              {images.map((img, i) => (
-                                <div
-                                  key={i}
-                                  className="group relative flex flex-col border border-brand-gold/15 bg-brand-black/20 hover:border-brand-gold/40 transition-colors overflow-hidden rounded"
-                                >
-                                  <div className="relative aspect-video overflow-hidden border-b border-brand-gold/10">
-                                    <img
-                                      src={img.url}
-                                      alt={img.alt || ""}
-                                      loading="lazy"
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        (e.currentTarget as HTMLImageElement).style.opacity = "0.2";
-                                      }}
-                                    />
-                                    <div className="absolute inset-0 bg-brand-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-2">
-                                      <Button 
-                                        size="icon" 
-                                        variant="secondary" 
-                                        className="size-7 rounded-full bg-brand-gold text-brand-green hover:bg-brand-gold/90"
-                                        onClick={() => img.url && setHeroImage(img.url)}
-                                        title="Usar no Hero"
-                                      >
-                                        <Save className="size-3.5" />
-                                      </Button>
-                                      <Button 
-                                        size="icon" 
-                                        variant="outline" 
-                                        className="size-7 rounded-full border-brand-gold/40 bg-brand-graphite text-brand-text-light hover:bg-brand-gold/10"
-                                        onClick={() => {
-                                          if (img.url) {
-                                            navigator.clipboard.writeText(img.url);
-                                            toast({ title: "Copiado", description: "URL da imagem copiada." });
-                                          }
-                                        }}
-                                        title="Copiar URL"
-                                      >
-                                        <ExternalLink className="size-3.5" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  <div className="p-1.5 space-y-1">
-                                    <Button 
-                                      variant="ghost" 
-                                      className="w-full h-6 px-1.5 text-[9px] uppercase tracking-wider text-brand-gold/80 hover:text-brand-gold hover:bg-brand-gold/10"
-                                      onClick={() => img.url && setHeroImage(img.url)}
-                                    >
-                                      Usar no Hero
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
+                   <div className="border-t border-brand-gold/15 pt-4 mt-2 space-y-3">
+                     <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/80 flex items-center gap-2">
+                       <ImageIcon className="size-3" /> Imagens da página antiga (MVP)
+                     </p>
+                     <div className="flex gap-2">
+                       <Input 
+                         placeholder="URL da página no site antigo..."
+                         value={scanUrl || String(pageMeta.metadata?.old_url || "")}
+                         onChange={(e) => setScanUrl(e.target.value)}
+                         className="bg-brand-graphite/40 border-brand-gold/10 text-[11px]"
+                       />
+                       <Button 
+                         size="sm" 
+                         onClick={handleExtractImages} 
+                         disabled={extractingImages}
+                         className="bg-brand-gold/20 text-brand-gold border border-brand-gold/30 hover:bg-brand-gold/30"
+                       >
+                         {extractingImages ? <Loader2 className="size-3 animate-spin" /> : <Search className="size-3" />}
+                       </Button>
+                     </div>
+ 
+                     {(() => {
+                       const meta = pageMeta.metadata as Record<string, unknown>;
+                       const candidates = Array.isArray(meta?.image_candidates) 
+                         ? (meta.image_candidates as any[]) 
+                         : [];
+ 
+                       if (candidates.length === 0) return null;
+ 
+                       const setHeroImage = (url: string) => {
+                         const hero = blocks.find(b => b.type === 'hero');
+                         if (hero) {
+                           markDirty(hero.id, { data: { ...hero.data, image_url: url } });
+                           toast({ title: "Hero atualizado", description: "A imagem foi aplicada ao bloco Hero." });
+                           setSelectedId(hero.id);
+                         } else {
+                           toast({ title: "Hero não encontrado", description: "Adicione um bloco Hero primeiro.", variant: "destructive" });
+                         }
+                       };
+ 
+                       const ignoreImage = (url: string) => {
+                         setPageMeta(prev => ({
+                           ...prev,
+                           metadata: {
+                             ...prev.metadata,
+                             image_candidates: candidates.filter(c => c.url !== url)
+                           }
+                         }));
+                       };
+ 
+                       return (
+                         <div className="space-y-3">
+                           <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1">
+                             {candidates.map((img, i) => (
+                               <div
+                                 key={i}
+                                 className="group relative flex flex-col border border-brand-gold/15 bg-brand-black/20 hover:border-brand-gold/40 transition-colors overflow-hidden rounded"
+                               >
+                                 <div className="relative aspect-video overflow-hidden border-b border-brand-gold/10">
+                                   <img
+                                     src={img.url}
+                                     alt={img.alt || ""}
+                                     loading="lazy"
+                                     className="w-full h-full object-cover"
+                                     onError={(e) => {
+                                       (e.currentTarget as HTMLImageElement).parentElement?.classList.add("hidden");
+                                     }}
+                                   />
+                                   <div className="absolute inset-0 bg-brand-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2 text-center">
+                                      <span className="text-[8px] uppercase tracking-tighter text-brand-gold/80">
+                                        {img.source} ({Math.round(img.confidence_score * 100)}%)
+                                      </span>
+                                      <div className="flex gap-1.5">
+                                        <Button 
+                                          size="icon" 
+                                          variant="secondary" 
+                                          className="size-7 rounded-full bg-brand-gold text-brand-green hover:bg-brand-gold/90"
+                                          onClick={() => img.url && setHeroImage(img.url)}
+                                          title="Usar no Hero"
+                                        >
+                                          <Save className="size-3.5" />
+                                        </Button>
+                                        <Button 
+                                          size="icon" 
+                                          variant="outline" 
+                                          className="size-7 rounded-full border-brand-gold/40 bg-brand-graphite text-brand-text-light hover:bg-brand-gold/10"
+                                          onClick={() => {
+                                            if (img.url) {
+                                              navigator.clipboard.writeText(img.url);
+                                              toast({ title: "Copiado", description: "URL da imagem copiada." });
+                                            }
+                                          }}
+                                          title="Copiar URL"
+                                        >
+                                          <ExternalLink className="size-3.5" />
+                                        </Button>
+                                        <Button 
+                                          size="icon" 
+                                          variant="ghost" 
+                                          className="size-7 rounded-full text-brand-text-muted hover:text-brand-bordeaux hover:bg-brand-bordeaux/10"
+                                          onClick={() => ignoreImage(img.url)}
+                                          title="Ignorar"
+                                        >
+                                          <Trash2 className="size-3.5" />
+                                        </Button>
+                                      </div>
+                                   </div>
+                                 </div>
+                                 <div className="p-1.5 space-y-1">
+                                   <p className="text-[8px] text-brand-text-muted truncate uppercase tracking-widest">{img.suggested_usage || 'section'}</p>
+                                   <Button 
+                                     variant="ghost" 
+                                     className="w-full h-6 px-1.5 text-[9px] uppercase tracking-wider text-brand-gold/80 hover:text-brand-gold hover:bg-brand-gold/10"
+                                     onClick={() => img.url && setHeroImage(img.url)}
+                                   >
+                                     Usar no Hero
+                                   </Button>
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
+                         </div>
+                       );
+                     })()}
+                   </div>
                 </div>
 
                 <p className="text-xs text-brand-text-muted">
