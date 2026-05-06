@@ -211,40 +211,74 @@ function HeroBlock({ data }: { data: BlockData }) {
 /* ============================================================
    BENEFÍCIOS GRID (Premium)
    ============================================================ */
-function BeneficiosGridBlock({ data }: { data: BlockData }) {
-  const eyebrow = s(data.eyebrow, "Benefícios");
-  const titleHtml = firstS([data.title_html, data.title], "Diferenciais do <em>tratamento</em>.");
-  const subtitle = s(data.subtitle);
-  const cards = arr<{ title?: string; text?: string; icon?: string }>(data.cards);
-  const variant = s(data.layout_variant, "grid"); // "grid" ou "centered"
-
-  if (!cards.length) return null;
-
-  return (
-    <section className="bg-brand-black section-pad bg-pattern-gold bg-pattern-gold bg-pattern-gold relative z-[2]">
-      <div className="container-editorial">
-        <div className={cn("reveal mb-12", variant === "centered" ? "text-center mx-auto max-w-2xl" : "max-w-2xl")}>
-          <span className={cn("eyebrow", variant === "centered" && "mx-auto justify-center")}>{eyebrow}</span>
-          <h2 className="h-display-2 mt-5 text-balance" dangerouslySetInnerHTML={{ __html: titleHtml }} />
-          <span className={cn("gold-rule mt-7", variant === "centered" && "mx-auto")} />
-          {subtitle && <p className="mt-6 text-brand-text-soft text-lg leading-relaxed">{subtitle}</p>}
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cards.map((card, i) => (
-             <div key={i} style={{ transitionDelay: `${i * 100}ms` }} className="reveal group bg-brand-graphite/40 border border-brand-gold/15 p-8 md:p-10 hover:border-brand-gold/40 transition-all duration-500">
-              <div className="flex flex-col h-full">
-                <Sparkles className="size-6 text-brand-gold/60 mb-6" strokeWidth={1} />
-                <h3 className="font-display text-2xl leading-tight mb-4">{s(card.title)}</h3>
-                <p className="text-brand-text-soft leading-relaxed text-[15px]">{s(card.text)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
+ function BeneficiosGridBlock({ data }: { data: BlockData }) {
+   const eyebrow = s(data.eyebrow, "Diferenciais");
+   const titleHtml = firstS([data.title_html, data.title], "Por que escolher a <em>Estética Batel</em>.");
+   const subtitle = s(data.subtitle);
+   const cards = arr<{ title?: string; text?: string; icon?: string }>(data.cards);
+   const variant = s(data.layout_variant, "grid"); // "grid" ou "centered"
+ 
+   if (!cards.length) return null;
+ 
+   return (
+     <section className="bg-brand-black section-pad relative z-[2] overflow-hidden">
+       {/* Decorative backgrounds */}
+       <div className="absolute top-0 left-0 w-full h-full bg-pattern-gold opacity-[0.03] pointer-events-none" aria-hidden />
+       <div className="absolute -top-24 -right-24 size-96 bg-brand-gold/5 blur-[120px] rounded-full pointer-events-none" aria-hidden />
+       <div className="absolute -bottom-24 -left-24 size-96 bg-brand-gold/5 blur-[120px] rounded-full pointer-events-none" aria-hidden />
+ 
+       <div className="container-editorial relative z-10">
+         <div className={cn("reveal mb-16", variant === "centered" ? "text-center mx-auto max-w-3xl" : "max-w-3xl")}>
+           <span className={cn("eyebrow", variant === "centered" && "mx-auto justify-center")}>{eyebrow}</span>
+           <h2 className="h-display-2 mt-6 text-balance leading-[1.1]" dangerouslySetInnerHTML={{ __html: titleHtml }} />
+           <span className={cn("gold-rule mt-8", variant === "centered" && "mx-auto")} />
+           {subtitle && (
+             <p className="mt-8 text-brand-text-soft text-lg md:text-xl leading-relaxed max-w-2xl">
+               {subtitle}
+             </p>
+           )}
+         </div>
+ 
+         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+           {cards.map((card, i) => (
+             <div 
+               key={i} 
+               style={{ transitionDelay: `${i * 150}ms` }} 
+               className="reveal group relative"
+             >
+               {/* Card Background & Glow Effect */}
+               <div className="absolute inset-0 bg-brand-gold/5 opacity-0 group-hover:opacity-100 blur-2xl transition-opacity duration-700 pointer-events-none" aria-hidden />
+               
+               <div className="relative h-full bg-brand-graphite/30 backdrop-blur-md border border-brand-gold/10 p-10 md:p-12 hover:border-brand-gold/30 transition-all duration-700 flex flex-col items-start overflow-hidden">
+                 {/* Decorative background number */}
+                 <span className="absolute -bottom-6 -right-4 font-display italic text-8xl text-brand-gold/5 select-none pointer-events-none group-hover:text-brand-gold/10 transition-colors duration-700">
+                   {(i + 1).toString().padStart(2, '0')}
+                 </span>
+ 
+                 {/* Icon Container */}
+                 <div className="size-14 rounded-full bg-brand-gold/10 flex items-center justify-center mb-8 relative group-hover:scale-110 transition-transform duration-700">
+                   <div className="absolute inset-0 rounded-full border border-brand-gold/20 animate-pulse" aria-hidden />
+                   <Sparkles className="size-6 text-brand-gold" strokeWidth={1} />
+                 </div>
+ 
+                 <h3 className="font-display text-2xl md:text-3xl leading-tight mb-5 text-brand-text-light group-hover:text-brand-gold transition-colors duration-500">
+                   {s(card.title)}
+                 </h3>
+                 
+                 <p className="text-brand-text-soft leading-relaxed text-[15px] md:text-base relative z-10">
+                   {s(card.text)}
+                 </p>
+ 
+                 {/* Bottom Accent Line */}
+                 <div className="absolute bottom-0 left-0 w-0 h-[2px] bg-gradient-to-r from-brand-gold/0 via-brand-gold/50 to-brand-gold/0 group-hover:w-full transition-all duration-1000" aria-hidden />
+               </div>
+             </div>
+           ))}
+         </div>
+       </div>
+     </section>
+   );
+ }
 
 /* ============================================================
    PROCEDIMENTO DETALHADO V2 (Premium)
