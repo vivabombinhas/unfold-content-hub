@@ -94,18 +94,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
     }
   }
 
-  return { ok: false, status: res.status, error: errorText.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
-  const data = await res.json();
-  // Normalize SDK/REST shapes
-  const root = data?.data ?? data;
-  return {
-    ok: true,
-    status: 200,
-    markdown: root?.markdown || null,
-    html: root?.html || null,
-    links: Array.isArray(root?.links) ? root.links : [],
-    metadata: root?.metadata || null,
-  };
+   return { ok: false, status: res.status, error: errorText.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
 }
 
 function truncate(s: string | null | undefined, n: number) {
