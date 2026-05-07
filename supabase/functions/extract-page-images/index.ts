@@ -24,9 +24,9 @@
    try {
      const { url, page_title, page_category } = await req.json();
  
-     if (!url || !url.includes("esteticabatel.com.br")) {
-       throw new Error("URL inválida ou fora do domínio permitido.");
-     }
+      if (!url) {
+        throw new Error("URL é obrigatória.");
+      }
  
      console.log(`Extracting images from: ${url}`);
  
