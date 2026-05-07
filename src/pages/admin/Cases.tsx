@@ -57,12 +57,30 @@ export default function Cases() {
   const [isScraping, setIsScraping] = useState(false);
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scrapedImages, setScrapedImages] = useState<{ url: string; alt: string }[]>([]);
+  const [recentImages, setRecentImages] = useState<{ url: string }[]>([]);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   
   const [caseData, setCaseData] = useState<Partial<Case>>({});
 
+  const fetchRecentImages = async () => {
+    try {
+      const { data, error } = await supabase.storage.from("media").list("uploads", {
+        limit: 20,
+        sortBy: { column: "created_at", order: "desc" }
+      });
+      if (error) throw error;
+      const urls = data.map(f => ({
+        url: supabase.storage.from("media").getPublicUrl(`uploads/${f.name}`).data.publicUrl
+      }));
+      setRecentImages(urls);
+    } catch (e) {
+      console.error("Error fetching recent images:", e);
+    }
+  };
+
   const handleOpenForm = (c: Case | null) => {
     setEditingCase(c);
+    fetchRecentImages();
     setCaseData(c || {
       slug: "",
       area: "",
@@ -351,9 +369,9 @@ export default function Cases() {
               </DialogFooter>
             </form>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <Label className="text-brand-gold text-[10px] uppercase tracking-widest mb-2 block">Importar de URL</Label>
+                <Label className="text-brand-gold text-[10px] uppercase tracking-widest mb-3 block">Importar de URL</Label>
                 <div className="flex gap-2">
                   <Input placeholder="URL da página..." value={scrapeUrl} onChange={e => setScrapeUrl(e.target.value)} className="bg-brand-black/40 border-brand-gold/10 text-xs h-9" />
                   <Button size="sm" variant="outline" onClick={handleScrape} disabled={isScraping || !scrapeUrl} className="h-9">
@@ -362,20 +380,54 @@ export default function Cases() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-2">
-                {scrapedImages.map((img, i) => (
-                  <div key={i} className="group relative aspect-square bg-brand-black/40 border border-brand-gold/5 rounded overflow-hidden">
-                    <img src={img.url} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-brand-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col p-1 gap-1">
-                      <Button size="sm" className="h-6 text-[8px] bg-brand-gold text-brand-bg py-0" onClick={() => setCaseData(p => ({...p, cover_url: img.url}))}>Capa</Button>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="outline" className="h-6 flex-1 text-[8px] py-0" onClick={() => setCaseData(p => ({...p, before_url: img.url}))}>Antes</Button>
-                        <Button size="sm" variant="outline" className="h-6 flex-1 text-[8px] py-0" onClick={() => setCaseData(p => ({...p, after_url: img.url}))}>Depois</Button>
-                      </div>
+              <div className="space-y-4">
+                {scrapedImages.length > 0 && (
+                  <div>
+                    <p className="text-[10px] text-brand-text-muted uppercase mb-2">Resultados da Busca</p>
+                    <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2">
+                      {scrapedImages.map((img, i) => (
+                        <ImageThumb key={i} url={img.url} onSelect={(type) => setCaseData(p => ({...p, [`${type}_url`]: img.url}))} />
+                      ))}
                     </div>
                   </div>
-                ))}
+                )}
+
+                <div>
+                  <p className="text-[10px] text-brand-text-muted uppercase mb-2">Uploads Recentes</p>
+                  <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-2">
+                    {recentImages.map((img, i) => (
+                      <ImageThumb key={i} url={img.url} onSelect={(type) => setCaseData(p => ({...p, [`${type}_url`]: img.url}))} />
+                    ))}
+                    {recentImages.length === 0 && (
+                      <div className="col-span-2 py-8 text-center border border-dashed border-brand-gold/10 rounded text-[10px] text-brand-text-muted">
+                        Nenhum upload recente.
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+...
+*** Add File: src/components/admin/ImageThumb.tsx
++import { Button } from "@/components/ui/button";
++
++export function ImageThumb({ url, onSelect }: { url: string; onSelect: (type: 'cover' | 'before' | 'after') => void }) {
++  return (
++    <div className="group relative aspect-square bg-brand-black/40 border border-brand-gold/5 rounded overflow-hidden">
++      <img src={url} className="w-full h-full object-cover" />
++      <div className="absolute inset-0 bg-brand-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col p-1 gap-1">
++        <Button size="sm" className="h-6 text-[8px] bg-brand-gold text-brand-bg py-0" onClick={() => onSelect('cover')}>Capa</Button>
++        <div className="flex gap-1">
++          <Button size="sm" variant="outline" className="h-6 flex-1 text-[8px] py-0" onClick={() => onSelect('before')}>Antes</Button>
++          <Button size="sm" variant="outline" className="h-6 flex-1 text-[8px] py-0" onClick={() => onSelect('after')}>Depois</Button>
++        </div>
++      </div>
++    </div>
++  );
+}
             </div>
           </div>
         </DialogContent>
