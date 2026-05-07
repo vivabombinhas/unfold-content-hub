@@ -648,9 +648,15 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
         case "metodo":
           data = generated.blocks.metodo;
           break;
-        case "beneficios_grid":
-          data = generated.blocks.beneficios_grid;
-          break;
+         case "beneficios_grid":
+           data = {
+             ...generated.blocks.beneficios_grid,
+             cards: (generated.blocks.beneficios_grid.cards || []).map((card: any, idx: number) => ({
+               ...card,
+               image_url: gridImages[idx] || null
+             }))
+           };
+           break;
         case "procedimento_detalhado":
           // Fase C: sempre vem com conteúdo. Ativo se veio da página antiga,
           // desligado (mas editável) se veio do fallback.
