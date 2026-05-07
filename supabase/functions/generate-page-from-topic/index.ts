@@ -657,12 +657,13 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
              }))
            };
            break;
-        case "procedimento_detalhado":
-          // Fase C: sempre vem com conteúdo. Ativo se veio da página antiga,
-          // desligado (mas editável) se veio do fallback.
-          data = procedimentoDetalhadoData;
-          enabled = procedimentoDetalhadoEnabled;
-          break;
+         case "procedimento_detalhado":
+           data = { 
+             ...procedimentoDetalhadoData, 
+             ...(procedimentoImage ? { image_url: procedimentoImage } : {}) 
+           };
+           enabled = procedimentoDetalhadoEnabled;
+           break;
         case "preco_ancora":
           data = generated.blocks.preco_ancora;
           break;
