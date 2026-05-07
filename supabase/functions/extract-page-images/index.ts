@@ -86,12 +86,19 @@
        let score = 0.5;
        let usage: "hero" | "section" | "gallery" | "unknown" = "section";
  
-       // Hero detection
+         // Hero and Clinical detection
        if (alt.toLowerCase().includes(page_title?.toLowerCase() || "") || 
            imgUrl.toLowerCase().includes(page_title?.toLowerCase() || "")) {
          score += 0.3;
          usage = "hero";
        }
+ 
+         if (alt.toLowerCase().includes("antes") || imgUrl.toLowerCase().includes("antes")) {
+           score += 0.2;
+         }
+         if (alt.toLowerCase().includes("depois") || imgUrl.toLowerCase().includes("depois")) {
+           score += 0.2;
+         }
  
        if (attrs.includes('class="wp-post-image"') || attrs.includes('class="attachment-full"')) {
          score += 0.2;
