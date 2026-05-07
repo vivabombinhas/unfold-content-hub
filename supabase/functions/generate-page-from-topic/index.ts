@@ -639,9 +639,9 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       let data: unknown;
       let enabled = true;
       switch (type) {
-        case "hero":
-          data = { ...generated.blocks.hero, ...(heroImage ? { image_url: heroImage } : {}) };
-          break;
+         case "hero":
+           data = { ...generated.blocks.hero, image_url: finalHeroImage };
+           break;
         case "manifesto_curto":
           data = generated.blocks.manifesto_curto;
           break;
