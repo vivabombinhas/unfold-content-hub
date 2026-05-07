@@ -230,8 +230,9 @@ import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Check, X, Globe, Load
           <div className="flex items-center justify-center py-20">
             <Loader2 className="size-8 text-brand-gold animate-spin" />
           </div>
-        ) : viewMode === "list" ? (
-          <div className="border border-brand-gold/15 bg-brand-graphite/20 overflow-hidden rounded-sm">
+        ) : (
+          viewMode === "list" ? (
+            <div className="border border-brand-gold/15 bg-brand-graphite/20 overflow-hidden rounded-sm">
            <table className="w-full text-sm">
              <thead className="text-left text-[10px] uppercase tracking-[0.2em] text-brand-text-muted border-b border-brand-gold/15">
                <tr>
@@ -253,8 +254,55 @@ import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Check, X, Globe, Load
                         ) : (
                           <div className="size-12 bg-brand-black/40 rounded border border-brand-gold/10 flex items-center justify-center">
                             <ImageIcon className="size-5 text-brand-text-muted/30" />
-                          </div>
-                        )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredCases?.map((c) => (
+                <div key={c.id} className="bg-brand-graphite/20 border border-brand-gold/15 rounded-sm overflow-hidden group hover:border-brand-gold/40 transition-colors">
+                  <div className="aspect-video relative overflow-hidden bg-brand-black/40">
+                    {c.cover_url ? (
+                      <img src={c.cover_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="size-8 text-brand-text-muted/20" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2 flex gap-1">
+                      {c.highlight && (
+                        <div className="bg-brand-gold text-brand-bg text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter">Destaque</div>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 bg-brand-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button size="sm" variant="secondary" className="h-8 bg-brand-gold text-brand-bg hover:bg-brand-gold/90" onClick={() => handleOpenForm(c)}>
+                        <Pencil className="size-3.5 mr-1" /> Editar
+                      </Button>
+                      <Button size="sm" variant="destructive" className="h-8" onClick={() => setPendingDelete(c)}>
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <p className="text-brand-text-light font-medium text-sm truncate">{c.area || "Sem área"}</p>
+                        <p className="text-[10px] text-brand-text-muted font-mono mt-0.5 truncate">{c.slug}</p>
+                      </div>
+                      <div className="flex -space-x-2">
+                        {c.before_url && <img src={c.before_url} className="size-6 rounded-full border border-brand-gold/20 object-cover bg-brand-black" title="Antes" />}
+                        {c.after_url && <img src={c.after_url} className="size-6 rounded-full border border-brand-gold/20 object-cover bg-brand-black" title="Depois" />}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {filteredCases?.length === 0 && (
+                <div className="col-span-full py-20 text-center border border-dashed border-brand-gold/10 rounded-sm">
+                  <p className="text-brand-text-muted">Nenhum caso clínico encontrado.</p>
+                </div>
+              )}
+            </div>
+          )
+        )}
                         <div className="flex flex-col gap-1">
                           <div className="flex gap-1">
                             {c.before_url && <img src={c.before_url} className="size-5 rounded-full object-cover border border-brand-gold/10" title="Antes" />}
