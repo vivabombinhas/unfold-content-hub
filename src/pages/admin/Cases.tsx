@@ -1,7 +1,7 @@
  import { useState } from "react";
  import { useQuery, useQueryClient } from "@tanstack/react-query";
  import { supabase } from "@/integrations/supabase/client";
- import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Check, X, Globe, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Check, X, Globe, Loader2, Link2, Upload as UploadIcon, Grid } from "lucide-react";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
  import { Textarea } from "@/components/ui/textarea";
@@ -181,18 +181,40 @@
      }
    };
  
-   return (
-     <div className="p-8 max-w-6xl">
-       <div className="flex items-center justify-between mb-8">
-         <div>
-           <h1 className="font-display text-3xl text-brand-text-light">Casos Clínicos</h1>
-           <p className="text-sm text-brand-text-muted mt-1">Gerencie a biblioteca de antes e depois e resultados clínicos.</p>
-         </div>
-         <Button onClick={() => handleOpenForm(null)} className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90">
-           <Plus className="size-4 mr-2" />
-           Novo Caso
-         </Button>
-       </div>
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+
+  return (
+    <div className="p-8 max-w-7xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="font-display text-3xl text-brand-text-light">Casos Clínicos</h1>
+          <p className="text-sm text-brand-text-muted mt-1">Gerencie a biblioteca de resultados de antes e depois.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex bg-brand-graphite/40 p-1 rounded-md border border-brand-gold/10 mr-2">
+             <Button 
+               variant="ghost" 
+               size="sm" 
+               className={cn("h-8 px-2.5", viewMode === 'list' ? "bg-brand-gold/20 text-brand-gold" : "text-brand-text-muted")}
+               onClick={() => setViewMode('list')}
+             >
+               <Search className="size-3.5" />
+             </Button>
+             <Button 
+               variant="ghost" 
+               size="sm" 
+               className={cn("h-8 px-2.5", viewMode === 'grid' ? "bg-brand-gold/20 text-brand-gold" : "text-brand-text-muted")}
+               onClick={() => setViewMode('grid')}
+             >
+               <Grid className="size-3.5" />
+             </Button>
+          </div>
+          <Button onClick={() => handleOpenForm(null)} className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90">
+            <Plus className="size-4 mr-2" />
+            Novo Caso
+          </Button>
+        </div>
+      </div>
  
        <div className="mb-6 relative">
          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-text-muted" />
@@ -204,10 +226,12 @@
          />
        </div>
  
-       {isLoading ? (
-         <p className="text-brand-text-muted">Carregando...</p>
-       ) : (
-         <div className="border border-brand-gold/15 bg-brand-graphite/20 overflow-hidden rounded-sm">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="size-8 text-brand-gold animate-spin" />
+          </div>
+        ) : viewMode === "list" ? (
+          <div className="border border-brand-gold/15 bg-brand-graphite/20 overflow-hidden rounded-sm">
            <table className="w-full text-sm">
              <thead className="text-left text-[10px] uppercase tracking-[0.2em] text-brand-text-muted border-b border-brand-gold/15">
                <tr>
@@ -219,54 +243,66 @@
                </tr>
              </thead>
              <tbody>
-               {filteredCases?.map((c) => (
-                 <tr key={c.id} className="border-t border-brand-gold/10 hover:bg-brand-graphite/30 group">
-                   <td className="px-5 py-3 text-brand-text-muted text-xs text-center">{c.position}</td>
-                   <td className="px-5 py-3">
-                     {c.cover_url ? (
-                       <img src={c.cover_url} alt="" className="size-10 object-cover rounded border border-brand-gold/20" />
-                     ) : (
-                       <div className="size-10 bg-brand-black/40 rounded border border-brand-gold/10 flex items-center justify-center">
-                         <ImageIcon className="size-4 text-brand-text-muted" />
-                       </div>
-                     )}
-                   </td>
-                   <td className="px-5 py-3">
-                     <div className="text-brand-text-light font-medium">{c.area || "Sem área"}</div>
-                     <div className="text-brand-text-muted text-[11px] mt-0.5">
-                       slug: {c.slug}
-                     </div>
-                   </td>
-                   <td className="px-5 py-3">
-                     {c.highlight ? (
-                       <span className="inline-flex items-center gap-1 text-[10px] bg-brand-gold/10 text-brand-gold px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
-                         <Check className="size-2.5" /> Sim
-                       </span>
-                     ) : (
-                       <span className="inline-flex items-center gap-1 text-[10px] bg-brand-black/40 text-brand-text-muted px-2 py-0.5 rounded-full uppercase tracking-wider">
-                         <X className="size-2.5" /> Não
-                       </span>
-                     )}
-                   </td>
-                   <td className="px-5 py-3 text-right">
-                     <div className="flex items-center justify-end gap-3">
-                         <button
-                           onClick={() => handleOpenForm(c)}
-                           className="text-brand-gold hover:underline inline-flex items-center gap-1.5 text-xs"
-                         >
-                         <Pencil className="size-3.5" />
-                         Editar
-                       </button>
-                       <button
-                         onClick={() => setPendingDelete(c)}
-                         className="text-brand-text-muted hover:text-destructive transition-colors"
-                       >
-                         <Trash2 className="size-4" />
-                       </button>
-                     </div>
-                   </td>
-                 </tr>
-               ))}
+                {filteredCases?.map((c) => (
+                  <tr key={c.id} className="border-t border-brand-gold/10 hover:bg-brand-graphite/30 group">
+                    <td className="px-5 py-4 text-brand-text-muted text-xs text-center font-mono">{c.position}</td>
+                    <td className="px-5 py-4">
+                      <div className="flex gap-2">
+                        {c.cover_url ? (
+                          <img src={c.cover_url} alt="" className="size-12 object-cover rounded border border-brand-gold/20" />
+                        ) : (
+                          <div className="size-12 bg-brand-black/40 rounded border border-brand-gold/10 flex items-center justify-center">
+                            <ImageIcon className="size-5 text-brand-text-muted/30" />
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-1">
+                          <div className="flex gap-1">
+                            {c.before_url && <img src={c.before_url} className="size-5 rounded-full object-cover border border-brand-gold/10" title="Antes" />}
+                            {c.after_url && <img src={c.after_url} className="size-5 rounded-full object-cover border border-brand-gold/10" title="Depois" />}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="text-brand-text-light font-medium">{c.area || "Sem área"}</div>
+                      <div className="text-brand-text-muted text-[11px] mt-0.5 font-mono">
+                        {c.slug}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      {c.highlight ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] bg-brand-gold/10 text-brand-gold px-2.5 py-1 rounded-full uppercase tracking-wider font-bold border border-brand-gold/20">
+                          <Check className="size-2.5" /> Destaque
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] bg-brand-black/40 text-brand-text-muted px-2.5 py-1 rounded-full uppercase tracking-wider border border-brand-gold/5">
+                          <X className="size-2.5" /> Padrão
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenForm(c)}
+                            className="h-8 text-brand-gold hover:bg-brand-gold/10"
+                          >
+                          <Pencil className="size-3.5 mr-1.5" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPendingDelete(c)}
+                          className="h-8 text-brand-text-muted hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
                {filteredCases?.length === 0 && (
                  <tr>
                    <td colSpan={5} className="px-5 py-8 text-center text-brand-text-muted">
