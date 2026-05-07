@@ -1,7 +1,7 @@
  import { useState } from "react";
  import { useQuery, useQueryClient } from "@tanstack/react-query";
  import { supabase } from "@/integrations/supabase/client";
- import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Check, X } from "lucide-react";
+ import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Check, X, Globe, Loader2 } from "lucide-react";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
  import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,7 @@
  import { toast } from "@/hooks/use-toast";
  import { useAuth } from "@/hooks/use-auth";
  import { Label } from "@/components/ui/label";
+ import { MediaInput } from "@/components/admin/MediaInput";
  import { Switch } from "@/components/ui/switch";
  
  interface Case {
@@ -52,6 +53,51 @@
    const [pendingDelete, setPendingDelete] = useState<Case | null>(null);
    const [isSaving, setIsSaving] = useState(false);
    const [isDeleting, setIsDeleting] = useState(false);
+   const [isScraping, setIsScraping] = useState(false);
+   const [scrapeUrl, setScrapeUrl] = useState("");
+   const [scrapedImages, setScrapedImages] = useState<{ url: string; alt: string }[]>([]);
+   
+   // Form states to handle MediaInput outside of native FormData if needed, 
+   // but since MediaInput just calls onChange, we can use state or refs.
+   const [caseData, setCaseData] = useState<Partial<Case>>({});
+ 
+   const handleOpenForm = (c: Case | null) => {
+     setEditingCase(c);
+     setCaseData(c || {
+       slug: "",
+       area: "",
+       cover_url: "",
+       before_url: "",
+       after_url: "",
+       notes: "",
+       age: "",
+       dosage: "",
+       duration: "",
+       toxin: "",
+       position: 0,
+       highlight: false,
+     });
+     setScrapedImages([]);
+     setScrapeUrl("");
+     setIsFormOpen(true);
+   };
+ 
+   const handleScrape = async () => {
+     if (!scrapeUrl) return;
+     setIsScraping(true);
+     try {
+       const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
+         body: { url: scrapeUrl }
+       });
+       if (error) throw error;
+       setScrapedImages(res.image_candidates || []);
+       toast({ title: "Busca concluída", description: `${res.image_candidates?.length || 0} imagens encontradas.` });
+     } catch (err: any) {
+       toast({ title: "Erro na busca", description: err.message, variant: "destructive" });
+     } finally {
+       setIsScraping(false);
+     }
+   };
  
    const { data: cases, isLoading } = useQuery({
      queryKey: ["admin-cases"],
@@ -72,27 +118,26 @@
       c.slug.toLowerCase().includes(search.toLowerCase()))
    );
  
-   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+   const handleSave = async (e: React.FormEvent) => {
      e.preventDefault();
      setIsSaving(true);
-     const formData = new FormData(e.currentTarget);
      
-     const payload = {
-       slug: formData.get("slug") as string,
-       area: formData.get("area") as string,
-       age: formData.get("age") as string,
-       cover_url: formData.get("cover_url") as string,
-       before_url: formData.get("before_url") as string,
-       after_url: formData.get("after_url") as string,
-       notes: formData.get("notes") as string,
-       dosage: formData.get("dosage") as string,
-       duration: formData.get("duration") as string,
-       toxin: formData.get("toxin") as string,
-       position: parseInt(formData.get("position") as string) || 0,
-       highlight: formData.get("highlight") === "on",
-     };
- 
      try {
+       const payload = {
+         slug: caseData.slug,
+         area: caseData.area,
+         age: caseData.age,
+         cover_url: caseData.cover_url,
+         before_url: caseData.before_url,
+         after_url: caseData.after_url,
+         notes: caseData.notes,
+         dosage: caseData.dosage,
+         duration: caseData.duration,
+         toxin: caseData.toxin,
+         position: Number(caseData.position) || 0,
+         highlight: caseData.highlight,
+       };
+ 
        if (editingCase) {
          const { error } = await supabase
            .from("cases")
