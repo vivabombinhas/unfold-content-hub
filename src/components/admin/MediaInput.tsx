@@ -1,8 +1,8 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Upload, Link2, X } from "lucide-react";
+import { Upload, Link2, X, Image as ImageIcon, Check, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
@@ -21,6 +21,12 @@ function normalizeUrl(url: string): string {
 export function MediaInput({ value, onChange, label }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [tempUrl, setTempUrl] = useState(value);
+
+  useEffect(() => {
+    setTempUrl(value);
+  }, [value]);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -42,34 +48,87 @@ export function MediaInput({ value, onChange, label }: Props) {
   }
 
   return (
-    <div className="space-y-2">
-      {label && <p className="text-xs text-brand-text-muted uppercase tracking-wider">{label}</p>}
-      {value && (
-        <div className="relative inline-block">
-          <img src={value} alt="" className="max-h-32 border border-brand-gold/20" />
-          <button
-            type="button"
-            onClick={() => onChange("")}
-            className="absolute -top-2 -right-2 size-6 grid place-items-center bg-brand-bordeaux text-white rounded-full"
+    <div className="space-y-2.5">
+      {label && <Label className="text-[10px] text-brand-text-muted uppercase tracking-widest font-bold">{label}</Label>}
+      
+      <div className="relative group min-h-[120px] rounded-md border border-brand-gold/15 bg-brand-black/40 flex items-center justify-center overflow-hidden transition-all hover:border-brand-gold/30">
+        {value ? (
+          <>
+            <img src={value} alt="" className="w-full h-full object-contain max-h-[200px]" />
+            <div className="absolute inset-0 bg-brand-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <Button type="button" size="sm" variant="secondary" onClick={() => fileRef.current?.click()} className="h-8 bg-brand-gold text-brand-bg">
+                Alterar
+              </Button>
+              <Button type="button" size="sm" variant="destructive" onClick={() => onChange("")} className="h-8">
+                Remover
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-3 p-6 text-center">
+            <div className="size-10 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
+              {uploading ? <Loader2 className="size-5 text-brand-gold animate-spin" /> : <ImageIcon className="size-5 text-brand-gold/60" />}
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-brand-text-light font-medium">Nenhuma imagem selecionada</p>
+              <p className="text-[10px] text-brand-text-muted">Suba um arquivo ou cole um link direto</p>
+            </div>
+            <div className="flex gap-2 mt-1">
+              <Button 
+                type="button" 
+                size="sm" 
+                variant="outline" 
+                onClick={() => fileRef.current?.click()} 
+                disabled={uploading}
+                className="h-8 text-[11px] border-brand-gold/20 hover:bg-brand-gold/10"
+              >
+                <Upload className="size-3.5 mr-1.5" />
+                Subir Arquivo
+              </Button>
+              <Button 
+                type="button" 
+                size="sm" 
+                variant="outline" 
+                onClick={() => setShowUrlInput(!showUrlInput)}
+                className="h-8 text-[11px] border-brand-gold/20 hover:bg-brand-gold/10"
+              >
+                <Link2 className="size-3.5 mr-1.5" />
+                Colar Link
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {(showUrlInput || (tempUrl && !value)) && (
+        <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
+          <Input
+            type="url"
+            placeholder="https://exemplo.com/imagem.jpg"
+            value={tempUrl}
+            onChange={(e) => setTempUrl(e.target.value)}
+            className="flex-1 h-9 text-xs bg-brand-black/60 border-brand-gold/20"
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), onChange(normalizeUrl(tempUrl)), setShowUrlInput(false))}
+          />
+          <Button 
+            type="button" 
+            size="sm" 
+            className="h-9 px-3 bg-brand-gold text-brand-bg"
+            onClick={() => {
+              onChange(normalizeUrl(tempUrl));
+              setShowUrlInput(false);
+            }}
           >
-            <X className="size-3" />
-          </button>
+            <Check className="size-4" />
+          </Button>
         </div>
       )}
-      <div className="flex gap-2">
-        <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
-          <Upload className="size-3.5 mr-1.5" />
-          {uploading ? "Subindo…" : "Subir arquivo"}
-        </Button>
-        <Input
-          type="url"
-          placeholder="ou cole link (Google Drive, Imgur…)"
-          value={value}
-          onChange={(e) => onChange(normalizeUrl(e.target.value))}
-          className="flex-1 text-xs"
-        />
-        <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleFile} />
-      </div>
+      
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={handleFile} />
     </div>
   );
+}
+
+function Label({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <p className={className}>{children}</p>;
 }
