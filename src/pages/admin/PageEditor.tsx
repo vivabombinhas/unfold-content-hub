@@ -723,9 +723,9 @@ export default function PageEditor() {
 
                       {(() => {
                        const meta = pageMeta.metadata as Record<string, unknown>;
-                       const candidates = Array.isArray(meta?.image_candidates) 
-                         ? (meta.image_candidates as any[]) 
-                         : [];
+                       const candidates = (Array.isArray(meta?.image_candidates) ? meta.image_candidates : [])
+                         .concat(Array.isArray(meta?.old_page_images) ? meta.old_page_images : [])
+                         .filter((img, index, self) => img?.url && self.findIndex(i => i.url === img.url) === index);
  
                        if (candidates.length === 0) return null;
  

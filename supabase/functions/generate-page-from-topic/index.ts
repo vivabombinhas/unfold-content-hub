@@ -747,10 +747,8 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       template_slug: TEMPLATE_SLUG,
       // Fase 1.2 — origem do conteúdo das referências
       reference_type: ownOldPage ? "own_old_page" : (linksReferencia.length > 0 ? "external" : "none"),
-      // URLs de imagens encontradas nas páginas antigas próprias.
-      // NÃO baixamos automaticamente — ficam como sugestões para o admin colar
-      // nos blocos de imagem (hero, etc.).
-      old_page_images: ownOldPage ? candidateImages : [],
+       // URLs de imagens encontradas nas páginas antigas próprias. Salvas como candidatos para o Editor.
+       image_candidates: ownOldPage ? candidateImages : [],
       old_page_extracted: ownOldPage ? {
         testimonials_count: ownTestimonials.length,
         faqs_count: ownFaqs.length,

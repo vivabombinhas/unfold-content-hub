@@ -40,7 +40,8 @@ const App = () => (
              <Route path="paginas/:slug" element={<PageEditor />} />
               <Route path="faqs" element={<Faqs />} />
                <Route path="depoimentos" element={<Reviews />} />
-               <Route path="casos" element={<Cases />} />
+                <Route path="casos" element={<Cases />} />
+                <Route path="ia-opinions" element={<div className="p-8 text-brand-text-muted">Página de Opiniões de IAs em desenvolvimento...</div>} />
               <Route path="cursos" element={<Courses />} />
             <Route path="configuracoes" element={<Settings />} />
           </Route>
