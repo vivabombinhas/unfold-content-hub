@@ -450,7 +450,7 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-      model: "google/gemini-2.0-flash-exp",
+      model: "google/gemini-2.0-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: fullUserPrompt },
