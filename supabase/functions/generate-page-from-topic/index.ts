@@ -591,16 +591,26 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       .slice(0, 30);
     // -----------------------------------------------------------------------
 
-    // Build blocks: Prioridade de imagem do Hero
-    // 1. Primeira imagem da página antiga (se houver)
-    // 2. Imagem do template (Botox) como fallback neutro
-
-    const heroImageFallback =
-      ((templateBlocks || []).find((b) => b.type === "hero")?.data as { image_url?: string } | undefined)?.image_url || null;
-    
-    const heroImage = (ownOldPage && candidateImages.length > 0) 
-      ? candidateImages[0].url 
-      : heroImageFallback;
+     // -----------------------------------------------------------------------
+     // Distribuição Inteligente de Imagens
+     // -----------------------------------------------------------------------
+     const heroImage = (candidateImages.length > 0) ? candidateImages[0].url : null;
+     
+     // Filtramos imagens para os outros blocos (pulando a do Hero)
+     const remainingImages = candidateImages.slice(1);
+     
+     // Imagem para o bloco de procedimento (se houver pelo menos 2 imagens)
+     const procedimentoImage = remainingImages.length > 0 ? remainingImages[0].url : null;
+     
+     // Imagens para o grid de benefícios (até 4)
+     const gridImages = remainingImages.slice(1, 5).map(img => img.url);
+ 
+     // Fallback neutro caso não tenha imagens extraídas (NÃO usar do Botox se o tema for outro)
+     const isBotox = /\b(botox|toxina|botulin)/i.test(tema);
+     const genericAestheticImage = "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=2070&auto=format&fit=crop";
+ 
+     const finalHeroImage = heroImage || (isBotox ? "https://esteticabatel.com.br/wp-content/uploads/2024/09/Botox-Masculino-Curitiba.jpg" : genericAestheticImage);
+ 
     const equipeBase =
       ((templateBlocks || []).find((b) => b.type === "equipe_rt")?.data as Record<string, unknown> | undefined) || {};
     // Reaproveitamos apenas dados institucionais da RT (foto, registro, nome) —
@@ -629,24 +639,31 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       let data: unknown;
       let enabled = true;
       switch (type) {
-        case "hero":
-          data = { ...generated.blocks.hero, ...(heroImage ? { image_url: heroImage } : {}) };
-          break;
+         case "hero":
+           data = { ...generated.blocks.hero, image_url: finalHeroImage };
+           break;
         case "manifesto_curto":
           data = generated.blocks.manifesto_curto;
           break;
         case "metodo":
           data = generated.blocks.metodo;
           break;
-        case "beneficios_grid":
-          data = generated.blocks.beneficios_grid;
-          break;
-        case "procedimento_detalhado":
-          // Fase C: sempre vem com conteúdo. Ativo se veio da página antiga,
-          // desligado (mas editável) se veio do fallback.
-          data = procedimentoDetalhadoData;
-          enabled = procedimentoDetalhadoEnabled;
-          break;
+         case "beneficios_grid":
+           data = {
+             ...generated.blocks.beneficios_grid,
+             cards: (generated.blocks.beneficios_grid.cards || []).map((card: any, idx: number) => ({
+               ...card,
+               image_url: gridImages[idx] || null
+             }))
+           };
+           break;
+         case "procedimento_detalhado":
+           data = { 
+             ...procedimentoDetalhadoData, 
+             ...(procedimentoImage ? { image_url: procedimentoImage } : {}) 
+           };
+           enabled = procedimentoDetalhadoEnabled;
+           break;
         case "preco_ancora":
           data = generated.blocks.preco_ancora;
           break;

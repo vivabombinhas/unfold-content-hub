@@ -60,7 +60,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
   const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: true, waitFor: 1000 }),
+     body: JSON.stringify({ url, formats: ["markdown", "html", "links"], onlyMainContent: false, waitFor: 1000 }),
   });
   if (res.ok) {
     const data = await res.json();
@@ -94,18 +94,7 @@ async function firecrawlScrape(apiKey: string, url: string) {
     }
   }
 
-  return { ok: false, status: res.status, error: errorText.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
-  const data = await res.json();
-  // Normalize SDK/REST shapes
-  const root = data?.data ?? data;
-  return {
-    ok: true,
-    status: 200,
-    markdown: root?.markdown || null,
-    html: root?.html || null,
-    links: Array.isArray(root?.links) ? root.links : [],
-    metadata: root?.metadata || null,
-  };
+   return { ok: false, status: res.status, error: errorText.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
 }
 
 function truncate(s: string | null | undefined, n: number) {
@@ -317,50 +306,54 @@ function truncate(s: string | null | undefined, n: number) {
         }
         if (scrape.html) {
           ownRawHtml.push(`<!-- ${sourceUrl} -->\n${scrape.html}`);
-          // Extrai <img src> e alt diretamente do HTML como candidatas
-          const imgRegex = /<img[^>]*?src=["']([^"']+)["'][^>]*?(?:alt=["']([^"']*)["'])?[^>]*>/gi;
-          let m;
-          while ((m = imgRegex.exec(scrape.html)) !== null) {
-            const url = m[1];
-            if (!url || url.startsWith("data:")) continue;
-            // Resolve URL relativa
-            let abs = url;
-            try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
-            // Pula ícones/SVGs decorativos óbvios
-            if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
-            if (/\/(logo|icon|favicon|sprite)/i.test(abs)) continue;
-            if (candidateImages.length < 30 && !candidateImages.some((c) => c.url === abs)) {
-              candidateImages.push({ url: abs, alt: m[2] || "", source_url: sourceUrl });
-            }
-          }
-          // data-src / data-lazy-src / data-original
-          const lazyRegex = /<img[^>]*?(?:data-src|data-lazy-src|data-original)=["']([^"']+)["'][^>]*?(?:alt=["']([^"']*)["'])?[^>]*>/gi;
-          let lm;
-          while ((lm = lazyRegex.exec(scrape.html)) !== null) {
-            const url = lm[1];
-            if (!url || url.startsWith("data:")) continue;
-            let abs = url;
-            try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
-            if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
-            if (/\/(logo|icon|favicon|sprite)/i.test(abs)) continue;
-            if (candidateImages.length < 30 && !candidateImages.some((c) => c.url === abs)) {
-              candidateImages.push({ url: abs, alt: lm[2] || "", source_url: sourceUrl });
-            }
-          }
-          // background-image inline
-          const bgRegex = /background-image\s*:\s*url\((['"]?)([^'")]+)\1\)/gi;
-          let bm;
-          while ((bm = bgRegex.exec(scrape.html)) !== null) {
-            const url = bm[2];
-            if (!url || url.startsWith("data:")) continue;
-            let abs = url;
-            try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
-            if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
-            if (/\/(logo|icon|favicon|sprite)/i.test(abs)) continue;
-            if (candidateImages.length < 30 && !candidateImages.some((c) => c.url === abs)) {
-              candidateImages.push({ url: abs, alt: "", source_url: sourceUrl });
-            }
-          }
+           // 1. Extrai Open Graph Image (muito provável ser a imagem principal do post/página)
+           const ogRegex = /<meta[^>]*?property=["']og:image["'][^>]*?content=["']([^"']+)["']/gi;
+           let ogm;
+           while ((ogm = ogRegex.exec(scrape.html)) !== null) {
+             let abs = ogm[1];
+             try { abs = new URL(abs, sourceUrl).toString(); } catch { /* ignore */ }
+             if (!candidateImages.some(c => c.url === abs)) {
+               candidateImages.unshift({ url: abs, alt: "Imagem principal (OG)", source_url: sourceUrl });
+             }
+           }
+
+           // 2. Extrai <img src> e variados (data-src, lazy-src, srcset)
+           const imgRegex = /<img[^>]*?(?:src|data-src|data-lazy-src|data-original|srcset)=["']([^"' ]+)["'][^>]*?(?:alt=["']([^"']*)["'])?[^>]*>/gi;
+           let m;
+           while ((m = imgRegex.exec(scrape.html)) !== null) {
+             const url = m[1];
+             if (!url || url.startsWith("data:")) continue;
+             let abs = url;
+             try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
+
+             // Filtro agressivo de ruído (logos, ícones, badges)
+             const isNoise = /\/(logo|icon|favicon|sprite|whatsapp|social|header|footer|menu|estrela|star|review|google-review|fb-icon|ig-icon|arrow|loader)/i.test(abs) 
+               || /logo|icon|favicon|whatsapp|social|badge/i.test(m[2] || "");
+             
+             if (isNoise) continue;
+             if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
+
+             if (candidateImages.length < 50 && !candidateImages.some((c) => c.url === abs)) {
+               candidateImages.push({ url: abs, alt: (m[2] || "").trim(), source_url: sourceUrl });
+             }
+           }
+
+           // 3. Background-image inline
+           const bgRegex = /background-image\s*:\s*url\((['"]?)([^'")]+)\1\)/gi;
+           let bm;
+           while ((bm = bgRegex.exec(scrape.html)) !== null) {
+             const url = bm[2];
+             if (!url || url.startsWith("data:")) continue;
+             let abs = url;
+             try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
+             
+             if (/\/(logo|icon|favicon|sprite|whatsapp|social)/i.test(abs)) continue;
+             if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
+
+             if (candidateImages.length < 50 && !candidateImages.some((c) => c.url === abs)) {
+               candidateImages.push({ url: abs, alt: "", source_url: sourceUrl });
+             }
+           }
         }
         scrapeDiagnostics.push({
           url: sourceUrl,
