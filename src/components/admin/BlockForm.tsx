@@ -3,7 +3,111 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MediaInput } from "./MediaInput";
- import { Plus, Trash2, Sparkles, Wand2, Loader2, Library, Settings2 } from "lucide-react";
+  import { Plus, Trash2, Sparkles, Wand2, Loader2, Library, Settings2, Eye } from "lucide-react";
+ function HeroImagePreview({ 
+   imageUrl, 
+   style, 
+   bgStyle, 
+   align, 
+   scale,
+   captionTop,
+   captionBottom
+ }: { 
+   imageUrl: string; 
+   style: string; 
+   bgStyle: string; 
+   align: string; 
+   scale: number;
+   captionTop?: string;
+   captionBottom?: string;
+ }) {
+   if (!imageUrl) return null;
+ 
+   const imageScale = scale / 100;
+ 
+   return (
+     <div className="mt-6 space-y-3">
+       <div className="flex items-center gap-2 mb-1">
+         <Eye className="size-3 text-brand-gold" />
+         <span className="text-[10px] uppercase tracking-widest text-brand-gold font-bold">Preview do Estilo</span>
+       </div>
+       
+       <div className="relative aspect-video rounded-lg border border-white/10 bg-brand-black overflow-hidden flex items-center justify-center p-4">
+         {/* Grid background for scale reference */}
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/5 to-transparent pointer-events-none" />
+         
+         <div 
+           className={cn(
+             "relative w-full h-full max-w-[140px] aspect-[4/5] transition-all duration-500",
+             align === "left" ? "mr-auto ml-0" : align === "right" ? "ml-auto mr-0" : "mx-auto"
+           )}
+         >
+           {/* Container mimics HeroBlock logic */}
+           <div 
+             className={cn(
+               "w-full h-full relative transition-all duration-500",
+               style === "full" && "overflow-hidden border border-brand-gold/10 bg-brand-graphite",
+               style === "cutout" && "overflow-visible",
+               style === "soft-card" && "overflow-hidden rounded-2xl border border-brand-gold/20 shadow-xl bg-brand-graphite",
+               style === "editorial" && "overflow-hidden border-x border-brand-gold/10 bg-brand-graphite"
+             )}
+           >
+             {/* BG Effects */}
+             {bgStyle === "glow" && style === "cutout" && (
+               <div className="absolute inset-0 bg-brand-gold/20 blur-[20px] rounded-full scale-125 animate-pulse-slow" />
+             )}
+             {bgStyle === "gradient" && (
+               <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/5 to-brand-black/40" />
+             )}
+             {bgStyle === "solid" && style !== "cutout" && (
+               <div className="absolute inset-0 bg-brand-black/20" />
+             )}
+ 
+             <div 
+               className="w-full h-full"
+               style={{ transform: `scale(${imageScale})` }}
+             >
+               <img 
+                 src={imageUrl} 
+                 alt="Preview" 
+                 className={cn(
+                   "w-full h-full",
+                   style === "cutout" ? "object-contain" : "object-cover"
+                 )} 
+               />
+             </div>
+ 
+             {/* Overlays */}
+             {style === "full" && (
+               <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
+             )}
+             {style === "editorial" && (
+               <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-brand-black via-transparent to-brand-gold/10 mix-blend-overlay" />
+             )}
+ 
+             {/* Captions simplified */}
+             {(captionTop || captionBottom) && (
+               <div className="absolute bottom-2 left-2 right-2 z-10">
+                 {captionTop && <p className="text-[6px] uppercase tracking-widest text-brand-gold truncate">{captionTop}</p>}
+                 {captionBottom && <p className="font-display italic text-[8px] text-white truncate">{captionBottom}</p>}
+               </div>
+             )}
+           </div>
+         </div>
+         
+         {/* Label showing the combination */}
+         <div className="absolute bottom-2 left-2 right-2 flex justify-between items-end pointer-events-none">
+           <div className="bg-black/60 backdrop-blur-md px-2 py-1 rounded border border-white/10">
+             <p className="text-[8px] text-white/50 uppercase tracking-tighter">
+               {style} + {bgStyle}
+             </p>
+           </div>
+         </div>
+       </div>
+     </div>
+   );
+ }
+ 
 import { useState } from "react";
  import { CaseBlockEditor } from "./CaseBlockEditor";
  import {
@@ -127,9 +231,19 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                      step={5} 
                      onValueChange={([v]) => set("hero_image_scale", v.toString())}
                    />
-                 </div>
-               </div>
-             </div>
+                </div>
+              </div>
+
+              <HeroImagePreview 
+                imageUrl={field(data.image_url)}
+                style={field(data.hero_image_style, "full")}
+                bgStyle={field(data.hero_bg_style, "solid")}
+                align={field(data.hero_image_align, "center")}
+                scale={parseInt(field(data.hero_image_scale, "100"))}
+                captionTop={field(data.caption_top)}
+                captionBottom={field(data.caption_bottom)}
+              />
+            </div>
            </div>
           <Field label="Caption (linha de cima)" value={field(data.caption_top)} onChange={(v) => set("caption_top", v)} />
           <Field label="Caption (linha de baixo)" value={field(data.caption_bottom)} onChange={(v) => set("caption_bottom", v)} />
