@@ -191,18 +191,18 @@
              </Button>
            </div>
  
-           {/* Canvas Container */}
-           <div className="flex-1 flex items-center justify-center p-8 lg:p-12 xl:p-16 overflow-hidden">
-             <div 
-               className={cn(
-                 "relative h-full bg-white shadow-[0_0_100px_rgba(0,0,0,0.5)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden rounded-md",
-                 viewMode === "desktop" ? "w-full" : 
-                 viewMode === "tablet" ? "w-[768px]" : "w-[375px]"
-               )}
-             >
-               {preview}
-             </div>
-           </div>
+            {/* Canvas Container */}
+            <div className="flex-1 flex items-center justify-center p-4 lg:p-6 overflow-hidden">
+              <div 
+                className={cn(
+                  "relative h-full bg-white shadow-[0_0_50px_rgba(0,0,0,0.3)] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-hidden rounded-lg border border-white/5",
+                  viewMode === "desktop" ? "w-full" : 
+                  viewMode === "tablet" ? "w-[768px]" : "w-[375px]"
+                )}
+              >
+                {preview}
+              </div>
+            </div>
          </main>
  
          {/* Drawer de Edição (Overlay Flutuante) */}
