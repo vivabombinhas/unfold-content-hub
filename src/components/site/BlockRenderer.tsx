@@ -80,7 +80,24 @@ function toClinicalCase(c: PoolCase): ClinicalCase {
     age: c.age ?? "",
     cover: c.cover_url ?? "",
     gallery: (c.gallery ?? []).map((g) => ({ src: g.src ?? "", caption: g.caption })),
-    beforeAfter: c.before_url && c.after_url ? { before: c.before_url, after: c.after_url } : undefined,
+   beforeAfter: c.before_url && c.after_url ? { before: c.before_url, after: c.after_url } : undefined,
+ /** Converte um item de caso customizado (do bloco da página) no shape que CaseModal espera. */
+ function manualToClinicalCase(m: any, id: string): ClinicalCase {
+   return {
+     id: `manual-${id}`,
+     area: s(m.title, "Caso Clínico"),
+     age: s(m.age, ""),
+     cover: s(m.image_url || m.before_url),
+     gallery: [],
+     beforeAfter: m.before_url && m.after_url ? { before: m.before_url, after: m.after_url } : undefined,
+     notes: s(m.notes || m.description),
+     highlight: true,
+     dosage: "",
+     duration: "",
+     toxin: "",
+   };
+ }
+ 
     highlight: c.highlight,
     notes: c.notes ?? "",
     dosage: c.dosage ?? "",
@@ -586,26 +603,47 @@ function CasosBlock({ data }: { data: BlockData }) {
     : typeof data.limit === "number" ? data.limit : 6;
   const areaFilter = s(data.area_filter).toLowerCase();
 
-  // Pool vem do banco; se vazio, bloco não renderiza.
-  let filtered = pool.filter((c) => c.highlight);
-  if (filtered.length === 0) filtered = pool;
-  if (areaFilter) {
-    const aliases: Record<string, string[]> = {
-      labios: ["lábio", "labio", "boca", "perioral"],
-      terco_superior: ["frontal", "glabela", "testa", "olh"],
-      terco_medio: ["malar", "olheir"],
-      mandibula: ["mandíb", "queixo", "masseter"],
-      pescoco: ["pescoço", "papada"],
-      face: ["face", "rosto"],
-      corpo: ["corpo", "abdome", "glúteo"],
-    };
-    const al = aliases[areaFilter] || [areaFilter.replace(/_/g, " ")];
-    const matched = pool.filter((c) => al.some((a) => c.area.toLowerCase().includes(a)));
-    if (matched.length > 0) filtered = matched;
-  }
-  const featured = filtered.slice(0, showCount).map(toClinicalCase);
-
-  if (featured.length === 0) return null;
+   const customCases = arr<any>(data.cases);
+   const hasCustomSelection = "cases" in data;
+ 
+   let featured: ClinicalCase[] = [];
+ 
+   if (hasCustomSelection) {
+     // 1. Usar seleção manual/específica da página
+     featured = customCases.map((item, idx) => {
+       if (item.source === "global") {
+         const p = pool.find((c) => c.id === item.case_id);
+         return p ? toClinicalCase(p) : null;
+       }
+       return manualToClinicalCase(item, String(idx));
+     }).filter(Boolean) as ClinicalCase[];
+   } else {
+     // 2. Fallback: Pool global (com filtros)
+     let filtered = pool.filter((c) => c.highlight);
+     if (filtered.length === 0) filtered = pool;
+     if (areaFilter) {
+       const aliases: Record<string, string[]> = {
+         labios: ["lábio", "labio", "boca", "perioral"],
+         terco_superior: ["frontal", "glabela", "testa", "olh"],
+         terco_medio: ["malar", "olheir"],
+         mandibula: ["mandíb", "queixo", "masseter"],
+         pescoco: ["pescoço", "papada"],
+         face: ["face", "rosto"],
+         corpo: ["corpo", "abdome", "glúteo"],
+       };
+       const al = aliases[areaFilter] || [areaFilter.replace(/_/g, " ")];
+       const matched = pool.filter((c) => al.some((a) => c.area.toLowerCase().includes(a)));
+       if (matched.length > 0) filtered = matched;
+     }
+     featured = filtered.slice(0, showCount).map(toClinicalCase);
+   }
+ 
+   if (featured.length === 0) {
+     // Se escolheu customizar mas não adicionou nada, não mostra nada
+     if (hasCustomSelection) return null;
+     // Se for global mas estiver vazio, não mostra nada
+     return null;
+   }
 
   return (
     <>
