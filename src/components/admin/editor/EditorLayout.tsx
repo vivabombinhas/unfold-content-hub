@@ -8,8 +8,27 @@
    Minimize2, 
    Monitor,
    Smartphone,
-   Tablet
+   Tablet,
+   Home,
+   FileText,
+   Images,
+   MessageCircle,
+   Quote,
+   Bot,
+   GraduationCap,
+   Settings,
+   LogOut,
+   ChevronDown
  } from "lucide-react";
+ import { Link, useLocation } from "react-router-dom";
+ import { useAuth } from "@/hooks/use-auth";
+ import {
+   DropdownMenu,
+   DropdownMenuContent,
+   DropdownMenuItem,
+   DropdownMenuTrigger,
+   DropdownMenuSeparator,
+ } from "@/components/ui/dropdown-menu";
  
  interface EditorLayoutProps {
    sidebar: React.ReactNode;
