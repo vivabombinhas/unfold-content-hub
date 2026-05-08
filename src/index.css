@@ -1,3 +1,14 @@
+ 
+   /* Editor Highlight */
+   .editor-selected-block {
+     outline: 3px solid hsl(var(--gold)) !important;
+     outline-offset: -3px !important;
+     box-shadow: inset 0 0 100px hsl(var(--gold) / 0.1), 0 0 40px hsl(var(--gold) / 0.3) !important;
+     position: relative !important;
+     z-index: 40 !important;
+     scroll-margin-top: 100px;
+   }
+ 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
