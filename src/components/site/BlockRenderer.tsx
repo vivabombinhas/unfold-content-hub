@@ -261,16 +261,20 @@ function HeroBlock({ data }: { data: BlockData }) {
                  <div className="absolute inset-0 bg-brand-black/20" aria-hidden />
                )}
  
-               <img 
-                 src={imageUrl} 
-                 alt={eyebrow} 
-                 className={cn(
-                   "w-full h-full transition-all duration-[4s] group-hover:scale-105",
-                   imageStyle === "cutout" ? "object-contain" : "object-cover"
-                 )} 
+               <div 
+                 className="w-full h-full transition-transform duration-[4s] group-hover:scale-110"
                  style={{ transform: `scale(${imageScale})` }}
-                 loading="eager" 
-               />
+               >
+                 <img 
+                   src={imageUrl} 
+                   alt={eyebrow} 
+                   className={cn(
+                     "w-full h-full",
+                     imageStyle === "cutout" ? "object-contain" : "object-cover"
+                   )} 
+                   loading="eager" 
+                 />
+               </div>
  
                {/* Overlays */}
                {imageStyle === "full" && (
