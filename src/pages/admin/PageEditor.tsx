@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BLOCK_LABELS, type BlockType, type PageBlockRow } from "@/types/blocks";
@@ -9,22 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ArrowLeft,
   ExternalLink,
   Save,
   Send,
   Undo2,
-  Plus,
-  Trash2,
-  Download,
-  Search,
   Loader2,
-  Image as ImageIcon,
-  AlertTriangle,
   Layout,
   Settings2,
   Sparkles,
-  GripVertical,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
@@ -98,36 +90,7 @@ export default function PageEditor() {
   const [publishing, setPublishing] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [extractingImages, setExtractingImages] = useState(false);
-  const [scanUrl, setScanUrl] = useState("");
-  const [extractError, setExtractError] = useState<{ url: string; message: string; status?: number } | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  async function handleExtractImages() {
-    if (!scanUrl || !scanUrl.includes("esteticabatel.com.br")) {
-      toast({ title: "URL inválida", description: "Use uma URL da clínica Batel.", variant: "destructive" });
-      return;
-    }
-    setExtractingImages(true);
-    setExtractError(null);
-    try {
-      const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
-        timeout: 60000,
-        body: { url: scanUrl, page_title: pageMeta.title, page_category: (pageMeta.metadata?.categoria as string) || "" },
-      });
-      if (error) throw error;
-      const candidates = res.image_candidates || [];
-      setPageMeta(prev => ({
-        ...prev,
-        metadata: { ...prev.metadata, image_candidates: candidates, old_url: scanUrl }
-      }));
-      toast({ title: "Busca concluída", description: `${candidates.length} imagens encontradas.` });
-    } catch (e: any) {
-      setExtractError({ url: scanUrl, message: e.message || "Erro na Edge Function" });
-    } finally {
-      setExtractingImages(false);
-    }
-  }
 
   useEffect(() => {
     if (!data?.page) return;
@@ -240,46 +203,46 @@ export default function PageEditor() {
   const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
   const selected = blocks.find((b) => b.id === selectedId) || null;
 
-   return (
-     <EditorLayout
-       title={pageMeta.title || (data?.page ? data.page.slug : "")}
-       isDrawerOpen={!!selectedId}
-       onCloseDrawer={() => setSelectedId(null)}
-       isSidebarCollapsed={isSidebarCollapsed}
-       setIsSidebarCollapsed={setIsSidebarCollapsed}
-       topbar={
-         <div className="flex items-center gap-3">
-           <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 mr-4">
-             <CopyLinkButton slug={data?.page?.slug || ""} status={data?.page?.status as any} />
-             <Button variant="ghost" size="sm" asChild className="h-8 text-white/60 hover:text-white hover:bg-white/5 rounded-lg px-3 transition-colors">
-               <a href={data?.page?.status === "published" ? `/p/${data?.page?.slug}` : `/p/${data?.page?.slug}?preview=1`} target="_blank" rel="noreferrer">
-                 <ExternalLink className="size-3.5 mr-2" /> <span className="text-xs">Preview</span>
-               </a>
-             </Button>
-           </div>
- 
-           {dirty && (
-             <Badge variant="outline" className="bg-brand-bordeaux/10 text-brand-bordeaux border-brand-bordeaux/20 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full animate-pulse mr-2">
-               Não salvo
-             </Badge>
-           )}
- 
-           <Button variant="ghost" size="sm" onClick={handleRevert} className="h-9 text-white/40 hover:text-white rounded-xl px-3 transition-colors">
-             <Undo2 className="size-3.5 mr-2" />
-             <span className="text-xs font-medium">Reverter</span>
-           </Button>
- 
-           <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty} className="h-9 bg-white/[0.02] border-white/10 text-white rounded-xl px-4 hover:bg-white/5 transition-all">
-             {saving ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Save className="size-3.5 mr-2" />} 
-             <span className="text-xs font-medium">Salvar</span>
-           </Button>
- 
-           <Button size="sm" onClick={handlePublish} disabled={publishing || dirty} className="h-9 bg-brand-gold text-brand-green hover:bg-brand-gold/90 rounded-xl px-6 font-bold shadow-[0_0_20px_rgba(209,180,111,0.2)] transition-all active:scale-95">
-             {publishing ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Send className="size-3.5 mr-2" />} 
-             <span className="text-xs font-bold uppercase tracking-wider">Publicar</span>
-           </Button>
-         </div>
-       }
+  return (
+    <EditorLayout
+      title={pageMeta.title || (data?.page ? data.page.slug : "")}
+      isDrawerOpen={!!selectedId}
+      onCloseDrawer={() => setSelectedId(null)}
+      isSidebarCollapsed={isSidebarCollapsed}
+      setIsSidebarCollapsed={setIsSidebarCollapsed}
+      topbar={
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 mr-4">
+            <CopyLinkButton slug={data?.page?.slug || ""} status={data?.page?.status as any} />
+            <Button variant="ghost" size="sm" asChild className="h-8 text-white/60 hover:text-white hover:bg-white/5 rounded-lg px-3 transition-colors">
+              <a href={data?.page?.status === "published" ? `/p/${data?.page?.slug}` : `/p/${data?.page?.slug}?preview=1`} target="_blank" rel="noreferrer">
+                <ExternalLink className="size-3.5 mr-2" /> <span className="text-xs">Preview</span>
+              </a>
+            </Button>
+          </div>
+
+          {dirty && (
+            <Badge variant="outline" className="bg-brand-bordeaux/10 text-brand-bordeaux border-brand-bordeaux/20 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full animate-pulse mr-2">
+              Não salvo
+            </Badge>
+          )}
+
+          <Button variant="ghost" size="sm" onClick={handleRevert} className="h-9 text-white/40 hover:text-white rounded-xl px-3 transition-colors">
+            <Undo2 className="size-3.5 mr-2" />
+            <span className="text-xs font-medium">Reverter</span>
+          </Button>
+
+          <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty} className="h-9 bg-white/[0.02] border-white/10 text-white rounded-xl px-4 hover:bg-white/5 transition-all">
+            {saving ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Save className="size-3.5 mr-2" />} 
+            <span className="text-xs font-medium">Salvar</span>
+          </Button>
+
+          <Button size="sm" onClick={handlePublish} disabled={publishing || dirty} className="h-9 bg-brand-gold text-brand-green hover:bg-brand-gold/90 rounded-xl px-6 font-bold shadow-[0_0_20px_rgba(209,180,111,0.2)] transition-all active:scale-95">
+            {publishing ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Send className="size-3.5 mr-2" />} 
+            <span className="text-xs font-bold uppercase tracking-wider">Publicar</span>
+          </Button>
+        </div>
+      }
       sidebar={
         <SidebarBlockList
           blocks={blocks}
@@ -314,9 +277,9 @@ export default function PageEditor() {
                 <div><h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Página</h4><p className="text-sm font-semibold text-white/90">Configurações Gerais</p></div>
               </div>
               <div className="space-y-6">
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
+                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
+                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
+                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
               </div>
               <div className="pt-8 border-t border-white/5 space-y-6">
                 <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] font-bold uppercase text-brand-gold/80">IA Context</h3></div>
