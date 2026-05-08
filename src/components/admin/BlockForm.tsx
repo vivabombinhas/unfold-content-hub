@@ -52,16 +52,16 @@ import { MediaInput } from "./MediaInput";
                style === "editorial" && "overflow-hidden border-x border-brand-gold/10 bg-brand-graphite"
              )}
            >
-             {/* BG Effects */}
-             {bgStyle === "glow" && style === "cutout" && (
-               <div className="absolute inset-0 bg-brand-gold/20 blur-[20px] rounded-full scale-125 animate-pulse-slow" />
-             )}
-             {bgStyle === "gradient" && (
-               <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/5 to-brand-black/40" />
-             )}
-             {bgStyle === "solid" && style !== "cutout" && (
-               <div className="absolute inset-0 bg-brand-black/20" />
-             )}
+              {/* BG Effects - Mirrored from HeroBlock */}
+              {bgStyle === "glow" && (
+                <div className="absolute inset-0 bg-brand-gold/25 blur-[30px] rounded-full scale-125 animate-pulse-slow" />
+              )}
+              {bgStyle === "gradient" && (
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/15 via-transparent to-brand-black/60" />
+              )}
+              {bgStyle === "solid" && (
+                <div className="absolute inset-0 bg-brand-graphite/40" />
+              )}
  
              <div 
                className="w-full h-full"
@@ -190,7 +190,7 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
  
                <div className="space-y-1.5">
                  <Label className="text-[10px] uppercase tracking-wider text-brand-text-muted">Fundo da Imagem</Label>
-                 <Select value={field(data.hero_bg_style, "solid")} onValueChange={(v) => set("hero_bg_style", v)}>
+                  <Select value={field(data.hero_bg_style, "gradient")} onValueChange={(v) => set("hero_bg_style", v)}>
                    <SelectTrigger className="h-9 bg-white/5 border-white/10">
                      <SelectValue placeholder="Selecione o fundo" />
                    </SelectTrigger>
@@ -235,15 +235,15 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                 </div>
               </div>
 
-              <HeroImagePreview 
-                imageUrl={field(data.image_url)}
-                style={field(data.hero_image_style, "full")}
-                bgStyle={field(data.hero_bg_style, "solid")}
-                align={field(data.hero_image_align, "center")}
-                scale={parseInt(field(data.hero_image_scale, "100"))}
-                captionTop={field(data.caption_top)}
-                captionBottom={field(data.caption_bottom)}
-              />
+                <HeroImagePreview 
+                  imageUrl={field(data.image_url)}
+                  style={field(data.hero_image_style, "full")}
+                  bgStyle={field(data.hero_bg_style, "gradient")}
+                  align={field(data.hero_image_align, "center")}
+                  scale={parseInt(field(data.hero_image_scale, "100"))}
+                  captionTop={field(data.caption_top)}
+                  captionBottom={field(data.caption_bottom)}
+                />
             </div>
            </div>
           <Field label="Caption (linha de cima)" value={field(data.caption_top)} onChange={(v) => set("caption_top", v)} />
