@@ -64,7 +64,7 @@
        <div className={cn("px-6 mb-8 flex items-center justify-between", isCollapsed && "px-4 justify-center")}>
          {!isCollapsed ? (
            <>
-             <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/40">Estrutura</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">Estrutura</h2>
              <Button variant="ghost" size="icon" className="size-6 text-white/40 hover:text-white" onClick={() => onSelect(null)}>
                <Settings2 className="size-3.5" />
              </Button>
@@ -100,7 +100,7 @@
                  <button
                    key={t}
                    onClick={() => onAddBlock(t)}
-                   className="w-full text-left px-3 py-2 text-xs text-white/60 hover:bg-brand-gold/10 hover:text-brand-gold rounded-lg transition-colors"
+                    className="w-full text-left px-3 py-2.5 text-sm text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
                  >
                    {BLOCK_LABELS[t]}
                  </button>
@@ -117,7 +117,7 @@
              onClick={() => setShowAddMenu(!showAddMenu)}
            >
              <Plus className={cn("size-4", !isCollapsed && "mr-2")} />
-             {!isCollapsed && "Adicionar"}
+              {!isCollapsed && <span className="text-sm font-bold">Adicionar</span>}
            </Button>
          </div>
          <Button 
@@ -130,7 +130,7 @@
            onClick={onImportBlock}
          >
            <Download className={cn("size-4", !isCollapsed && "mr-2")} />
-           {!isCollapsed && "Importar"}
+            {!isCollapsed && <span className="text-sm font-bold">Importar</span>}
          </Button>
        </div>
      </div>
@@ -152,8 +152,8 @@
        ref={setNodeRef}
        style={style}
        className={cn(
-         "group relative flex items-center gap-2 rounded-xl transition-all duration-200 cursor-pointer",
-         isSelected ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:bg-white/[0.04] hover:text-white/70",
+          "group relative flex items-center gap-3 rounded-xl transition-all duration-200 cursor-pointer",
+          isSelected ? "bg-white/10 text-white shadow-sm" : "text-white hover:bg-white/[0.04] transition-colors",
          !block.enabled && "opacity-50 grayscale",
          isCollapsed ? "justify-center p-2" : "px-3 py-2.5"
        )}
@@ -163,10 +163,10 @@
          <GripVertical className="size-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
        </div>
        
-       <div className="flex-1 min-w-0 flex items-center gap-3">
-         <div className={cn("size-2 rounded-full shrink-0 transition-colors", isSelected ? "bg-brand-gold shadow-[0_0_8px_rgba(209,180,111,0.5)]" : "bg-white/10")} />
+        <div className="flex-1 min-w-0 flex items-center gap-3.5">
+          <div className={cn("size-2.5 rounded-full shrink-0 transition-colors", isSelected ? "bg-brand-gold shadow-[0_0_10px_rgba(209,180,111,0.6)]" : "bg-white/20")} />
          {!isCollapsed && (
-           <span className="text-xs font-medium truncate tracking-tight">
+            <span className="text-sm font-bold truncate tracking-tight">
              {BLOCK_LABELS[block.type as BlockType] || block.type}
            </span>
          )}
