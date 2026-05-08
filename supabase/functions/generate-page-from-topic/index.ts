@@ -594,10 +594,16 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
      // -----------------------------------------------------------------------
      // Distribuição Inteligente de Imagens
      // -----------------------------------------------------------------------
-     const heroImage = (candidateImages.length > 0) ? candidateImages[0].url : null;
+     // -----------------------------------------------------------------------
+     // Distribuição Inteligente de Imagens (Premium & Editorial)
+     // -----------------------------------------------------------------------
      
-     // Filtramos imagens para os outros blocos (pulando a do Hero)
-     const remainingImages = candidateImages.slice(1);
+     // Tentamos pegar a melhor imagem para Hero (que não seja inadequada)
+     const heroCandidate = candidateImages.find(img => !(img as any).inadequate_for_hero) || candidateImages[0];
+     const heroImage = heroCandidate ? heroCandidate.url : null;
+     
+     // Filtramos imagens para os outros blocos (removendo a escolhida para o Hero)
+     const remainingImages = candidateImages.filter(img => img.url !== heroImage);
      
      // Imagem para o bloco de procedimento (se houver pelo menos 2 imagens)
      const procedimentoImage = remainingImages.length > 0 ? remainingImages[0].url : null;
@@ -639,9 +645,16 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       let data: unknown;
       let enabled = true;
       switch (type) {
-         case "hero":
-           data = { ...generated.blocks.hero, image_url: finalHeroImage };
-           break;
+          case "hero":
+            data = { 
+              ...generated.blocks.hero, 
+              image_url: finalHeroImage,
+              hero_image_style: "editorial", // Estilo premium por padrão
+              hero_bg_style: "gradient",      // Fundo sofisticado por padrão
+              hero_image_align: "center",
+              hero_image_scale: "100"
+            };
+            break;
         case "manifesto_curto":
           data = generated.blocks.manifesto_curto;
           break;

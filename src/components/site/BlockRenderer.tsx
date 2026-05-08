@@ -183,7 +183,12 @@ function HeroBlock({ data }: { data: BlockData }) {
      [data.paragraph, data.subtitle, data.description],
      "Protocolo de alta performance com dosagem calibrada para resultados naturais e sofisticados. Sem aspecto congelado, preservando a expressão que comunica autoridade e segurança. Avaliação clínica individualizada e técnica documentada para máxima previsibilidade."
    );
-  const imageUrl = s(data.image_url);
+   const imageUrl = s(data.image_url);
+   const imageStyle = s(data.hero_image_style, "full");
+   const bgStyle = s(data.hero_bg_style, "solid");
+   const imageAlign = s(data.hero_image_align, "center");
+   const imageScale = parseInt(s(data.hero_image_scale, "100")) / 100;
+ 
   const captionTop = s(data.caption_top);
   const captionBottom = s(data.caption_bottom);
   const footnote = s(data.footnote, "Resposta em até 30 minutos · Atendimento confidencial");
@@ -227,23 +232,73 @@ function HeroBlock({ data }: { data: BlockData }) {
             <p className="text-[11px] tracking-[0.2em] uppercase text-brand-text-muted reveal" style={{ transitionDelay: "600ms" }}>{footnote}</p>
           )}
         </div>
-        {imageUrl && (
-           <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none parallax-subtle" style={{ transitionDelay: "400ms" }}>
-             <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative group border border-brand-gold/10">
-               <img src={imageUrl} alt={eyebrow} className="w-full h-full object-cover transition-transform duration-[4s] group-hover:scale-110" loading="eager" />
-              <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
-            </div>
-            <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
-              <Medal size={130} floating className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]" />
-            </div>
-            {(captionTop || captionBottom) && (
-              <div className="absolute bottom-5 left-5 right-5">
-                {captionTop && <p className="text-[10px] uppercase tracking-[0.22em] text-brand-gold">{captionTop}</p>}
-                {captionBottom && <p className="font-display italic text-xl text-brand-text-light mt-1">{captionBottom}</p>}
-              </div>
-            )}
-          </div>
-        )}
+         {imageUrl && (
+           <div 
+             className={cn(
+               "relative reveal parallax-subtle w-full max-w-md lg:max-w-none",
+               imageAlign === "left" ? "mx-0" : imageAlign === "right" ? "ml-auto mr-0" : "mx-auto"
+             )} 
+             style={{ transitionDelay: "400ms" }}
+           >
+             {/* Image Container with Style Variants */}
+             <div 
+               className={cn(
+                 "aspect-[4/5] relative group transition-all duration-700",
+                 imageStyle === "full" && "overflow-hidden border border-brand-gold/10 bg-brand-graphite",
+                 imageStyle === "cutout" && "overflow-visible",
+                 imageStyle === "soft-card" && "overflow-hidden rounded-[2rem] border border-brand-gold/20 shadow-2xl bg-brand-graphite",
+                 imageStyle === "editorial" && "overflow-hidden border-x border-brand-gold/10 bg-brand-graphite"
+               )}
+             >
+               {/* Background effects behind image */}
+               {bgStyle === "glow" && imageStyle === "cutout" && (
+                 <div className="absolute inset-0 bg-brand-gold/20 blur-[100px] rounded-full scale-150 animate-pulse-slow" aria-hidden />
+               )}
+               {bgStyle === "gradient" && (
+                 <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/5 to-brand-black/40" aria-hidden />
+               )}
+               {bgStyle === "solid" && imageStyle !== "cutout" && (
+                 <div className="absolute inset-0 bg-brand-black/20" aria-hidden />
+               )}
+ 
+               <div 
+                 className="w-full h-full"
+                 style={{ transform: `scale(${imageScale})` }}
+               >
+                 <img 
+                   src={imageUrl} 
+                   alt={eyebrow} 
+                   className={cn(
+                     "w-full h-full transition-transform duration-[4s] group-hover:scale-110",
+                     imageStyle === "cutout" ? "object-contain" : "object-cover"
+                   )} 
+                   loading="eager" 
+                 />
+               </div>
+ 
+               {/* Overlays */}
+               {imageStyle === "full" && (
+                 <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
+               )}
+               {imageStyle === "editorial" && (
+                 <div aria-hidden className="absolute inset-0 pointer-events-none bg-gradient-to-t from-brand-black via-transparent to-brand-gold/10 mix-blend-overlay" />
+               )}
+             </div>
+ 
+             {/* Medal */}
+             <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
+               <Medal size={130} floating className="drop-shadow-[0_10px_30px_rgba(0,0,0,0.5)]" />
+             </div>
+ 
+             {/* Captions */}
+             {(captionTop || captionBottom) && (
+               <div className="absolute bottom-5 left-5 right-5 z-10">
+                 {captionTop && <p className="text-[10px] uppercase tracking-[0.22em] text-brand-gold">{captionTop}</p>}
+                 {captionBottom && <p className="font-display italic text-xl text-brand-text-light mt-1">{captionBottom}</p>}
+               </div>
+             )}
+           </div>
+         )}
       </div>
     </section>
   );
