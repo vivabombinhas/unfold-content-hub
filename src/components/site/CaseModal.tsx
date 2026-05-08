@@ -92,29 +92,35 @@ export const CaseModal = ({ caseData, onClose }: CaseModalProps) => {
                 <p>{caseData.notes}</p>
               </div>
 
-              <dl className="mt-9 grid gap-4 text-sm">
-                <div className="flex items-start gap-4 pb-4 border-b border-brand-gold/15">
-                  <Syringe className="size-4 text-brand-gold mt-0.5 shrink-0" strokeWidth={1.5} />
-                  <div>
-                    <dt className="text-[10px] font-body uppercase tracking-[0.22em] text-brand-text-muted">Dosagem</dt>
-                    <dd className="mt-1 text-brand-text-light">{caseData.dosage}</dd>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 pb-4 border-b border-brand-gold/15">
-                  <Clock className="size-4 text-brand-gold mt-0.5 shrink-0" strokeWidth={1.5} />
-                  <div>
-                    <dt className="text-[10px] font-body uppercase tracking-[0.22em] text-brand-text-muted">Tempo de resultado</dt>
-                    <dd className="mt-1 text-brand-text-light">{caseData.duration}</dd>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 pb-4 border-b border-brand-gold/15">
-                  <FileText className="size-4 text-brand-gold mt-0.5 shrink-0" strokeWidth={1.5} />
-                  <div>
-                    <dt className="text-[10px] font-body uppercase tracking-[0.22em] text-brand-text-muted">Toxina utilizada</dt>
-                    <dd className="mt-1 text-brand-text-light">{caseData.toxin}</dd>
-                  </div>
-                </div>
-              </dl>
+               <dl className="mt-9 grid gap-4 text-sm">
+                 {caseData.dosage && (
+                   <div className="flex items-start gap-4 pb-4 border-b border-brand-gold/15">
+                     <Syringe className="size-4 text-brand-gold mt-0.5 shrink-0" strokeWidth={1.5} />
+                     <div>
+                       <dt className="text-[10px] font-body uppercase tracking-[0.22em] text-brand-text-muted">Dosagem</dt>
+                       <dd className="mt-1 text-brand-text-light">{caseData.dosage}</dd>
+                     </div>
+                   </div>
+                 )}
+                 {caseData.duration && (
+                   <div className="flex items-start gap-4 pb-4 border-b border-brand-gold/15">
+                     <Clock className="size-4 text-brand-gold mt-0.5 shrink-0" strokeWidth={1.5} />
+                     <div>
+                       <dt className="text-[10px] font-body uppercase tracking-[0.22em] text-brand-text-muted">Tempo de resultado</dt>
+                       <dd className="mt-1 text-brand-text-light">{caseData.duration}</dd>
+                     </div>
+                   </div>
+                 )}
+                 {caseData.toxin && (
+                   <div className="flex items-start gap-4 pb-4 border-b border-brand-gold/15">
+                     <FileText className="size-4 text-brand-gold mt-0.5 shrink-0" strokeWidth={1.5} />
+                     <div>
+                       <dt className="text-[10px] font-body uppercase tracking-[0.22em] text-brand-text-muted">Toxina utilizada</dt>
+                       <dd className="mt-1 text-brand-text-light">{caseData.toxin}</dd>
+                     </div>
+                   </div>
+                 )}
+               </dl>
 
               <GoldButton
                 as="a"
