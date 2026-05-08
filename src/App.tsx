@@ -16,7 +16,8 @@ import Reviews from "./pages/admin/Reviews.tsx";
  import Courses from "./pages/admin/Courses.tsx";
  import Cases from "./pages/admin/Cases.tsx";
 import PageEditor from "./pages/admin/PageEditor.tsx";
-import NewPageFromTopic from "./pages/admin/NewPageFromTopic.tsx";
+ import NewPageFromTopic from "./pages/admin/NewPageFromTopic.tsx";
+ import BatchPageCreation from "./pages/admin/BatchPageCreation.tsx";
 import PageCreationWizard from "./pages/admin/PageCreationWizard.tsx";
 import Settings from "./pages/admin/Settings.tsx";
 
@@ -35,7 +36,8 @@ const App = () => (
           <Route path="/admin" element={<AuthProvider><AdminLayout /></AuthProvider>}>
             <Route index element={<AdminDashboard />} />
             <Route path="paginas" element={<PagesList />} />
-            <Route path="paginas/nova" element={<PageCreationWizard />} />
+             <Route path="paginas/nova" element={<PageCreationWizard />} />
+             <Route path="paginas/lote" element={<BatchPageCreation />} />
             <Route path="paginas/nova-legado" element={<NewPageFromTopic />} />
              <Route path="paginas/:slug" element={<PageEditor />} />
               <Route path="faqs" element={<Faqs />} />
