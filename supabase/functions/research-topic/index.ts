@@ -64,10 +64,12 @@ async function firecrawlScrape(apiKey: string, url: string) {
         url, 
         formats: ["markdown", "html", "links"], 
         onlyMainContent: false, 
-        waitFor: 3000,
         actions: [
-          { type: "wait", milliseconds: 2000 },
-          { type: "scrollX", steps: 5, direction: "down" }
+          { type: "wait", milliseconds: 1000 },
+          { type: "scroll", direction: "down" },
+          { type: "wait", milliseconds: 1000 },
+          { type: "scroll", direction: "down" },
+          { type: "wait", milliseconds: 1000 }
         ]
       }),
   });
