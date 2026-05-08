@@ -45,6 +45,9 @@
    image_url?: string;
    notes?: string;
    age?: string;
+   dosage?: string;
+   duration?: string;
+   toxin?: string;
  }
  
  interface Props {
@@ -254,6 +257,33 @@
                    <Input 
                      value={item.age || ""} 
                      onChange={e => onUpdate({ age: e.target.value })} 
+                     className="h-8 text-xs bg-brand-black/40 border-brand-gold/10"
+                   />
+                 </div>
+                 <div className="space-y-1.5">
+                   <Label className="text-[10px] uppercase tracking-widest text-brand-text-muted">Toxina utilizada</Label>
+                   <Input 
+                     value={item.toxin || ""} 
+                     onChange={e => onUpdate({ toxin: e.target.value })} 
+                     className="h-8 text-xs bg-brand-black/40 border-brand-gold/10"
+                   />
+                 </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-3">
+                 <div className="space-y-1.5">
+                   <Label className="text-[10px] uppercase tracking-widest text-brand-text-muted">Dosagem</Label>
+                   <Input 
+                     value={item.dosage || ""} 
+                     onChange={e => onUpdate({ dosage: e.target.value })} 
+                     className="h-8 text-xs bg-brand-black/40 border-brand-gold/10"
+                   />
+                 </div>
+                 <div className="space-y-1.5">
+                   <Label className="text-[10px] uppercase tracking-widest text-brand-text-muted">Tempo de resultado</Label>
+                   <Input 
+                     value={item.duration || ""} 
+                     onChange={e => onUpdate({ duration: e.target.value })} 
                      className="h-8 text-xs bg-brand-black/40 border-brand-gold/10"
                    />
                  </div>
