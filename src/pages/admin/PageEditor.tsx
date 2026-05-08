@@ -9,21 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ArrowLeft,
-  ExternalLink,
-  GripVertical,
-   Save,
-   Send,
-   Undo2,
-   Plus,
-   Trash2,
-   Download,
-   Search,
-   Loader2,
-    Image as ImageIcon,
-    AlertTriangle,
-  } from "lucide-react";
+ import { ArrowLeft, ExternalLink, Save, Send, Undo2, Plus, Trash2, Download, Search, Loader2, Image as ImageIcon, AlertTriangle, Layout, Settings2, Sparkles } from "lucide-react";
+ import { EditorLayout } from "@/components/admin/editor/EditorLayout";
+ import { SidebarBlockList } from "@/components/admin/editor/SidebarBlockList";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
