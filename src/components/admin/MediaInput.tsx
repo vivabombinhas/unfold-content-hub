@@ -2,7 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Upload, Link2, X, Image as ImageIcon, Check, Loader2 } from "lucide-react";
+ import { Upload, Link2, X, Image as ImageIcon, Check, Loader2, Library } from "lucide-react";
+ import { ImageBankModal } from "./ImageBankModal";
 import { toast } from "@/hooks/use-toast";
 
 interface Props {
@@ -73,7 +74,8 @@ export function MediaInput({ value, onChange, label }: Props) {
               <p className="text-xs text-brand-text-light font-medium">Nenhuma imagem selecionada</p>
               <p className="text-[10px] text-brand-text-muted">Suba um arquivo ou cole um link direto</p>
             </div>
-            <div className="flex gap-2 mt-1">
+             <div className="flex flex-wrap justify-center gap-2 mt-1">
+               <ImageBankModal onSelect={onChange} />
               <Button 
                 type="button" 
                 size="sm" 
