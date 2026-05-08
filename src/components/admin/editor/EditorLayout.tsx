@@ -88,7 +88,7 @@
              <DropdownMenuTrigger asChild>
                <Button variant="ghost" className="h-9 px-3 gap-2 bg-white/5 border border-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl">
                  <activeNav.icon className="size-4 text-brand-gold" />
-                 <span className="text-xs font-medium">{activeNav.label}</span>
+                  <span className="text-sm font-bold">{activeNav.label}</span>
                  <ChevronDown className="size-3 opacity-50" />
                </Button>
              </DropdownMenuTrigger>
@@ -98,8 +98,8 @@
                    <Link 
                      to={item.to} 
                      className={cn(
-                       "flex items-center gap-3 px-3 py-2 text-xs transition-colors cursor-pointer w-full",
-                       location.pathname === item.to ? "bg-brand-gold/10 text-brand-gold" : "text-white/60 hover:bg-white/5 hover:text-white"
+                        "flex items-center gap-3 px-3 py-2.5 text-sm transition-colors cursor-pointer w-full",
+                        location.pathname === item.to ? "bg-brand-gold/10 text-brand-gold font-bold" : "text-white hover:bg-white/5 font-medium"
                      )}
                    >
                      <item.icon className={cn("size-4", location.pathname === item.to ? "text-brand-gold" : "text-white/40")} />
@@ -119,7 +119,7 @@
            
            <div className="flex flex-col">
              <span className="text-[10px] uppercase tracking-widest text-white/30 font-bold leading-none mb-1">Editando Página</span>
-             <span className="text-sm font-semibold text-white/90 truncate max-w-[200px] leading-none">{title}</span>
+              <span className="text-base font-bold text-white truncate max-w-[250px] leading-none">{title}</span>
            </div>
          </div>
  
