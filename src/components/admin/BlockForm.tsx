@@ -179,7 +179,7 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                    <SelectTrigger className="h-9 bg-white/5 border-white/10">
                      <SelectValue placeholder="Selecione o estilo" />
                    </SelectTrigger>
-                   <SelectContent>
+                  <SelectContent className="z-[100]">
                      <SelectItem value="full">Normal (Full)</SelectItem>
                      <SelectItem value="cutout">Recortada (Cutout)</SelectItem>
                      <SelectItem value="soft-card">Card Suave</SelectItem>
@@ -194,7 +194,7 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                    <SelectTrigger className="h-9 bg-white/5 border-white/10">
                      <SelectValue placeholder="Selecione o fundo" />
                    </SelectTrigger>
-                   <SelectContent>
+                    <SelectContent className="z-[100]">
                      <SelectItem value="solid">Sólido Escuro</SelectItem>
                      <SelectItem value="gradient">Degradê Sutil</SelectItem>
                      <SelectItem value="glow">Brilho (Halo)</SelectItem>
@@ -211,7 +211,7 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                    <SelectTrigger className="h-9 bg-white/5 border-white/10">
                      <SelectValue placeholder="Alinhamento" />
                    </SelectTrigger>
-                   <SelectContent>
+                    <SelectContent className="z-[100]">
                      <SelectItem value="left">Esquerda</SelectItem>
                      <SelectItem value="center">Centralizado</SelectItem>
                      <SelectItem value="right">Direita</SelectItem>
