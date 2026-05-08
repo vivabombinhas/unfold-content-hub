@@ -80,7 +80,15 @@ function toClinicalCase(c: PoolCase): ClinicalCase {
     age: c.age ?? "",
     cover: c.cover_url ?? "",
     gallery: (c.gallery ?? []).map((g) => ({ src: g.src ?? "", caption: g.caption })),
-   beforeAfter: c.before_url && c.after_url ? { before: c.before_url, after: c.after_url } : undefined,
+    beforeAfter: c.before_url && c.after_url ? { before: c.before_url, after: c.after_url } : undefined,
+    highlight: c.highlight,
+    notes: c.notes ?? "",
+    dosage: c.dosage ?? "",
+    duration: c.duration ?? "",
+     toxin: c.toxin ?? "",
+   };
+ }
+ 
  /** Converte um item de caso customizado (do bloco da página) no shape que CaseModal espera. */
  function manualToClinicalCase(m: any, id: string): ClinicalCase {
    return {
@@ -97,14 +105,6 @@ function toClinicalCase(c: PoolCase): ClinicalCase {
      toxin: "",
    };
  }
- 
-    highlight: c.highlight,
-    notes: c.notes ?? "",
-    dosage: c.dosage ?? "",
-    duration: c.duration ?? "",
-    toxin: c.toxin ?? "",
-  };
-}
 
 /* ============================================================
    Public entry: pick the right renderer for a block type
