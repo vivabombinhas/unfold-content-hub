@@ -68,7 +68,7 @@ export default function AdminDashboard() {
         </Button>
       </header>
 
-      {/* Stats Grid */}
+      {/* s Grid */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((c) => (
           <Link
@@ -85,7 +85,7 @@ export default function AdminDashboard() {
             <p className="text-3xl font-display text-white mb-1 group-hover:text-brand-gold transition-colors">{c.value}</p>
             <p className="text-[11px] font-bold uppercase tracking-widest text-white/30 group-hover:text-white/50 transition-colors">{c.label}</p>
           </Link>
-        ))}Stat
+        ))}
       </section>
 
       {/* Main Grid: Tools and Actions */}
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
                   <p className="text-[11px] text-white/30">{action.description}</p>
                 </div>
               </Link>
-            ))} Stat
+            ))} 
           </div>
         </section>
 
@@ -135,9 +135,9 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-bold text-white/90">Curadoria de IA</h3>
                 <p className="text-xs text-white/30 mt-1">Configure as respostas automáticas e opiniões do robô.</p>
               </div>
-            </Link> Stat
+            </Link> 
           </div>
-        </section> Stat
+        </section> 
       </div>
     </div>
   );
