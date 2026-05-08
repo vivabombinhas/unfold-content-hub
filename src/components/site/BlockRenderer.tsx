@@ -101,9 +101,9 @@ function toClinicalCase(c: PoolCase): ClinicalCase {
      beforeAfter: m.before_url && m.after_url ? { before: m.before_url, after: m.after_url } : undefined,
      notes: s(m.notes || m.description),
      highlight: true,
-     dosage: "",
-     duration: "",
-     toxin: "",
+     dosage: s(m.dosage, ""),
+     duration: s(m.duration, ""),
+     toxin: s(m.toxin, ""),
    };
  }
 
