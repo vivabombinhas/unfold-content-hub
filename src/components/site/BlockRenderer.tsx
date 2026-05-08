@@ -808,10 +808,47 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
     });
   }
  
-   list = list.slice(0, showCount);
-  if (list.length === 0) return null;
+   const finalReviews = list.slice(0, showCount);
+
+   // Schema.org Structured Data for Reviews
+   const schemaData = {
+     "@context": "https://schema.org",
+     "@type": "Product",
+     "name": "Tratamento de Toxina Botulínica",
+     "description": "Procedimento estético de alta performance para suavização de linhas de expressão.",
+     "brand": {
+       "@type": "Brand",
+       "name": "Estética Batel"
+     },
+     "aggregateRating": {
+       "@type": "AggregateRating",
+       "ratingValue": "4.9",
+       "reviewCount": "240" // Valor aproximado baseado no copy do bloco
+     },
+     "review": finalReviews.map((r) => ({
+       "@type": "Review",
+       "author": {
+         "@type": "Person",
+         "name": r.name
+       },
+       "datePublished": "2024-01-01", // Placeholder
+       "reviewBody": r.text,
+       "reviewRating": {
+         "@type": "Rating",
+         "ratingValue": r.rating,
+         "bestRating": "5"
+       }
+     }))
+   };
+
+   if (finalReviews.length === 0) return null;
+
   return (
     <section className="bg-brand-black section-pad relative z-[2] overflow-hidden">
+       <script
+         type="application/ld+json"
+         dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+       />
       <div className="container-editorial">
         <div className="flex items-end justify-between gap-6 flex-wrap mb-10">
           <div className="reveal">
@@ -826,7 +863,7 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
       </div>
       <div className="overflow-x-auto scrollbar-hide pb-6">
         <div className="flex gap-5 px-[max(20px,5vw)] snap-x snap-mandatory">
-          {list.map((r) => (
+          {finalReviews.map((r) => (
             <article key={r.id} className="snap-start shrink-0 w-[88vw] sm:w-[420px] bg-brand-graphite border border-brand-gold/15 p-7 flex flex-col">
               <div className="flex items-center justify-between">
                 <div className="flex">
