@@ -10,15 +10,7 @@ import { LocalizacaoSection } from "@/components/site/LocalizacaoSection";
 import { useReveal } from "@/hooks/use-reveal";
 import { PoolsProvider, usePoolsQuery } from "@/hooks/use-pools";
 import type { BlockType } from "@/types/blocks";
-
-/**
- * PublicPage — renderiza qualquer página criada no admin.
- *
- * URLs:
- *  /p/:slug                → página publicada (status=published)
- *  /p/:slug?preview=1      → mostra rascunho (precisa estar logado como admin
- *                             pra RLS deixar passar)
- */
+import { cn } from "@/lib/utils";
 
 interface BlockRow {
   id: string;
@@ -45,7 +37,6 @@ export default function PublicPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-page", slug, previewMode],
     queryFn: async () => {
-      // 1. Page row (RLS lets anyone read published; admins also read drafts)
       const pageQuery = supabase.from("pages").select("*").eq("slug", slug).maybeSingle();
       const { data: page, error: pe } = await pageQuery;
       if (pe) throw pe;
@@ -53,7 +44,6 @@ export default function PublicPage() {
       const p = page as unknown as PageRow;
       if (!previewMode && p.status !== "published") return null;
 
-      // 2. Blocks (live for preview; snapshot for production)
       const { data: blocks, error: be } = await supabase
         .from("page_blocks")
         .select("id,type,position,enabled,data")
@@ -68,7 +58,6 @@ export default function PublicPage() {
   const poolsQuery = usePoolsQuery();
   const pools = poolsQuery.data ?? { cases: [], reviews: [], aiOpinions: [], courses: [], faqs: [] };
 
-  // SEO: set <title> and meta description as soon as we have the page.
   useEffect(() => {
     if (!data?.page) return;
     const t = data.page.meta_title || data.page.title;
@@ -89,7 +78,23 @@ export default function PublicPage() {
     [data?.blocks],
   );
 
-  // Run reveal observer AFTER blocks AND pools are in the DOM.
+  useEffect(() => {
+    if (!previewMode) return;
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === "SELECT_BLOCK") {
+        const id = e.data.id;
+        const el = document.querySelector(`[data-block-id="${id}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          document.querySelectorAll(".editor-selected-block").forEach(b => b.classList.remove("editor-selected-block"));
+          el.classList.add("editor-selected-block");
+        }
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [previewMode]);
+
   useReveal(`${blocks.length}-${poolsQuery.dataUpdatedAt}`);
 
   if (isLoading) {
@@ -115,7 +120,7 @@ export default function PublicPage() {
   }
 
   return (
-    <div className="bg-brand-black text-brand-text-light min-h-screen">
+    <div className={cn("bg-brand-black text-brand-text-light min-h-screen", previewMode && "preview-mode")}>
       <Header breadcrumbCurrent={data.page.title} />
 
       {previewMode && data.page.status !== "published" && (
@@ -126,14 +131,13 @@ export default function PublicPage() {
 
        <PoolsProvider value={pools}>
          {blocks.map((b) => (
-           <BlockRenderer key={b.id} type={b.type} data={b.data || {}} />
+           <BlockRenderer key={b.id} id={b.id} type={b.type} data={b.data || {}} />
          ))}
          {!blocks.some((b) => b.type === "equipe_rt") && (
            <BlockRenderer type="equipe_rt" data={{}} />
          )}
        </PoolsProvider>
 
-      {/* Seção fixa de localização — global, não é um block_type. */}
       <LocalizacaoSection />
 
       <Footer />
