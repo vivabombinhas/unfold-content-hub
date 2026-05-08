@@ -98,7 +98,7 @@ export default function AdminLayout() {
               }
               title={isCollapsed ? item.label : undefined}
             >
-              <item.icon className={cn("shrink-0 transition-transform group-hover:scale-110", isCollapsed ? "size-6" : "size-4")} strokeWidth={isActive ? 2.2 : 1.6} />
+              <item.icon className={cn("shrink-0 transition-transform group-hover:scale-110", isCollapsed ? "size-6" : "size-4")} strokeWidth={1.6} />
               {!isCollapsed && <span className="text-xs font-semibold tracking-tight truncate">{item.label}</span>}
               {isCollapsed && (
                 <div className="absolute left-full ml-4 px-2 py-1.5 bg-[#1A1A1A] text-white text-[10px] rounded-lg border border-white/10 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-2xl">
