@@ -240,47 +240,46 @@ export default function PageEditor() {
   const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
   const selected = blocks.find((b) => b.id === selectedId) || null;
 
-  return (
-    <EditorLayout
-      isDrawerOpen={!!selectedId}
-      onCloseDrawer={() => setSelectedId(null)}
-      isSidebarCollapsed={isSidebarCollapsed}
-      setIsSidebarCollapsed={setIsSidebarCollapsed}
-      topbar={
-        <header className="h-[64px] border-b border-white/5 bg-[#0F0F0F] px-6 flex items-center justify-between shadow-sm relative z-50">
-          <div className="flex items-center gap-6">
-            <Link to="/admin/paginas" className="text-white/40 hover:text-white transition-colors">
-              <ArrowLeft className="size-5" />
-            </Link>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-3">
-                <h1 className="text-sm font-semibold text-white/90 tracking-tight">{pageMeta.title || data.page.slug}</h1>
-                <Badge className={cn("text-[10px] h-5 px-2 rounded-full font-bold uppercase tracking-widest", data.page.status === "published" ? "bg-brand-gold/20 text-brand-gold border-brand-gold/30" : "bg-white/5 text-white/40")}>
-                  {data.page.status === "published" ? "Publicada" : "Rascunho"}
-                </Badge>
-                {dirty && <span className="text-brand-bordeaux text-[9px] font-bold uppercase animate-pulse">● Não salvo</span>}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 mr-4">
-              <CopyLinkButton slug={data.page.slug} status={data.page.status as any} />
-              <Button variant="ghost" size="sm" asChild className="h-8 text-white/60">
-                <a href={data.page.status === "published" ? `/p/${data.page.slug}` : `/p/${data.page.slug}?preview=1`} target="_blank" rel="noreferrer">
-                  <ExternalLink className="size-3.5 mr-2" /> <span className="text-xs">Preview</span>
-                </a>
-              </Button>
-            </div>
-            <Button variant="ghost" size="sm" onClick={handleRevert} className="text-white/40">Reverter</Button>
-            <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty} className="bg-white/[0.02] border-white/10 text-white rounded-xl px-4">
-              {saving ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Save className="size-3.5 mr-2" />} Salvar
-            </Button>
-            <Button size="sm" onClick={handlePublish} disabled={publishing || dirty} className="bg-brand-gold text-brand-green rounded-xl px-6 font-bold">
-              {publishing ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Send className="size-3.5 mr-2" />} Publicar
-            </Button>
-          </div>
-        </header>
-      }
+   return (
+     <EditorLayout
+       title={pageMeta.title || (data?.page ? data.page.slug : "")}
+       isDrawerOpen={!!selectedId}
+       onCloseDrawer={() => setSelectedId(null)}
+       isSidebarCollapsed={isSidebarCollapsed}
+       setIsSidebarCollapsed={setIsSidebarCollapsed}
+       topbar={
+         <div className="flex items-center gap-3">
+           <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 mr-4">
+             <CopyLinkButton slug={data?.page?.slug || ""} status={data?.page?.status as any} />
+             <Button variant="ghost" size="sm" asChild className="h-8 text-white/60 hover:text-white hover:bg-white/5 rounded-lg px-3 transition-colors">
+               <a href={data?.page?.status === "published" ? `/p/${data?.page?.slug}` : `/p/${data?.page?.slug}?preview=1`} target="_blank" rel="noreferrer">
+                 <ExternalLink className="size-3.5 mr-2" /> <span className="text-xs">Preview</span>
+               </a>
+             </Button>
+           </div>
+ 
+           {dirty && (
+             <Badge variant="outline" className="bg-brand-bordeaux/10 text-brand-bordeaux border-brand-bordeaux/20 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full animate-pulse mr-2">
+               Não salvo
+             </Badge>
+           )}
+ 
+           <Button variant="ghost" size="sm" onClick={handleRevert} className="h-9 text-white/40 hover:text-white rounded-xl px-3 transition-colors">
+             <Undo2 className="size-3.5 mr-2" />
+             <span className="text-xs font-medium">Reverter</span>
+           </Button>
+ 
+           <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty} className="h-9 bg-white/[0.02] border-white/10 text-white rounded-xl px-4 hover:bg-white/5 transition-all">
+             {saving ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Save className="size-3.5 mr-2" />} 
+             <span className="text-xs font-medium">Salvar</span>
+           </Button>
+ 
+           <Button size="sm" onClick={handlePublish} disabled={publishing || dirty} className="h-9 bg-brand-gold text-brand-green hover:bg-brand-gold/90 rounded-xl px-6 font-bold shadow-[0_0_20px_rgba(209,180,111,0.2)] transition-all active:scale-95">
+             {publishing ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Send className="size-3.5 mr-2" />} 
+             <span className="text-xs font-bold uppercase tracking-wider">Publicar</span>
+           </Button>
+         </div>
+       }
       sidebar={
         <SidebarBlockList
           blocks={blocks}
