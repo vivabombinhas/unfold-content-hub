@@ -91,15 +91,15 @@ export default function AdminLayout() {
                 cn(
                   "flex items-center gap-3 rounded-xl transition-all duration-200 group relative",
                   isActive
-                    ? "bg-brand-gold/10 text-brand-gold shadow-[inset_0_0_0_1px_rgba(209,180,111,0.1)]"
-                    : "text-white/40 hover:bg-white/[0.03] hover:text-white/80",
+                    ? "bg-brand-gold/10 text-brand-gold shadow-[inset_0_0_0_1px_rgba(209,180,111,0.1)] font-bold"
+                    : "text-white hover:bg-white/[0.03]",
                   isCollapsed ? "justify-center h-12 px-0" : "px-4 py-3"
                 )
               }
               title={isCollapsed ? item.label : undefined}
             >
               <item.icon className={cn("shrink-0 transition-transform group-hover:scale-110", isCollapsed ? "size-6" : "size-4")} strokeWidth={1.6} />
-              {!isCollapsed && <span className="text-xs font-semibold tracking-tight truncate">{item.label}</span>}
+              {!isCollapsed && <span className="text-sm font-bold tracking-tight truncate">{item.label}</span>}
               {isCollapsed && (
                 <div className="absolute left-full ml-4 px-2 py-1.5 bg-[#1A1A1A] text-white text-[10px] rounded-lg border border-white/10 opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-2xl">
                   {item.label}
@@ -119,7 +119,7 @@ export default function AdminLayout() {
             )}
           >
             <LogOut className="size-5 shrink-0" strokeWidth={1.6} />
-            {!isCollapsed && <span className="text-xs font-semibold">Sair da conta</span>}
+            {!isCollapsed && <span className="text-sm font-bold">Sair da conta</span>}
           </button>
         </div>
 
