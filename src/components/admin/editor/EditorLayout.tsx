@@ -8,8 +8,27 @@
    Minimize2, 
    Monitor,
    Smartphone,
-   Tablet
+   Tablet,
+   Home,
+   FileText,
+   Images,
+   MessageCircle,
+   Quote,
+   Bot,
+   GraduationCap,
+   Settings,
+   LogOut,
+   ChevronDown
  } from "lucide-react";
+ import { Link, useLocation } from "react-router-dom";
+ import { useAuth } from "@/hooks/use-auth";
+ import {
+   DropdownMenu,
+   DropdownMenuContent,
+   DropdownMenuItem,
+   DropdownMenuTrigger,
+   DropdownMenuSeparator,
+ } from "@/components/ui/dropdown-menu";
  
  interface EditorLayoutProps {
    sidebar: React.ReactNode;
@@ -20,6 +39,7 @@
    onCloseDrawer: () => void;
    isSidebarCollapsed: boolean;
    setIsSidebarCollapsed: (v: boolean) => void;
+   title?: string;
  }
  
  export function EditorLayout({ 
@@ -30,18 +50,84 @@
    isDrawerOpen,
    onCloseDrawer,
    isSidebarCollapsed,
-   setIsSidebarCollapsed
+   setIsSidebarCollapsed,
+   title
  }: EditorLayoutProps) {
    const [isFocusMode, setIsFocusMode] = useState(false);
    const [viewMode, setViewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+   const { signOut } = useAuth();
+   const location = useLocation();
+ 
+   const NAV = [
+     { to: "/admin", label: "Dashboard", icon: Home },
+     { to: "/admin/paginas", label: "Páginas", icon: FileText },
+     { to: "/admin/casos", label: "Casos clínicos", icon: Images },
+     { to: "/admin/faqs", label: "FAQ", icon: MessageCircle },
+     { to: "/admin/depoimentos", label: "Depoimentos", icon: Quote },
+     { to: "/admin/ia-opinions", label: "IA", icon: Bot },
+     { to: "/admin/cursos", label: "Cursos", icon: GraduationCap },
+     { to: "/admin/configuracoes", label: "Ajustes", icon: Settings },
+   ];
+ 
+   const activeNav = NAV.find(n => location.pathname.startsWith(n.to) && n.to !== "/admin") || NAV[0];
  
    return (
      <div className="flex flex-col h-screen w-full overflow-hidden bg-[#0A0A0A] text-brand-text-light font-sans selection:bg-brand-gold/30">
-       {/* Topbar */}
-       <div className="z-50 shrink-0">
-         {topbar}
-       </div>
+       {/* Global Topbar / Navigation */}
+       <header className="h-[56px] border-b border-white/5 bg-[#0F0F0F] px-4 flex items-center justify-between shrink-0 z-[70] shadow-2xl">
+         <div className="flex items-center gap-4">
+           <Link to="/admin" className="flex items-center gap-2 mr-4 group text-brand-text-light hover:text-white transition-colors">
+             <div className="size-7 rounded-lg bg-brand-gold flex items-center justify-center shadow-[0_0_15px_rgba(209,180,111,0.3)] transition-transform group-hover:scale-105">
+               <Home className="size-4 text-brand-green" strokeWidth={2.5} />
+             </div>
+             <span className="text-sm font-bold tracking-tight text-white/90 hidden md:block">Estética Batel</span>
+           </Link>
  
+           {/* Floating Nav Menu */}
+           <DropdownMenu>
+             <DropdownMenuTrigger asChild>
+               <Button variant="ghost" className="h-9 px-3 gap-2 bg-white/5 border border-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl">
+                 <activeNav.icon className="size-4 text-brand-gold" />
+                 <span className="text-xs font-medium">{activeNav.label}</span>
+                 <ChevronDown className="size-3 opacity-50" />
+               </Button>
+             </DropdownMenuTrigger>
+             <DropdownMenuContent align="start" className="w-56 bg-[#1A1A1A] border-white/10 rounded-xl p-2 shadow-2xl z-[80]">
+               {NAV.map((item) => (
+                 <DropdownMenuItem key={item.to} asChild className="rounded-lg mb-0.5">
+                   <Link 
+                     to={item.to} 
+                     className={cn(
+                       "flex items-center gap-3 px-3 py-2 text-xs transition-colors cursor-pointer w-full",
+                       location.pathname === item.to ? "bg-brand-gold/10 text-brand-gold" : "text-white/60 hover:bg-white/5 hover:text-white"
+                     )}
+                   >
+                     <item.icon className={cn("size-4", location.pathname === item.to ? "text-brand-gold" : "text-white/40")} />
+                     {item.label}
+                   </Link>
+                 </DropdownMenuItem>
+               ))}
+               <DropdownMenuSeparator className="bg-white/5 my-2" />
+               <DropdownMenuItem onClick={signOut} className="rounded-lg text-red-400 focus:text-red-400 focus:bg-red-400/10 cursor-pointer">
+                 <LogOut className="size-4 mr-3" />
+                 <span className="text-xs font-medium">Sair do Admin</span>
+               </DropdownMenuItem>
+             </DropdownMenuContent>
+           </DropdownMenu>
+ 
+           <div className="w-px h-4 bg-white/10 mx-2" />
+           
+           <div className="flex flex-col">
+             <span className="text-[10px] uppercase tracking-widest text-white/30 font-bold leading-none mb-1">Editando Página</span>
+             <span className="text-sm font-semibold text-white/90 truncate max-w-[200px] leading-none">{title}</span>
+           </div>
+         </div>
+ 
+         <div className="flex items-center gap-2">
+           {topbar}
+         </div>
+       </header>
+
        <div className="flex flex-1 overflow-hidden relative">
          {/* Sidebar Esquerda - Colapsável */}
          {!isFocusMode && (
