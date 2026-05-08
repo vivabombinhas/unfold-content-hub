@@ -218,6 +218,36 @@ export type Database = {
         }
         Relationships: []
       }
+      image_bank: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          tags: string[] | null
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       page_blocks: {
         Row: {
           created_at: string
