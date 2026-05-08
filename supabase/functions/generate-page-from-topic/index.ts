@@ -699,17 +699,18 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           // sobre o pool de Google reviews.
           // Fase B: depoimentos APENAS da página antiga quando ela tem.
           // Quando tem, desliga o pool global setando source explícito.
-           if (type === "depoimentos") {
-             if (ownTestimonials.length > 0) {
-               merged.items = ownTestimonials;
-               merged.show_count = ownTestimonials.length;
-               merged.source = "own_old_page";
-               merged.disable_pool = true;
-             } else if (ownOldPage) {
-               // Se é página própria e não extraiu depoimentos, oculta o bloco.
-               enabled = false;
-             }
-           }
+            if (type === "depoimentos" && ownOldPage) {
+              // Mesmo se ownTestimonials estiver vazio, garantimos que o bloco depoimentos seja criado habilitado
+              // para que o fallback de PublicPage ou o pool global possa atuar se necessário,
+              // ou simplesmente para seguir o modelo BOTOX que sempre tem depoimentos.
+              if (ownTestimonials.length > 0) {
+                merged.items = ownTestimonials;
+                merged.show_count = Math.max(ownTestimonials.length, 6);
+                merged.source = "own_old_page";
+                merged.disable_pool = true;
+              }
+              enabled = true; // Forçar habilitado conforme modelo BOTOX
+            }
           data = merged;
           break;
         }
