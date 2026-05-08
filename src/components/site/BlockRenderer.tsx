@@ -109,44 +109,68 @@ function toClinicalCase(c: PoolCase): ClinicalCase {
 /* ============================================================
    Public entry: pick the right renderer for a block type
    ============================================================ */
-export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData }) {
-  switch (type) {
+ export function BlockRenderer({ id, type, data }: { id?: string; type: BlockType; data: BlockData }) {
+   let content = null;
+ 
+   switch (type) {
     case "hero":
-      return <HeroBlock data={data} />;
+       content = <HeroBlock data={data} />;
+       break;
     case "authority_strip":
-      return <AuthorityBlock data={data} />;
+       content = <AuthorityBlock data={data} />;
+       break;
     case "manifesto_curto":
-      return <ManifestoBlock data={data} />;
+       content = <ManifestoBlock data={data} />;
+       break;
     case "metodo":
-      return <MetodoBlock data={data} />;
+       content = <MetodoBlock data={data} />;
+       break;
     case "procedimento_detalhado":
-      return <ProcedimentoDetalhadoBlock data={data} />;
+       content = <ProcedimentoDetalhadoBlock data={data} />;
+       break;
     case "casos":
-      return <CasosBlock data={data} />;
+       content = <CasosBlock data={data} />;
+       break;
     case "preco_ancora":
-      return <PrecoBlock data={data} />;
+       content = <PrecoBlock data={data} />;
+       break;
     case "depoimentos":
-      return <DepoimentosBlock data={data} />;
+       content = <DepoimentosBlock data={data} />;
+       break;
     case "ai_opinions":
-      return <AIOpinionsBlock data={data} />;
+       content = <AIOpinionsBlock data={data} />;
+       break;
     case "equipe_rt":
-      return <EquipeBlock data={data} />;
+       content = <EquipeBlock data={data} />;
+       break;
     case "cursos":
-      return <CursosBlock data={data} />;
+       content = <CursosBlock data={data} />;
+       break;
     case "faq":
-      return <FaqBlock data={data} />;
+       content = <FaqBlock data={data} />;
+       break;
     case "marquee_cards":
-      return <MarqueeCardsBlock data={data} />;
+       content = <MarqueeCardsBlock data={data} />;
+       break;
     case "cta_final":
-      return <CtaFinalBlock data={data} />;
+       content = <CtaFinalBlock data={data} />;
+       break;
     case "beneficios_grid":
-      return <BeneficiosGridBlock data={data} />;
+       content = <BeneficiosGridBlock data={data} />;
+       break;
     case "procedimento_detalhado_v2":
-      return <ProcedimentoDetalhadoV2Block data={data} />;
-    default:
-      return null;
-  }
-}
+       content = <ProcedimentoDetalhadoV2Block data={data} />;
+       break;
+   }
+ 
+   if (!content) return null;
+ 
+   return (
+     <div data-block-id={id} className="transition-all duration-300">
+       {content}
+     </div>
+   );
+ }
 
 /* ============================================================
    HERO
