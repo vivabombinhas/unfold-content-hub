@@ -195,11 +195,11 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                      <SelectValue placeholder="Selecione o fundo" />
                    </SelectTrigger>
                     <SelectContent className="z-[100]">
-                     <SelectItem value="solid">Sólido Escuro</SelectItem>
-                     <SelectItem value="gradient">Degradê Sutil</SelectItem>
-                     <SelectItem value="glow">Brilho (Halo)</SelectItem>
-                     <SelectItem value="none">Transparente</SelectItem>
-                   </SelectContent>
+                      <SelectItem value="solid">Sólido Profundo (Solid)</SelectItem>
+                      <SelectItem value="gradient">Degradê Sutil (Padrão)</SelectItem>
+                      <SelectItem value="glow">Brilho Suave (Glow)</SelectItem>
+                      <SelectItem value="none">Sem Fundo (Transparente)</SelectItem>
+                    </SelectContent>
                  </Select>
                </div>
              </div>
