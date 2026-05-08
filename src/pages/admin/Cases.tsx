@@ -346,10 +346,32 @@ export default function Cases() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Notas do Caso</Label>
-                <Textarea value={caseData.notes || ""} onChange={e => setCaseData(p => ({...p, notes: e.target.value}))} className="bg-brand-black/40 border-brand-gold/10 min-h-[100px]" />
-              </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                   <Label>Idade/Rótulo</Label>
+                   <Input value={caseData.age || ""} onChange={e => setCaseData(p => ({...p, age: e.target.value}))} placeholder="Ex: 35 anos" className="bg-brand-black/40 border-brand-gold/10" />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Toxina utilizada</Label>
+                   <Input value={caseData.toxin || ""} onChange={e => setCaseData(p => ({...p, toxin: e.target.value}))} placeholder="Ex: Botox" className="bg-brand-black/40 border-brand-gold/10" />
+                 </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                   <Label>Dosagem</Label>
+                   <Input value={caseData.dosage || ""} onChange={e => setCaseData(p => ({...p, dosage: e.target.value}))} placeholder="Ex: 50 unidades" className="bg-brand-black/40 border-brand-gold/10" />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Tempo de resultado</Label>
+                   <Input value={caseData.duration || ""} onChange={e => setCaseData(p => ({...p, duration: e.target.value}))} placeholder="Ex: 14 dias" className="bg-brand-black/40 border-brand-gold/10" />
+                 </div>
+               </div>
+
+               <div className="space-y-2">
+                 <Label>Notas do Caso</Label>
+                 <Textarea value={caseData.notes || ""} onChange={e => setCaseData(p => ({...p, notes: e.target.value}))} className="bg-brand-black/40 border-brand-gold/10 min-h-[80px]" />
+               </div>
 
               <div className="flex items-center gap-8">
                 <div className="flex items-center gap-2">
