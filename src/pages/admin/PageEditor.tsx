@@ -196,7 +196,15 @@ export default function PageEditor() {
   }, [data?.page?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-  const selected = useMemo(() => blocks.find((b) => b.id === selectedId) ?? null, [blocks, selectedId]);
+   const selected = useMemo(() => blocks.find((b) => b.id === selectedId) ?? null, [blocks, selectedId]);
+ 
+   // Notifica o iframe quando um bloco é selecionado para scroll/highlight
+   useEffect(() => {
+     if (selectedId) {
+       const iframe = document.querySelector('iframe');
+       iframe?.contentWindow?.postMessage({ type: 'SELECT_BLOCK', id: selectedId }, '*');
+     }
+   }, [selectedId]);
   const previewSrc = useMemo(
     () => (data?.page?.slug ? `/p/${data.page.slug}?preview=1` : ""),
     [data?.page?.slug],
@@ -517,7 +525,7 @@ export default function PageEditor() {
       </header>
 
       {/* 3-col body */}
-      <div className="flex-1 grid grid-cols-[300px_1fr_380px] overflow-hidden">
+       <div className="flex-1 grid grid-cols-[260px_1fr_400px] overflow-hidden">
         {/* LEFT — Block list */}
         <aside className="border-r border-brand-gold/15 bg-brand-graphite/20 overflow-y-auto">
           <div className="p-4 sticky top-0 bg-brand-graphite/60 backdrop-blur border-b border-brand-gold/15">

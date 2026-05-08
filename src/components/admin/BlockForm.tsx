@@ -3,8 +3,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MediaInput } from "./MediaInput";
-import { Plus, Trash2, Sparkles, Wand2, Loader2 } from "lucide-react";
+ import { Plus, Trash2, Sparkles, Wand2, Loader2, Library } from "lucide-react";
 import { useState } from "react";
+ import { CaseBlockEditor } from "./CaseBlockEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { BlockType } from "@/types/blocks";
@@ -120,18 +121,70 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
       );
     }
 
-    case "casos":
-      return (
-        <div className="space-y-4">
-          <Field label="Eyebrow" value={field(data.eyebrow)} onChange={(v) => set("eyebrow", v)} />
-          <AIField label="Título (HTML)" fieldKey="title_html" value={field(data.title_html)} onChange={(v) => set("title_html", v)} ctx={aiCtx} />
-          <Field label="Quantos casos exibir em destaque" value={String(data.show_count ?? 6)} onChange={(v) => set("show_count", parseInt(v) || 6)} />
-          <p className="text-xs text-brand-text-muted">
-            Os casos vêm do pool global. Edite-os em <strong>Casos clínicos</strong> no menu.
-            A seleção por página entra na rodada 2B.
-          </p>
-        </div>
-      );
+     case "casos": {
+       const items = arr<any>(data.cases);
+       const hasCustomCases = "cases" in data;
+ 
+       return (
+         <div className="space-y-6">
+           <div className="space-y-4">
+             <Field label="Eyebrow" value={field(data.eyebrow, "Casos clínicos")} onChange={(v) => set("eyebrow", v)} />
+             <AIField label="Título (HTML)" fieldKey="title_html" value={field(data.title_html)} onChange={(v) => set("title_html", v)} ctx={aiCtx} />
+           </div>
+ 
+           <div className="space-y-3">
+             <div className="flex items-center justify-between">
+               <Label className="text-xs font-bold uppercase tracking-widest text-brand-gold">Seleção de Casos</Label>
+               {!hasCustomCases ? (
+                 <Button 
+                   size="sm" 
+                   variant="outline" 
+                   className="h-7 text-[10px] border-brand-gold/30 text-brand-gold hover:bg-brand-gold/10"
+                   onClick={() => set("cases", [])}
+                 >
+                   <Plus className="size-3 mr-1" /> Customizar para esta página
+                 </Button>
+               ) : (
+                 <Button 
+                   size="sm" 
+                   variant="ghost" 
+                   className="h-7 text-[10px] text-brand-bordeaux hover:bg-brand-bordeaux/10"
+                   onClick={() => {
+                     if (confirm("Voltar para o pool global? Suas seleções manuais desta página serão perdidas.")) {
+                       const next = { ...data };
+                       delete next.cases;
+                       onChange(next);
+                     }
+                   }}
+                 >
+                   Reverter para Global
+                 </Button>
+               )}
+             </div>
+ 
+             {!hasCustomCases ? (
+               <div className="p-4 border border-dashed border-brand-gold/15 rounded-lg bg-brand-gold/5 text-center space-y-2">
+                 <p className="text-xs text-brand-text-muted">
+                   Atualmente exibindo casos automaticamente do pool global com base na categoria da página.
+                 </p>
+                 <p className="text-[10px] text-brand-gold/60 uppercase tracking-widest">
+                   (Recomendado para SEO e Frescor)
+                 </p>
+               </div>
+             ) : (
+               <CaseBlockEditor 
+                 items={items} 
+                 onChange={(next) => set("cases", next)} 
+               />
+             )}
+           </div>
+ 
+           {!hasCustomCases && (
+             <Field label="Quantos casos exibir (Fallback Global)" value={String(data.show_count ?? 6)} onChange={(v) => set("show_count", parseInt(v) || 6)} />
+           )}
+         </div>
+       );
+     }
 
     case "preco_ancora": {
       const bullets = arr<string>(data.bullets);

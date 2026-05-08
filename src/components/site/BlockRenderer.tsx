@@ -85,51 +85,92 @@ function toClinicalCase(c: PoolCase): ClinicalCase {
     notes: c.notes ?? "",
     dosage: c.dosage ?? "",
     duration: c.duration ?? "",
-    toxin: c.toxin ?? "",
-  };
-}
+     toxin: c.toxin ?? "",
+   };
+ }
+ 
+ /** Converte um item de caso customizado (do bloco da página) no shape que CaseModal espera. */
+ function manualToClinicalCase(m: any, id: string): ClinicalCase {
+   return {
+     id: `manual-${id}`,
+     area: s(m.title, "Caso Clínico"),
+     age: s(m.age, ""),
+     cover: s(m.image_url || m.before_url),
+     gallery: [],
+     beforeAfter: m.before_url && m.after_url ? { before: m.before_url, after: m.after_url } : undefined,
+     notes: s(m.notes || m.description),
+     highlight: true,
+     dosage: "",
+     duration: "",
+     toxin: "",
+   };
+ }
 
 /* ============================================================
    Public entry: pick the right renderer for a block type
    ============================================================ */
-export function BlockRenderer({ type, data }: { type: BlockType; data: BlockData }) {
-  switch (type) {
+ export function BlockRenderer({ id, type, data }: { id?: string; type: BlockType; data: BlockData }) {
+   let content = null;
+ 
+   switch (type) {
     case "hero":
-      return <HeroBlock data={data} />;
+       content = <HeroBlock data={data} />;
+       break;
     case "authority_strip":
-      return <AuthorityBlock data={data} />;
+       content = <AuthorityBlock data={data} />;
+       break;
     case "manifesto_curto":
-      return <ManifestoBlock data={data} />;
+       content = <ManifestoBlock data={data} />;
+       break;
     case "metodo":
-      return <MetodoBlock data={data} />;
+       content = <MetodoBlock data={data} />;
+       break;
     case "procedimento_detalhado":
-      return <ProcedimentoDetalhadoBlock data={data} />;
+       content = <ProcedimentoDetalhadoBlock data={data} />;
+       break;
     case "casos":
-      return <CasosBlock data={data} />;
+       content = <CasosBlock data={data} />;
+       break;
     case "preco_ancora":
-      return <PrecoBlock data={data} />;
+       content = <PrecoBlock data={data} />;
+       break;
     case "depoimentos":
-      return <DepoimentosBlock data={data} />;
+       content = <DepoimentosBlock data={data} />;
+       break;
     case "ai_opinions":
-      return <AIOpinionsBlock data={data} />;
+       content = <AIOpinionsBlock data={data} />;
+       break;
     case "equipe_rt":
-      return <EquipeBlock data={data} />;
+       content = <EquipeBlock data={data} />;
+       break;
     case "cursos":
-      return <CursosBlock data={data} />;
+       content = <CursosBlock data={data} />;
+       break;
     case "faq":
-      return <FaqBlock data={data} />;
+       content = <FaqBlock data={data} />;
+       break;
     case "marquee_cards":
-      return <MarqueeCardsBlock data={data} />;
+       content = <MarqueeCardsBlock data={data} />;
+       break;
     case "cta_final":
-      return <CtaFinalBlock data={data} />;
+       content = <CtaFinalBlock data={data} />;
+       break;
     case "beneficios_grid":
-      return <BeneficiosGridBlock data={data} />;
+       content = <BeneficiosGridBlock data={data} />;
+       break;
     case "procedimento_detalhado_v2":
-      return <ProcedimentoDetalhadoV2Block data={data} />;
-    default:
-      return null;
-  }
-}
+       content = <ProcedimentoDetalhadoV2Block data={data} />;
+       break;
+   }
+ 
+   if (!content) return null;
+ 
+   return (
+     <div data-block-id={id} className="transition-all duration-300">
+       {content}
+     </div>
+   );
+ }
 
 /* ============================================================
    HERO
@@ -586,26 +627,47 @@ function CasosBlock({ data }: { data: BlockData }) {
     : typeof data.limit === "number" ? data.limit : 6;
   const areaFilter = s(data.area_filter).toLowerCase();
 
-  // Pool vem do banco; se vazio, bloco não renderiza.
-  let filtered = pool.filter((c) => c.highlight);
-  if (filtered.length === 0) filtered = pool;
-  if (areaFilter) {
-    const aliases: Record<string, string[]> = {
-      labios: ["lábio", "labio", "boca", "perioral"],
-      terco_superior: ["frontal", "glabela", "testa", "olh"],
-      terco_medio: ["malar", "olheir"],
-      mandibula: ["mandíb", "queixo", "masseter"],
-      pescoco: ["pescoço", "papada"],
-      face: ["face", "rosto"],
-      corpo: ["corpo", "abdome", "glúteo"],
-    };
-    const al = aliases[areaFilter] || [areaFilter.replace(/_/g, " ")];
-    const matched = pool.filter((c) => al.some((a) => c.area.toLowerCase().includes(a)));
-    if (matched.length > 0) filtered = matched;
-  }
-  const featured = filtered.slice(0, showCount).map(toClinicalCase);
-
-  if (featured.length === 0) return null;
+   const customCases = arr<any>(data.cases);
+   const hasCustomSelection = "cases" in data;
+ 
+   let featured: ClinicalCase[] = [];
+ 
+   if (hasCustomSelection) {
+     // 1. Usar seleção manual/específica da página
+     featured = customCases.map((item, idx) => {
+       if (item.source === "global") {
+         const p = pool.find((c) => c.id === item.case_id);
+         return p ? toClinicalCase(p) : null;
+       }
+       return manualToClinicalCase(item, String(idx));
+     }).filter(Boolean) as ClinicalCase[];
+   } else {
+     // 2. Fallback: Pool global (com filtros)
+     let filtered = pool.filter((c) => c.highlight);
+     if (filtered.length === 0) filtered = pool;
+     if (areaFilter) {
+       const aliases: Record<string, string[]> = {
+         labios: ["lábio", "labio", "boca", "perioral"],
+         terco_superior: ["frontal", "glabela", "testa", "olh"],
+         terco_medio: ["malar", "olheir"],
+         mandibula: ["mandíb", "queixo", "masseter"],
+         pescoco: ["pescoço", "papada"],
+         face: ["face", "rosto"],
+         corpo: ["corpo", "abdome", "glúteo"],
+       };
+       const al = aliases[areaFilter] || [areaFilter.replace(/_/g, " ")];
+       const matched = pool.filter((c) => al.some((a) => c.area.toLowerCase().includes(a)));
+       if (matched.length > 0) filtered = matched;
+     }
+     featured = filtered.slice(0, showCount).map(toClinicalCase);
+   }
+ 
+   if (featured.length === 0) {
+     // Se escolheu customizar mas não adicionou nada, não mostra nada
+     if (hasCustomSelection) return null;
+     // Se for global mas estiver vazio, não mostra nada
+     return null;
+   }
 
   return (
     <>
