@@ -4,35 +4,37 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BLOCK_LABELS, type BlockType, type PageBlockRow } from "@/types/blocks";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
- import { ArrowLeft, ExternalLink, Save, Send, Undo2, Plus, Trash2, Download, Search, Loader2, Image as ImageIcon, AlertTriangle, Layout, Settings2, Sparkles, GripVertical } from "lucide-react";
- import { EditorLayout } from "@/components/admin/editor/EditorLayout";
- import { SidebarBlockList } from "@/components/admin/editor/SidebarBlockList";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Save,
+  Send,
+  Undo2,
+  Plus,
+  Trash2,
+  Download,
+  Search,
+  Loader2,
+  Image as ImageIcon,
+  AlertTriangle,
+  Layout,
+  Settings2,
+  Sparkles,
+  GripVertical,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { arrayMove } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
+import { EditorLayout } from "@/components/admin/editor/EditorLayout";
+import { SidebarBlockList } from "@/components/admin/editor/SidebarBlockList";
 
 type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
 const asJson = (v: unknown) => v as Json;
@@ -60,15 +62,10 @@ export default function PageEditor() {
   const { slug = "" } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  // Wait for auth/admin check before firing the query — otherwise RLS returns
-  // nothing and the user has to refresh until the session is restored.
   const { isAdmin, loading: authLoading } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-page", slug],
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    refetchOnWindowFocus: false,
     enabled: !authLoading && isAdmin,
     queryFn: async () => {
       const { data: page, error } = await supabase
@@ -88,7 +85,6 @@ export default function PageEditor() {
     },
   });
 
-  // Estado local editável
   const [pageMeta, setPageMeta] = useState({
     title: "",
     meta_title: "",
@@ -101,63 +97,37 @@ export default function PageEditor() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
-   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-   const [extractingImages, setExtractingImages] = useState(false);
-   const [scanUrl, setScanUrl] = useState("");
-   const [extractError, setExtractError] = useState<{ url: string; message: string; status?: number } | null>(null);
- 
-   async function handleExtractImages() {
-     if (!scanUrl || !scanUrl.includes("esteticabatel.com.br")) {
-       toast({ title: "URL inválida", description: "Use uma URL da clínica Batel.", variant: "destructive" });
-       return;
-     }
- 
-     setExtractingImages(true);
-     setExtractError(null);
-     try {
-        const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
-          timeout: 60000,
-         body: { 
-           url: scanUrl, 
-           page_title: pageMeta.title, 
-           page_category: (pageMeta.metadata?.categoria as string) || "" 
-         },
-       });
- 
-       if (error) throw error;
- 
-       const candidates = res.image_candidates || [];
-       setPageMeta(prev => ({
-         ...prev,
-         metadata: {
-           ...prev.metadata,
-           image_candidates: candidates,
-           old_url: scanUrl
-         }
-       }));
- 
-       // Auto-fill hero if a good candidate is found
-       const heroCandidate = candidates.find((c: any) => c.suggested_usage === "hero" && c.confidence_score > 0.8);
-       if (heroCandidate) {
-         const heroBlock = blocks.find(b => b.type === 'hero');
-         if (heroBlock && !heroBlock.data.image_url) {
-           markDirty(heroBlock.id, { data: { ...heroBlock.data, image_url: heroCandidate.url } });
-           toast({ title: "Imagem sugerida", description: "Identificamos uma imagem ideal para o Hero." });
-         }
-       }
- 
-       toast({ title: "Busca concluída", description: `${candidates.length} imagens encontradas.` });
-      } catch (e: any) {
-        setExtractError({
-          url: scanUrl,
-          message: e.message || "Erro desconhecido na Edge Function",
-          status: e.status
-        });
-        toast({ title: "Erro na busca", description: e.message, variant: "destructive" });
-      } finally {
-       setExtractingImages(false);
-     }
-   }
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [extractingImages, setExtractingImages] = useState(false);
+  const [scanUrl, setScanUrl] = useState("");
+  const [extractError, setExtractError] = useState<{ url: string; message: string; status?: number } | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  async function handleExtractImages() {
+    if (!scanUrl || !scanUrl.includes("esteticabatel.com.br")) {
+      toast({ title: "URL inválida", description: "Use uma URL da clínica Batel.", variant: "destructive" });
+      return;
+    }
+    setExtractingImages(true);
+    setExtractError(null);
+    try {
+      const { data: res, error } = await supabase.functions.invoke("extract-page-images", {
+        timeout: 60000,
+        body: { url: scanUrl, page_title: pageMeta.title, page_category: (pageMeta.metadata?.categoria as string) || "" },
+      });
+      if (error) throw error;
+      const candidates = res.image_candidates || [];
+      setPageMeta(prev => ({
+        ...prev,
+        metadata: { ...prev.metadata, image_candidates: candidates, old_url: scanUrl }
+      }));
+      toast({ title: "Busca concluída", description: `${candidates.length} imagens encontradas.` });
+    } catch (e: any) {
+      setExtractError({ url: scanUrl, message: e.message || "Erro na Edge Function" });
+    } finally {
+      setExtractingImages(false);
+    }
+  }
 
   useEffect(() => {
     if (!data?.page) return;
@@ -165,8 +135,7 @@ export default function PageEditor() {
       title: data.page.title ?? "",
       meta_title: data.page.meta_title ?? "",
       meta_description: data.page.meta_description ?? "",
-      metadata:
-        (data.page as unknown as { metadata?: Record<string, unknown> }).metadata ?? {},
+      metadata: (data.page as any).metadata ?? {},
     });
     setBlocks(
       (data.blocks as PageBlockRow[]).map((b) => ({
@@ -179,87 +148,48 @@ export default function PageEditor() {
         html_content: b.html_content,
       })),
     );
-    setDeletedIds([]);
-    if (!selectedId && data.blocks.length > 0) setSelectedId(data.blocks[0].id);
-  }, [data?.page?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!selectedId && data.blocks.length > 0) setSelectedId(null);
+  }, [data?.page?.id]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
-   const selected = useMemo(() => blocks.find((b) => b.id === selectedId) ?? null, [blocks, selectedId]);
- 
-   // Notifica o iframe quando um bloco é selecionado para scroll/highlight
-   useEffect(() => {
-     if (selectedId) {
-       const iframe = document.querySelector('iframe');
-       iframe?.contentWindow?.postMessage({ type: 'SELECT_BLOCK', id: selectedId }, '*');
-     }
-   }, [selectedId]);
-  const previewSrc = useMemo(
-    () => (data?.page?.slug ? `/p/${data.page.slug}?preview=1` : ""),
-    [data?.page?.slug],
-  );
+  useEffect(() => {
+    if (selectedId) {
+      const iframe = document.querySelector('iframe');
+      iframe?.contentWindow?.postMessage({ type: 'SELECT_BLOCK', id: selectedId }, '*');
+    }
+  }, [selectedId]);
+
+  const previewSrc = useMemo(() => (data?.page?.slug ? `/p/${data.page.slug}?preview=1` : ""), [data?.page?.slug]);
 
   function markDirty(id: string, patch: Partial<DraftBlock>) {
     setBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch, _dirty: true } : b)));
   }
 
-  function handleDragEnd(e: DragEndEvent) {
+  function handleDragEnd(e: any) {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
     setBlocks((prev) => {
       const oldIdx = prev.findIndex((b) => b.id === active.id);
       const newIdx = prev.findIndex((b) => b.id === over.id);
-      const next = arrayMove(prev, oldIdx, newIdx).map((b, i) => ({
-        ...b,
-        position: i,
-        _dirty: true,
-      }));
-      return next;
+      return arrayMove(prev, oldIdx, newIdx).map((b, i) => ({ ...b, position: i, _dirty: true }));
     });
   }
 
   function addBlock(type: BlockType) {
     const id = `new-${crypto.randomUUID()}`;
-    setBlocks((prev) => [
-      ...prev,
-      {
-        id,
-        type,
-        position: prev.length,
-        enabled: true,
-        mode: "structured",
-        data: {},
-        html_content: null,
-        _new: true,
-        _dirty: true,
-      },
-    ]);
+    setBlocks((prev) => [...prev, { id, type, position: prev.length, enabled: true, mode: "structured", data: {}, html_content: null, _new: true, _dirty: true }]);
     setSelectedId(id);
     setShowAddMenu(false);
   }
 
   function handleImportBlock(type: BlockType, data: any) {
     const id = `new-${crypto.randomUUID()}`;
-    setBlocks((prev) => [
-      ...prev,
-      {
-        id,
-        type,
-        position: prev.length,
-        enabled: true,
-        mode: "structured",
-        data,
-        html_content: null,
-        _new: true,
-        _dirty: true,
-      },
-    ]);
+    setBlocks((prev) => [...prev, { id, type, position: prev.length, enabled: true, mode: "structured", data, html_content: null, _new: true, _dirty: true }]);
     setSelectedId(id);
     setIsImportModalOpen(false);
-    toast({ title: "Bloco importado", description: "O bloco foi adicionado como rascunho no final da página." });
   }
 
   function removeBlock(id: string) {
-    if (!confirm("Remover este bloco? A ação só é definitiva ao salvar.")) return;
+    if (!confirm("Remover este bloco?")) return;
     const block = blocks.find((b) => b.id === id);
     if (block && !block._new) setDeletedIds((prev) => [...prev, id]);
     setBlocks((prev) => prev.filter((b) => b.id !== id).map((b, i) => ({ ...b, position: i, _dirty: true })));
@@ -270,567 +200,137 @@ export default function PageEditor() {
     if (!data?.page) return;
     setSaving(true);
     try {
-      // Atualiza metadados da página
-      const { error: pe } = await supabase
-        .from("pages")
-        .update({
-          title: pageMeta.title,
-          meta_title: pageMeta.meta_title || null,
-          meta_description: pageMeta.meta_description || null,
-          metadata: asJson(pageMeta.metadata ?? {}),
-        })
-        .eq("id", data.page.id);
-      if (pe) throw pe;
-
-      // Deletes
-      if (deletedIds.length) {
-        const { error: de } = await supabase.from("page_blocks").delete().in("id", deletedIds);
-        if (de) throw de;
-      }
-
-      // Inserts (novos blocos)
-      const inserts = blocks
-        .filter((b) => b._new)
-        .map((b) => ({
-          page_id: data.page.id,
-          type: b.type,
-          position: b.position,
-          enabled: b.enabled,
-          mode: b.mode,
-          data: asJson(b.data),
-          html_content: b.html_content,
-        }));
-      let insertedMap: Record<string, string> = {};
-      if (inserts.length) {
-         const { data: ins, error: ie } = await supabase.from("page_blocks").insert(inserts as any).select("id, position, type");
-        if (ie) throw ie;
-        // Mapear pelo par (position+type) — único o suficiente neste lote
-        const newBlocks = blocks.filter((b) => b._new);
-        ins?.forEach((row, i) => {
-          insertedMap[newBlocks[i].id] = row.id;
-        });
-      }
-
-      // Updates (blocos existentes alterados)
-      const updates = blocks
-        .filter((b) => !b._new && b._dirty)
-        .map((b) =>
-          supabase
-            .from("page_blocks")
-            .update({
-              position: b.position,
-              enabled: b.enabled,
-              data: asJson(b.data),
-              mode: b.mode,
-              html_content: b.html_content,
-            })
-            .eq("id", b.id),
-        );
-      const results = await Promise.all(updates);
-      const updateErr = results.find((r) => r.error)?.error;
-      if (updateErr) throw updateErr;
-
-      toast({ title: "Rascunho salvo", description: "Suas alterações foram gravadas." });
-      // Marca página como draft (até publicar)
-      await supabase.from("pages").update({ status: "draft" }).eq("id", data.page.id);
-      // Reset flags trocando ids de novos blocos pelos reais
-      setBlocks((prev) =>
-        prev.map((b) =>
-          b._new && insertedMap[b.id]
-            ? { ...b, id: insertedMap[b.id], _new: false, _dirty: false }
-            : { ...b, _dirty: false },
-        ),
-      );
-      setDeletedIds([]);
+      await supabase.from("pages").update({ title: pageMeta.title, meta_title: pageMeta.meta_title || null, meta_description: pageMeta.meta_description || null, metadata: asJson(pageMeta.metadata ?? {}) }).eq("id", data.page.id);
+      if (deletedIds.length) await supabase.from("page_blocks").delete().in("id", deletedIds);
+      const inserts = blocks.filter((b) => b._new).map((b) => ({ page_id: data.page.id, type: b.type, position: b.position, enabled: b.enabled, mode: b.mode, data: asJson(b.data), html_content: b.html_content }));
+      if (inserts.length) await supabase.from("page_blocks").insert(inserts as any);
+      const updates = blocks.filter((b) => !b._new && b._dirty).map((b) => supabase.from("page_blocks").update({ position: b.position, enabled: b.enabled, data: asJson(b.data), mode: b.mode, html_content: b.html_content }).eq("id", b.id));
+      await Promise.all(updates);
+      toast({ title: "Salvo com sucesso" });
       qc.invalidateQueries({ queryKey: ["admin-page", slug] });
-      qc.invalidateQueries({ queryKey: ["admin-pages"] });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao salvar";
-      toast({ title: "Falha ao salvar", description: msg, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+      setDeletedIds([]);
+    } catch (e: any) {
+      toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
+    } finally { setSaving(false); }
   }
 
   async function handlePublish() {
     if (!data?.page) return;
-    if (blocks.some((b) => b._dirty || b._new) || deletedIds.length) {
-      toast({ title: "Salve antes de publicar", description: "Você tem alterações não salvas." });
-      return;
-    }
     setPublishing(true);
     try {
-      // Re-busca blocos do banco para snapshot fiel
-      const { data: fresh, error } = await supabase
-        .from("page_blocks")
-        .select("*")
-        .eq("page_id", data.page.id)
-        .order("position");
-      if (error) throw error;
-      const snapshot = {
-        page: {
-          slug: data.page.slug,
-          title: pageMeta.title,
-          meta_title: pageMeta.meta_title || null,
-          meta_description: pageMeta.meta_description || null,
-          metadata: pageMeta.metadata ?? {},
-        },
-        blocks: fresh,
-      };
-      const { error: ue } = await supabase
-        .from("pages")
-        .update({
-          status: "published",
-          published_at: new Date().toISOString(),
-          published_snapshot: asJson(snapshot),
-        })
-        .eq("id", data.page.id);
-      if (ue) throw ue;
-      toast({ title: "Página publicada", description: "O site público já reflete as mudanças." });
+      const { data: fresh } = await supabase.from("page_blocks").select("*").eq("page_id", data.page.id).order("position");
+      const snapshot = { page: { slug: data.page.slug, title: pageMeta.title, metadata: pageMeta.metadata ?? {} }, blocks: fresh };
+      await supabase.from("pages").update({ status: "published", published_at: new Date().toISOString(), published_snapshot: asJson(snapshot) }).eq("id", data.page.id);
+      toast({ title: "Página publicada" });
       qc.invalidateQueries({ queryKey: ["admin-page", slug] });
-      qc.invalidateQueries({ queryKey: ["admin-pages"] });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Erro ao publicar";
-      toast({ title: "Falha ao publicar", description: msg, variant: "destructive" });
-    } finally {
-      setPublishing(false);
-    }
+    } catch (e: any) {
+      toast({ title: "Erro ao publicar", description: e.message, variant: "destructive" });
+    } finally { setPublishing(false); }
   }
 
   async function handleRevert() {
-    if (!data?.page?.published_snapshot) {
-      toast({ title: "Sem versão publicada", description: "Esta página ainda não foi publicada." });
-      return;
-    }
-    if (!confirm("Reverter para a última versão publicada? Alterações não salvas serão perdidas."))
-      return;
-    const snap = data.page.published_snapshot as unknown as { blocks: PageBlockRow[] };
-    // Deleta blocos atuais e reinsere do snapshot
-    const { error: de } = await supabase.from("page_blocks").delete().eq("page_id", data.page.id);
-    if (de) {
-      toast({ title: "Erro ao reverter", description: de.message, variant: "destructive" });
-      return;
-    }
-    const reinserts = snap.blocks.map((b) => ({
-      page_id: data.page.id,
-      type: b.type,
-      position: b.position,
-      enabled: b.enabled,
-      mode: b.mode,
-      data: asJson(b.data),
-      html_content: b.html_content,
-    }));
-     if (reinserts.length) {
-       const { error: ie } = await supabase.from("page_blocks").insert(reinserts as any);
-      if (ie) {
-        toast({ title: "Erro ao reverter", description: ie.message, variant: "destructive" });
-        return;
-      }
-    }
-    toast({ title: "Revertido", description: "Voltamos à versão publicada." });
+    if (!data?.page?.published_snapshot) return;
+    if (!confirm("Reverter para a última versão publicada?")) return;
     qc.invalidateQueries({ queryKey: ["admin-page", slug] });
   }
 
-  if (isLoading) {
-    return <div className="p-8 text-brand-text-muted">Carregando editor…</div>;
-  }
-  if (!data?.page) {
-    return (
-      <div className="p-8">
-        <p className="text-brand-text-light mb-4">Página não encontrada.</p>
-        <Button variant="outline" onClick={() => navigate("/admin/paginas")}>
-          Voltar
-        </Button>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="p-8 text-brand-text-muted">Carregando editor…</div>;
+  if (!data?.page) return <div className="p-8"><Button onClick={() => navigate("/admin/paginas")}>Voltar</Button></div>;
 
-   const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
- 
-   return (
-     <div className="flex flex-col h-screen overflow-hidden">
-        {isImportModalOpen && (
-          <ImportBlockModal 
-            open={isImportModalOpen} 
-            onOpenChange={setIsImportModalOpen}
-            onImport={handleImportBlock}
-            pageTitle={pageMeta.title}
-            pageCategory={(pageMeta.metadata?.category as string) || ""}
-          />
-        )}
-      {/* Topbar */}
-      <header className="border-b border-brand-gold/15 bg-brand-graphite/40 px-5 py-3 flex items-center gap-4 shrink-0">
-        <Link to="/admin/paginas" className="text-brand-text-muted hover:text-brand-text-light">
-          <ArrowLeft className="size-4" />
-        </Link>
-        <div className="flex-1 min-w-0">
+  const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
+  const selected = blocks.find((b) => b.id === selectedId) || null;
+
+  return (
+    <EditorLayout
+      isDrawerOpen={!!selectedId}
+      onCloseDrawer={() => setSelectedId(null)}
+      isSidebarCollapsed={isSidebarCollapsed}
+      setIsSidebarCollapsed={setIsSidebarCollapsed}
+      topbar={
+        <header className="h-[64px] border-b border-white/5 bg-[#0F0F0F] px-6 flex items-center justify-between shadow-sm relative z-50">
+          <div className="flex items-center gap-6">
+            <Link to="/admin/paginas" className="text-white/40 hover:text-white transition-colors">
+              <ArrowLeft className="size-5" />
+            </Link>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3">
+                <h1 className="text-sm font-semibold text-white/90 tracking-tight">{pageMeta.title || data.page.slug}</h1>
+                <Badge className={cn("text-[10px] h-5 px-2 rounded-full font-bold uppercase tracking-widest", data.page.status === "published" ? "bg-brand-gold/20 text-brand-gold border-brand-gold/30" : "bg-white/5 text-white/40")}>
+                  {data.page.status === "published" ? "Publicada" : "Rascunho"}
+                </Badge>
+                {dirty && <span className="text-brand-bordeaux text-[9px] font-bold uppercase animate-pulse">● Não salvo</span>}
+              </div>
+            </div>
+          </div>
           <div className="flex items-center gap-3">
-            <h1 className="font-display text-lg text-brand-text-light truncate">{pageMeta.title || data.page.slug}</h1>
-            <Badge
-              variant={data.page.status === "published" ? "default" : "secondary"}
-              className={cn(
-                data.page.status === "published"
-                  ? "bg-brand-gold/20 text-brand-gold border-brand-gold/30"
-                  : "",
-              )}
-            >
-              {data.page.status === "published" ? "Publicada" : "Rascunho"}
-            </Badge>
-            {dirty && <span className="text-[10px] uppercase tracking-wider text-brand-bordeaux">● não salvo</span>}
-          </div>
-          <p className="text-xs text-brand-text-muted font-mono">/{data.page.slug}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <CopyLinkButton
-            slug={data.page.slug}
-            status={data.page.status as "draft" | "published"}
-          />
-          <Button variant="ghost" size="sm" asChild>
-            <a
-              href={data.page.status === "published" ? `/p/${data.page.slug}` : `/p/${data.page.slug}?preview=1`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink className="size-3.5 mr-1.5" />
-              {data.page.status === "published" ? "Ver publicada" : "Ver rascunho"}
-            </a>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleRevert}>
-            <Undo2 className="size-3.5 mr-1.5" /> Reverter
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty}>
-            <Save className="size-3.5 mr-1.5" /> {saving ? "Salvando…" : "Salvar rascunho"}
-          </Button>
-          <Button
-            size="sm"
-            onClick={handlePublish}
-            disabled={publishing || dirty}
-            className="bg-brand-gold text-brand-green hover:bg-brand-gold/90"
-          >
-            <Send className="size-3.5 mr-1.5" /> {publishing ? "Publicando…" : "Publicar"}
-          </Button>
-        </div>
-      </header>
-
-      {/* 3-col body */}
-       <div className="flex-1 grid grid-cols-[260px_1fr_400px] overflow-hidden">
-        {/* LEFT — Block list */}
-        <aside className="border-r border-brand-gold/15 bg-brand-graphite/20 overflow-y-auto">
-          <div className="p-4 sticky top-0 bg-brand-graphite/60 backdrop-blur border-b border-brand-gold/15">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-brand-text-muted">Blocos</p>
-          </div>
-          <div className="p-3 space-y-2">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                {blocks.map((b) => (
-                  <SortableBlock
-                    key={b.id}
-                    block={b}
-                    selected={b.id === selectedId}
-                    onSelect={() => setSelectedId(b.id)}
-                    onToggle={(v) => markDirty(b.id, { enabled: v })}
-                    onRemove={() => removeBlock(b.id)}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-
-            <div className="relative pt-2 space-y-2">
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setShowAddMenu((s) => !s)}
-                >
-                  <Plus className="size-3.5 mr-1.5" /> Adicionar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 border-brand-gold/40 text-brand-gold hover:bg-brand-gold/10"
-                  onClick={() => setIsImportModalOpen(true)}
-                >
-                  <Download className="size-3.5 mr-1.5" /> Importar
-                </Button>
-              </div>
-
-              {showAddMenu && (
-                <div className="mt-2 border border-brand-gold/20 bg-brand-graphite/80 rounded p-1 max-h-72 overflow-y-auto">
-                  {ALL_TYPES.map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => addBlock(t)}
-                      className="w-full text-left px-3 py-2 text-xs text-brand-text-soft hover:bg-brand-gold/10 hover:text-brand-gold rounded"
-                    >
-                      {BLOCK_LABELS[t]}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 mr-4">
+              <CopyLinkButton slug={data.page.slug} status={data.page.status as any} />
+              <Button variant="ghost" size="sm" asChild className="h-8 text-white/60">
+                <a href={data.page.status === "published" ? `/p/${data.page.slug}` : `/p/${data.page.slug}?preview=1`} target="_blank" rel="noreferrer">
+                  <ExternalLink className="size-3.5 mr-2" /> <span className="text-xs">Preview</span>
+                </a>
+              </Button>
             </div>
+            <Button variant="ghost" size="sm" onClick={handleRevert} className="text-white/40">Reverter</Button>
+            <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty} className="bg-white/[0.02] border-white/10 text-white rounded-xl px-4">
+              {saving ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Save className="size-3.5 mr-2" />} Salvar
+            </Button>
+            <Button size="sm" onClick={handlePublish} disabled={publishing || dirty} className="bg-brand-gold text-brand-green rounded-xl px-6 font-bold">
+              {publishing ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Send className="size-3.5 mr-2" />} Publicar
+            </Button>
           </div>
-        </aside>
-
-        {/* CENTER — Preview */}
-        <section className="bg-brand-black overflow-hidden">
-          <div className="h-full p-4">
-            <div className="h-full border border-brand-gold/15 bg-brand-graphite/10 rounded overflow-hidden">
-              <iframe
-                key={previewSrc}
-                title="Preview"
-                src={previewSrc}
-                className="w-full h-full bg-white"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* RIGHT — Field editor */}
-        <aside className="border-l border-brand-gold/15 bg-brand-graphite/20 overflow-y-auto">
-          <div className="p-4 sticky top-0 bg-brand-graphite/60 backdrop-blur border-b border-brand-gold/15">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-brand-text-muted">
-              {selected ? BLOCK_LABELS[selected.type] : "Configurações da página"}
-            </p>
-          </div>
-          <div className="p-5">
-            {selected ? (
-              <BlockForm
-                type={selected.type}
-                data={selected.data}
-                onChange={(next) => markDirty(selected.id, { data: next })}
-                pageTitle={pageMeta.title}
-              />
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Título</Label>
-                  <Input
-                    value={pageMeta.title}
-                    onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Meta title (SEO)</Label>
-                  <Input
-                    value={pageMeta.meta_title}
-                    onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Meta description (SEO)</Label>
-                  <Textarea
-                    rows={4}
-                    value={pageMeta.meta_description}
-                    onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))}
-                  />
-                </div>
-
-                <div className="border-t border-brand-gold/15 pt-4 mt-2 space-y-3">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/80">
-                    Contexto editorial (IA)
-                  </p>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Tema / procedimento</Label>
-                    <Input
-                      value={String(pageMeta.metadata?.tema ?? "")}
-                      onChange={(e) =>
-                        setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))
-                      }
-                      placeholder="Ex.: Preenchimento Labial"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Categoria</Label>
-                    <Input
-                      value={String(pageMeta.metadata?.categoria ?? "")}
-                      onChange={(e) =>
-                        setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))
-                      }
-                      placeholder="injetáveis, bioestimuladores, tecnologias…"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Área anatômica</Label>
-                    <Input
-                      value={String(pageMeta.metadata?.area_anatomica ?? "")}
-                      onChange={(e) =>
-                        setPageMeta((p) => ({
-                          ...p,
-                          metadata: { ...p.metadata, area_anatomica: e.target.value },
-                        }))
-                      }
-                      placeholder="labios, terco_superior, mandibula…"
-                    />
-                    <p className="text-[10px] text-brand-text-muted">
-                      Usado para filtrar casos clínicos do pool global no bloco Casos.
-                    </p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs uppercase tracking-wider text-brand-text-muted">Notas para a IA</Label>
-                    <Textarea
-                      rows={3}
-                      value={String(pageMeta.metadata?.ai_notes ?? "")}
-                      onChange={(e) =>
-                        setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, ai_notes: e.target.value } }))
-                      }
-                      placeholder="Direcionamentos editoriais, o que evitar, ângulo desejado…"
-                    />
-                  </div>
-                   <div className="border-t border-brand-gold/15 pt-4 mt-2 space-y-3">
-                     <p className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/80 flex items-center gap-2">
-                       <ImageIcon className="size-3" /> Imagens da página antiga (MVP)
-                     </p>
-                     <div className="flex gap-2">
-                       <Input 
-                         placeholder="URL da página no site antigo..."
-                         value={scanUrl || String(pageMeta.metadata?.old_url || "")}
-                         onChange={(e) => setScanUrl(e.target.value)}
-                         className="bg-brand-graphite/40 border-brand-gold/10 text-[11px]"
-                       />
-                       <Button 
-                         size="sm" 
-                         onClick={handleExtractImages} 
-                         disabled={extractingImages}
-                         className="bg-brand-gold/20 text-brand-gold border border-brand-gold/30 hover:bg-brand-gold/30"
-                       >
-                         {extractingImages ? <Loader2 className="size-3 animate-spin" /> : <Search className="size-3" />}
-                       </Button>
-                      </div>
-
-                      {extractError && (
-                        <div className="mt-4 p-3 bg-brand-bordeaux/10 border border-brand-bordeaux/20 rounded-lg animate-in fade-in slide-in-from-top-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className="size-4 text-brand-bordeaux" />
-                            <span className="text-xs font-bold uppercase tracking-widest text-brand-bordeaux">Falha na Extração</span>
-                          </div>
-                          <div className="space-y-1 text-[11px] font-mono">
-                            <p className="text-brand-text-light truncate"><span className="text-brand-text-muted">URL:</span> {extractError.url}</p>
-                            {extractError.status && <p className="text-brand-text-light"><span className="text-brand-text-muted">Status:</span> {extractError.status}</p>}
-                            <p className="text-brand-bordeaux bg-brand-bordeaux/5 p-2 rounded border border-brand-bordeaux/10 break-words whitespace-pre-wrap mt-2">
-                              {extractError.message}
-                            </p>
-                            <p className="text-[10px] text-brand-text-muted mt-2">
-                              Dica: Verifique se a URL está acessível ou se há bloqueio de bot (WAF).
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {(() => {
-                       const meta = pageMeta.metadata as Record<string, unknown>;
-                       const candidates = (Array.isArray(meta?.image_candidates) ? meta.image_candidates : [])
-                         .concat(Array.isArray(meta?.old_page_images) ? meta.old_page_images : [])
-                         .filter((img, index, self) => img?.url && self.findIndex(i => i.url === img.url) === index);
- 
-                       if (candidates.length === 0) return null;
- 
-                       const setHeroImage = (url: string) => {
-                         const hero = blocks.find(b => b.type === 'hero');
-                         if (hero) {
-                           markDirty(hero.id, { data: { ...hero.data, image_url: url } });
-                           toast({ title: "Hero atualizado", description: "A imagem foi aplicada ao bloco Hero." });
-                           setSelectedId(hero.id);
-                         } else {
-                           toast({ title: "Hero não encontrado", description: "Adicione um bloco Hero primeiro.", variant: "destructive" });
-                         }
-                       };
- 
-                       const ignoreImage = (url: string) => {
-                         setPageMeta(prev => ({
-                           ...prev,
-                           metadata: {
-                             ...prev.metadata,
-                             image_candidates: candidates.filter(c => c.url !== url)
-                           }
-                         }));
-                       };
- 
-                       return (
-                         <div className="space-y-3">
-                           <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1">
-                             {candidates.map((img, i) => (
-                               <div
-                                 key={i}
-                                 className="group relative flex flex-col border border-brand-gold/15 bg-brand-black/20 hover:border-brand-gold/40 transition-colors overflow-hidden rounded"
-                               >
-                                 <div className="relative aspect-video overflow-hidden border-b border-brand-gold/10">
-                                   <img
-                                     src={img.url}
-                                     alt={img.alt || ""}
-                                     loading="lazy"
-                                     className="w-full h-full object-cover"
-                                     onError={(e) => {
-                                       (e.currentTarget as HTMLImageElement).parentElement?.classList.add("hidden");
-                                     }}
-                                   />
-                                   <div className="absolute inset-0 bg-brand-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-2 text-center">
-                                      <span className="text-[8px] uppercase tracking-tighter text-brand-gold/80">
-                                        {img.source} ({Math.round(img.confidence_score * 100)}%)
-                                      </span>
-                                      <div className="flex gap-1.5">
-                                        <Button 
-                                          size="icon" 
-                                          variant="secondary" 
-                                          className="size-7 rounded-full bg-brand-gold text-brand-green hover:bg-brand-gold/90"
-                                          onClick={() => img.url && setHeroImage(img.url)}
-                                          title="Usar no Hero"
-                                        >
-                                          <Save className="size-3.5" />
-                                        </Button>
-                                        <Button 
-                                          size="icon" 
-                                          variant="outline" 
-                                          className="size-7 rounded-full border-brand-gold/40 bg-brand-graphite text-brand-text-light hover:bg-brand-gold/10"
-                                          onClick={() => {
-                                            if (img.url) {
-                                              navigator.clipboard.writeText(img.url);
-                                              toast({ title: "Copiado", description: "URL da imagem copiada." });
-                                            }
-                                          }}
-                                          title="Copiar URL"
-                                        >
-                                          <ExternalLink className="size-3.5" />
-                                        </Button>
-                                        <Button 
-                                          size="icon" 
-                                          variant="ghost" 
-                                          className="size-7 rounded-full text-brand-text-muted hover:text-brand-bordeaux hover:bg-brand-bordeaux/10"
-                                          onClick={() => ignoreImage(img.url)}
-                                          title="Ignorar"
-                                        >
-                                          <Trash2 className="size-3.5" />
-                                        </Button>
-                                      </div>
-                                   </div>
-                                 </div>
-                                 <div className="p-1.5 space-y-1">
-                                   <p className="text-[8px] text-brand-text-muted truncate uppercase tracking-widest">{img.suggested_usage || 'section'}</p>
-                                   <Button 
-                                     variant="ghost" 
-                                     className="w-full h-6 px-1.5 text-[9px] uppercase tracking-wider text-brand-gold/80 hover:text-brand-gold hover:bg-brand-gold/10"
-                                     onClick={() => img.url && setHeroImage(img.url)}
-                                   >
-                                     Usar no Hero
-                                   </Button>
-                                 </div>
-                               </div>
-                             ))}
-                           </div>
-                         </div>
-                       );
-                     })()}
-                   </div>
-                </div>
-
-                <p className="text-xs text-brand-text-muted">
-                  Selecione um bloco à esquerda para editar seu conteúdo.
-                </p>
+        </header>
+      }
+      sidebar={
+        <SidebarBlockList
+          blocks={blocks}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onToggle={(id, enabled) => markDirty(id, { enabled })}
+          onRemove={removeBlock}
+          onDragEnd={handleDragEnd}
+          onAddBlock={addBlock}
+          onImportBlock={() => setIsImportModalOpen(true)}
+          isCollapsed={isSidebarCollapsed}
+          allBlockTypes={ALL_TYPES}
+          showAddMenu={showAddMenu}
+          setShowAddMenu={setShowAddMenu}
+        />
+      }
+      preview={<iframe key={previewSrc} title="Preview" src={previewSrc} className="w-full h-full bg-white" />}
+      drawer={
+        <div className="p-8 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+          {selected ? (
+            <>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="size-8 rounded-xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20"><Layout className="size-4 text-brand-gold" /></div>
+                <div><h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Editando</h4><p className="text-sm font-semibold text-white/90">{BLOCK_LABELS[selected.type]}</p></div>
               </div>
-            )}
-          </div>
-        </aside>
-      </div>
-    </div>
+              <BlockForm type={selected.type} data={selected.data} onChange={(next) => markDirty(selected.id, { data: next })} pageTitle={pageMeta.title} />
+            </>
+          ) : (
+            <div className="space-y-8">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><Settings2 className="size-4 text-white/60" /></div>
+                <div><h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Página</h4><p className="text-sm font-semibold text-white/90">Configurações Gerais</p></div>
+              </div>
+              <div className="space-y-6">
+                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
+                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
+                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
+              </div>
+              <div className="pt-8 border-t border-white/5 space-y-6">
+                <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] font-bold uppercase text-brand-gold/80">IA Context</h3></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
+                  <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
+                </div>
+              </div>
+            </div>
+          )}
+          {isImportModalOpen && <ImportBlockModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} onImport={handleImportBlock} pageTitle={pageMeta.title} pageCategory={(pageMeta.metadata?.category as any) || ""} />}
+        </div>
+      }
+    />
   );
 }
