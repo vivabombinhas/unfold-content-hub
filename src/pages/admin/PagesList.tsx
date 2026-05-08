@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Pencil, Sparkles, Trash2 } from "lucide-react";
+ import { ExternalLink, ListChecks, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
@@ -72,17 +72,23 @@ export default function PagesList() {
           <h1 className="font-display text-3xl text-brand-text-light">Páginas</h1>
           <p className="text-sm text-brand-text-muted mt-1">Crie e edite landings. A IA gera o rascunho a partir de um tema.</p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" className="border-brand-gold/30 text-brand-gold hover:bg-brand-gold/5">
-            <Link to="/admin/paginas/nova-legado">Pesquisa Web</Link>
-          </Button>
-          <Button asChild className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90">
-            <Link to="/admin/paginas/nova">
-              <Sparkles className="size-4 mr-2" />
-              Nova Página (Wizard)
-            </Link>
-          </Button>
-        </div>
+         <div className="flex gap-3">
+           <Button asChild variant="outline" className="border-brand-gold/20 text-brand-text-muted hover:bg-brand-gold/5 hover:text-brand-gold">
+             <Link to="/admin/paginas/lote">
+               <ListChecks className="size-4 mr-2" />
+               Criar em Lote
+             </Link>
+           </Button>
+           <Button asChild variant="outline" className="border-brand-gold/30 text-brand-gold hover:bg-brand-gold/5">
+             <Link to="/admin/paginas/nova-legado">Pesquisa Web</Link>
+           </Button>
+           <Button asChild className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90">
+             <Link to="/admin/paginas/nova">
+               <Sparkles className="size-4 mr-2" />
+               Nova Página (Wizard)
+             </Link>
+           </Button>
+         </div>
       </div>
 
       {isLoading ? (
