@@ -216,7 +216,7 @@ export default function PageEditor() {
             <CopyLinkButton slug={data?.page?.slug || ""} status={data?.page?.status as any} />
             <Button variant="ghost" size="sm" asChild className="h-8 text-white/60 hover:text-white hover:bg-white/5 rounded-lg px-3 transition-colors">
               <a href={data?.page?.status === "published" ? `/p/${data?.page?.slug}` : `/p/${data?.page?.slug}?preview=1`} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-3.5 mr-2" /> <span className="text-xs">Preview</span>
+                <ExternalLink className="size-3.5 mr-2" /> <span className="text-sm font-bold">Preview</span>
               </a>
             </Button>
           </div>
@@ -229,12 +229,12 @@ export default function PageEditor() {
 
           <Button variant="ghost" size="sm" onClick={handleRevert} className="h-9 text-white/40 hover:text-white rounded-xl px-3 transition-colors">
             <Undo2 className="size-3.5 mr-2" />
-            <span className="text-xs font-medium">Reverter</span>
+            <span className="text-sm font-bold">Reverter</span>
           </Button>
 
           <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty} className="h-9 bg-white/[0.02] border-white/10 text-white rounded-xl px-4 hover:bg-white/5 transition-all">
             {saving ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Save className="size-3.5 mr-2" />} 
-            <span className="text-xs font-medium">Salvar</span>
+            <span className="text-sm font-bold">Salvar</span>
           </Button>
 
           <Button size="sm" onClick={handlePublish} disabled={publishing || dirty} className="h-9 bg-brand-gold text-brand-green hover:bg-brand-gold/90 rounded-xl px-6 font-bold shadow-[0_0_20px_rgba(209,180,111,0.2)] transition-all active:scale-95">
