@@ -3,9 +3,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MediaInput } from "./MediaInput";
- import { Plus, Trash2, Sparkles, Wand2, Loader2, Library } from "lucide-react";
+ import { Plus, Trash2, Sparkles, Wand2, Loader2, Library, Settings2 } from "lucide-react";
 import { useState } from "react";
  import { CaseBlockEditor } from "./CaseBlockEditor";
+ import {
+   Select,
+   SelectContent,
+   SelectItem,
+   SelectTrigger,
+   SelectValue,
+ } from "@/components/ui/select";
+ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { BlockType } from "@/types/blocks";
@@ -51,7 +59,78 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
           <AITextArea label="Parágrafo" fieldKey="paragraph" value={field(data.paragraph)} onChange={(v) => set("paragraph", v)} rows={4} ctx={aiCtx} />
           <CtaField label="CTA primário" value={data.cta_primary} onChange={(v) => set("cta_primary", v)} />
           <CtaField label="CTA secundário" value={data.cta_secondary} onChange={(v) => set("cta_secondary", v)} />
-          <MediaInput label="Imagem hero" value={field(data.image_url)} onChange={(v) => set("image_url", v)} />
+           <div className="pt-4 border-t border-brand-gold/10 space-y-4">
+             <div className="flex items-center gap-2 mb-2">
+               <Settings2 className="size-3.5 text-brand-gold" />
+               <h3 className="text-[10px] uppercase tracking-[0.2em] text-brand-gold font-bold">Configurações da Imagem Hero</h3>
+             </div>
+             
+             <MediaInput label="Imagem hero" value={field(data.image_url)} onChange={(v) => set("image_url", v)} />
+             
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-1.5">
+                 <Label className="text-[10px] uppercase tracking-wider text-brand-text-muted">Estilo Visual</Label>
+                 <Select value={field(data.hero_image_style, "full")} onValueChange={(v) => set("hero_image_style", v)}>
+                   <SelectTrigger className="h-9 bg-white/5 border-white/10">
+                     <SelectValue placeholder="Selecione o estilo" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="full">Normal (Full)</SelectItem>
+                     <SelectItem value="cutout">Recortada (Cutout)</SelectItem>
+                     <SelectItem value="soft-card">Card Suave</SelectItem>
+                     <SelectItem value="editorial">Editorial (Overlay)</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+ 
+               <div className="space-y-1.5">
+                 <Label className="text-[10px] uppercase tracking-wider text-brand-text-muted">Fundo da Imagem</Label>
+                 <Select value={field(data.hero_bg_style, "solid")} onValueChange={(v) => set("hero_bg_style", v)}>
+                   <SelectTrigger className="h-9 bg-white/5 border-white/10">
+                     <SelectValue placeholder="Selecione o fundo" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="solid">Sólido Escuro</SelectItem>
+                     <SelectItem value="gradient">Degradê Sutil</SelectItem>
+                     <SelectItem value="glow">Brilho (Halo)</SelectItem>
+                     <SelectItem value="none">Transparente</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+             </div>
+ 
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-1.5">
+                 <Label className="text-[10px] uppercase tracking-wider text-brand-text-muted">Alinhamento</Label>
+                 <Select value={field(data.hero_image_align, "center")} onValueChange={(v) => set("hero_image_align", v)}>
+                   <SelectTrigger className="h-9 bg-white/5 border-white/10">
+                     <SelectValue placeholder="Alinhamento" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="left">Esquerda</SelectItem>
+                     <SelectItem value="center">Centralizado</SelectItem>
+                     <SelectItem value="right">Direita</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+ 
+               <div className="space-y-1.5">
+                 <div className="flex justify-between">
+                   <Label className="text-[10px] uppercase tracking-wider text-brand-text-muted">Tamanho (Escala)</Label>
+                   <span className="text-[10px] text-brand-gold">{field(data.hero_image_scale, "100")}%</span>
+                 </div>
+                 <div className="pt-2">
+                   <Slider 
+                     value={[parseInt(field(data.hero_image_scale, "100"))]} 
+                     min={50} 
+                     max={150} 
+                     step={5} 
+                     onValueChange={([v]) => set("hero_image_scale", v.toString())}
+                   />
+                 </div>
+               </div>
+             </div>
+           </div>
           <Field label="Caption (linha de cima)" value={field(data.caption_top)} onChange={(v) => set("caption_top", v)} />
           <Field label="Caption (linha de baixo)" value={field(data.caption_bottom)} onChange={(v) => set("caption_bottom", v)} />
           <Field label="Footnote" value={field(data.footnote)} onChange={(v) => set("footnote", v)} />
