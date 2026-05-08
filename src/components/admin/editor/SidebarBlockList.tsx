@@ -100,7 +100,7 @@
                  <button
                    key={t}
                    onClick={() => onAddBlock(t)}
-                   className="w-full text-left px-3 py-2 text-xs text-white/60 hover:bg-brand-gold/10 hover:text-brand-gold rounded-lg transition-colors"
+                    className="w-full text-left px-3 py-2.5 text-sm text-white hover:bg-white/10 rounded-lg transition-colors font-medium"
                  >
                    {BLOCK_LABELS[t]}
                  </button>
