@@ -40,6 +40,26 @@ async function firecrawlScrape(apiKey: string, url: string) {
   return { ok: false };
 }
 
+ async function logScraping(adminClient: any, data: {
+   url?: string,
+   task_type: string,
+   source_origin?: string,
+   content_snapshot?: string,
+   extracted_data?: any,
+   metadata?: any,
+   status?: string,
+   error_message?: string
+ }) {
+   try {
+     await adminClient.from("scraping_logs").insert([{
+       ...data,
+       content_snapshot: data.content_snapshot?.slice(0, 50000), // Limit snapshot size
+     }]);
+   } catch (e) {
+     console.error("Error saving log to database:", e);
+   }
+ }
+
  Deno.serve(async (req) => {
    if (req.method === 'OPTIONS') {
      return new Response('ok', { headers: corsHeaders })
@@ -160,15 +180,31 @@ SCHEMA DE SAÍDA:
       })
     });
 
-     let aiData;
-     let result: any = {};
+      let aiData;
+      let result: any = {};
 
-     try {
-       aiData = await aiRes.json();
-       result = JSON.parse(aiData?.choices?.[0]?.message?.content || "{}");
-     } catch (e) {
-       console.error("AI parse error", e);
-     }
+      try {
+        aiData = await aiRes.json();
+        const rawContent = aiData?.choices?.[0]?.message?.content || "{}";
+        result = JSON.parse(rawContent);
+      } catch (e) {
+        console.error("AI parse error", e);
+      }
+
+      // Log result to telemetry
+      await logScraping(admin, {
+        url: url || "manual_paste",
+        task_type: "scan",
+        source_origin,
+        content_snapshot: content,
+        extracted_data: result,
+        metadata: {
+          ai_model: "google/gemini-2.5-flash",
+          content_length: content.length,
+          sections_found: result.sections?.length || 0
+        },
+        status: (result.sections?.length > 0) ? "success" : "partial"
+      });
 
      // 1. Fallback obrigatório para texto colado
      if ((!result.sections || result.sections.length === 0) && rawText && rawText.length > 30) {
