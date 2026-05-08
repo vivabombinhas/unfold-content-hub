@@ -33,7 +33,8 @@ import { CaseModal } from "@/components/site/CaseModal";
 import { SideSheet } from "@/components/site/SideSheet";
 import { useCountUp } from "@/hooks/use-count-up";
 import { type ClinicalCase } from "@/data/landing";
-import { usePools, type PoolCase } from "@/hooks/use-pools";
+ import { usePools, type PoolCase, type PoolReview } from "@/hooks/use-pools";
+ import { reviews as fallbackReviews } from "@/data/landing";
 import { cn } from "@/lib/utils";
 import type { BlockType } from "@/types/blocks";
 
@@ -777,29 +778,35 @@ function DepoimentosBlock({ data }: { data: BlockData }) {
   const ownItems = arr<{ name?: string; text?: string; rating?: number; date_label?: string; source?: string }>(data.items);
    let list: any[] = [];
  
-   if (ownItems.length > 0) {
-     list = ownItems.map((it, i) => ({
-       id: `own-${i}`,
-       name: s(it.name, "Paciente"),
-       text: s(it.text),
-       rating: typeof it.rating === "number" ? Math.max(1, Math.min(5, it.rating)) : 5,
-       date_label: s(it.date_label, ""),
-     }));
-   } else {
-     // Fallback para pool global inteligente
-     list = [...reviews];
-     
-     // 1. Filtrar por tag se houver (futuro: cruzar com categoria da página)
-     if (tagFilter) {
-       // Implementar filtro por tags se a tabela tiver tags (atualmente reviews não tem explicitamente, mas podemos inferir do texto ou categoria)
-     }
-     
-     // 2. Priorizar melhores notas e posição
-     list.sort((a, b) => {
-       if (b.rating !== a.rating) return b.rating - a.rating;
-       return (a.position || 0) - (b.position || 0);
-     });
-   }
+  if (ownItems.length > 0) {
+    list = ownItems.map((it, i) => ({
+      id: `own-${i}`,
+      name: s(it.name, "Paciente"),
+      text: s(it.text),
+      rating: typeof it.rating === "number" ? Math.max(1, Math.min(5, it.rating)) : 5,
+      date_label: s(it.date_label, ""),
+    }));
+  } else {
+    // Fallback para pool global inteligente
+    list = reviews.length > 0 ? [...reviews] : fallbackReviews.map((r, i) => ({
+      id: `fallback-${i}`,
+      name: r.name,
+      text: r.text,
+      rating: r.rating,
+      date_label: (r as any).date || "Paciente",
+    }));
+    
+    // 1. Filtrar por tag se houver (futuro: cruzar com categoria da página)
+    if (tagFilter) {
+      // Implementar filtro por tags se a tabela tiver tags (atualmente reviews não tem explicitamente, mas podemos inferir do texto ou categoria)
+    }
+    
+    // 2. Priorizar melhores notas e posição
+    list.sort((a, b) => {
+      if (b.rating !== a.rating) return b.rating - a.rating;
+      return (a.position || 0) - (b.position || 0);
+    });
+  }
  
    list = list.slice(0, showCount);
   if (list.length === 0) return null;

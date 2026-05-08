@@ -133,9 +133,12 @@ export default function PublicPage() {
          {blocks.map((b) => (
            <BlockRenderer key={b.id} id={b.id} type={b.type} data={b.data || {}} />
          ))}
-         {!blocks.some((b) => b.type === "equipe_rt") && (
-           <BlockRenderer type="equipe_rt" data={{}} />
-         )}
+          {!blocks.some((b) => b.type === "depoimentos") && (
+            <BlockRenderer type="depoimentos" data={{}} />
+          )}
+          {!blocks.some((b) => b.type === "equipe_rt") && (
+            <BlockRenderer type="equipe_rt" data={{}} />
+          )}
        </PoolsProvider>
 
       <LocalizacaoSection />
