@@ -357,11 +357,27 @@ function truncate(s: string | null | undefined, n: number) {
              let abs = url;
              try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
 
-             // Filtro agressivo de ruído (logos, ícones, badges)
-             const isNoise = /\/(logo|icon|favicon|sprite|whatsapp|social|header|footer|menu|estrela|star|review|google-review|fb-icon|ig-icon|arrow|loader)/i.test(abs) 
-               || /logo|icon|favicon|whatsapp|social|badge/i.test(m[2] || "");
-             
-             if (isNoise) continue;
+              // Filtro agressivo de ruído e imagens inadequadas para Hero (logos, ícones, diagramas técnicos)
+              const isNoise = /\/(logo|icon|favicon|sprite|whatsapp|social|header|footer|menu|estrela|star|review|google-review|fb-icon|ig-icon|arrow|loader|placeholder)/i.test(abs) 
+                || /logo|icon|favicon|whatsapp|social|badge|selo|banner/i.test(m[2] || "");
+              
+              // Filtro de imagens técnicas (desenhos no rosto, marcações, diagramas)
+              const isTechnical = /\/(esquema|diagrama|desenho|anatomia|marcado|marcas|antes-depois|tecnica|passo-a-passo|step-by-step)/i.test(abs)
+                || /esquema|diagrama|desenho|anatomia|marcado|marcação|tecnica|técnico|explicativo/i.test(m[2] || "");
+
+              if (isNoise) continue;
+              
+              // Se for técnica, marcamos para evitar no Hero, mas permitimos para o pool geral de candidatos
+              const isHeroInadequate = isTechnical;
+
+              if (candidateImages.length < 50 && !candidateImages.some((c) => c.url === abs)) {
+                candidateImages.push({ 
+                  url: abs, 
+                  alt: (m[2] || "").trim(), 
+                  source_url: sourceUrl,
+                  inadequate_for_hero: isHeroInadequate
+                });
+              }
              if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
 
              if (candidateImages.length < 50 && !candidateImages.some((c) => c.url === abs)) {
