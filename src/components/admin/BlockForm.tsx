@@ -60,7 +60,7 @@ import { MediaInput } from "./MediaInput";
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/15 via-transparent to-brand-black/60" />
               )}
               {bgStyle === "solid" && (
-                <div className="absolute inset-0 bg-brand-graphite/40" />
+                <div className="absolute inset-0 bg-brand-graphite" />
               )}
  
              <div 
