@@ -262,14 +262,14 @@ function HeroBlock({ data }: { data: BlockData }) {
                )}
  
                <div 
-                 className="w-full h-full transition-transform duration-[4s] group-hover:scale-110"
+                 className="w-full h-full"
                  style={{ transform: `scale(${imageScale})` }}
                >
                  <img 
                    src={imageUrl} 
                    alt={eyebrow} 
                    className={cn(
-                     "w-full h-full",
+                     "w-full h-full transition-transform duration-[4s] group-hover:scale-110",
                      imageStyle === "cutout" ? "object-contain" : "object-cover"
                    )} 
                    loading="eager" 
