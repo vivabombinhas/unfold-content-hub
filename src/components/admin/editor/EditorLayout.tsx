@@ -39,6 +39,7 @@
    onCloseDrawer: () => void;
    isSidebarCollapsed: boolean;
    setIsSidebarCollapsed: (v: boolean) => void;
+   title?: string;
  }
  
  export function EditorLayout({ 
