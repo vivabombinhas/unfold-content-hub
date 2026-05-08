@@ -185,7 +185,7 @@ function HeroBlock({ data }: { data: BlockData }) {
    );
    const imageUrl = s(data.image_url);
    const imageStyle = s(data.hero_image_style, "full");
-   const bgStyle = s(data.hero_bg_style, "solid");
+    const bgStyle = s(data.hero_bg_style, "gradient");
    const imageAlign = s(data.hero_image_align, "center");
    const imageScale = parseInt(s(data.hero_image_scale, "100")) / 100;
  
@@ -250,16 +250,16 @@ function HeroBlock({ data }: { data: BlockData }) {
                  imageStyle === "editorial" && "overflow-hidden border-x border-brand-gold/10 bg-brand-graphite"
                )}
              >
-               {/* Background effects behind image */}
-               {bgStyle === "glow" && imageStyle === "cutout" && (
-                 <div className="absolute inset-0 bg-brand-gold/20 blur-[100px] rounded-full scale-150 animate-pulse-slow" aria-hidden />
-               )}
-               {bgStyle === "gradient" && (
-                 <div className="absolute inset-0 bg-gradient-to-b from-brand-gold/5 to-brand-black/40" aria-hidden />
-               )}
-               {bgStyle === "solid" && imageStyle !== "cutout" && (
-                 <div className="absolute inset-0 bg-brand-black/20" aria-hidden />
-               )}
+                {/* Background effects behind image - Using design tokens */}
+                {bgStyle === "glow" && (
+                  <div className="absolute inset-0 bg-brand-gold/25 blur-[120px] rounded-full scale-125 animate-pulse-slow" aria-hidden />
+                )}
+                {bgStyle === "gradient" && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/15 via-transparent to-brand-black/60" aria-hidden />
+                )}
+                {bgStyle === "solid" && (
+                  <div className="absolute inset-0 bg-brand-graphite/40" aria-hidden />
+                )}
  
                <div 
                  className="w-full h-full"
