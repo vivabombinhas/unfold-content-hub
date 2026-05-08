@@ -111,6 +111,26 @@ function truncate(s: string | null | undefined, n: number) {
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
 
+ async function logScraping(adminClient: any, data: {
+   url?: string,
+   task_type: string,
+   source_origin?: string,
+   content_snapshot?: string,
+   extracted_data?: any,
+   metadata?: any,
+   status?: string,
+   error_message?: string
+ }) {
+   try {
+     await adminClient.from("scraping_logs").insert([{
+       ...data,
+       content_snapshot: data.content_snapshot?.slice(0, 50000), // Limit snapshot size
+     }]);
+   } catch (e) {
+     console.error("Error saving log to database:", e);
+   }
+ }
+
  Deno.serve(async (req) => {
    if (req.method === 'OPTIONS') {
      return new Response('ok', { headers: corsHeaders })
@@ -502,14 +522,30 @@ function truncate(s: string | null | undefined, n: number) {
       }
     }
 
+    const responsePayload = {
+      tema,
+      research: args,
+      sources: sources.slice(0, 10),
+      old_page_content: oldPageContent,
+      scrape_diagnostics: scrapeDiagnostics,
+    };
+
+    // Log telemetry for research
+    await logScraping(admin, {
+      url: tema,
+      task_type: "research",
+      source_origin: ownOldPage ? "batel_legacy" : "web_search",
+      content_snapshot: corpus,
+      extracted_data: responsePayload,
+      metadata: {
+        own_old_page: ownOldPage,
+        sources_count: sources.length
+      },
+      status: args ? "success" : "partial"
+    });
+
     return new Response(
-      JSON.stringify({
-        tema,
-        research: args,
-        sources: sources.slice(0, 10),
-        old_page_content: oldPageContent,
-        scrape_diagnostics: scrapeDiagnostics,
-      }),
+      JSON.stringify(responsePayload),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
