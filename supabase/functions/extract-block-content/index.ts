@@ -41,6 +41,26 @@ async function firecrawlScrape(apiKey: string, url: string) {
   return { ok: false };
 }
 
+ async function logScraping(adminClient: any, data: {
+   url?: string,
+   task_type: string,
+   source_origin?: string,
+   content_snapshot?: string,
+   extracted_data?: any,
+   metadata?: any,
+   status?: string,
+   error_message?: string
+ }) {
+   try {
+     await adminClient.from("scraping_logs").insert([{
+       ...data,
+       content_snapshot: data.content_snapshot?.slice(0, 50000), // Limit snapshot size
+     }]);
+   } catch (e) {
+     console.error("Error saving log to database:", e);
+   }
+ }
+
  export const handler = async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -212,12 +232,25 @@ async function firecrawlScrape(apiKey: string, url: string) {
        console.error("AI Extraction failed:", aiError);
      }
 
-     return new Response(JSON.stringify({ 
-       sections, 
-       debug: stats 
-     }), {
-       headers: { ...corsHeaders, "Content-Type": "application/json" },
+      const responsePayload = { 
+        sections, 
+        debug: stats 
+      };
+
+      // Log telemetry for block extraction
+      await logScraping(admin, {
+        url: url || "manual_text",
+        task_type: "extract_block",
+        source_origin: url ? (url.includes("esteticabatel.com.br") ? "batel_legacy" : "external_reference") : "manual_paste",
+        content_snapshot: content,
+        extracted_data: responsePayload,
+        metadata: stats,
+        status: sections.length > 0 ? "success" : "partial"
       });
+
+      return new Response(JSON.stringify(responsePayload), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+       });
  
     } catch (e: any) {
       console.error(e);
