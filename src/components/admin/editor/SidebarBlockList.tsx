@@ -64,7 +64,7 @@
        <div className={cn("px-6 mb-8 flex items-center justify-between", isCollapsed && "px-4 justify-center")}>
          {!isCollapsed ? (
            <>
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">Estrutura</h2>
+             <h2 className="text-xs uppercase tracking-[0.2em] text-white/50 font-medium">Estrutura</h2>
              <Button variant="ghost" size="icon" className="size-6 text-white/40 hover:text-white" onClick={() => onSelect(null)}>
                <Settings2 className="size-3.5" />
              </Button>
@@ -117,7 +117,7 @@
              onClick={() => setShowAddMenu(!showAddMenu)}
            >
              <Plus className={cn("size-4", !isCollapsed && "mr-2")} />
-              {!isCollapsed && <span className="text-sm font-bold">Adicionar</span>}
+               {!isCollapsed && <span className="text-sm font-medium">Adicionar</span>}
            </Button>
          </div>
          <Button 
@@ -130,7 +130,7 @@
            onClick={onImportBlock}
          >
            <Download className={cn("size-4", !isCollapsed && "mr-2")} />
-            {!isCollapsed && <span className="text-sm font-bold">Importar</span>}
+             {!isCollapsed && <span className="text-sm font-medium">Importar</span>}
          </Button>
        </div>
      </div>
@@ -166,7 +166,7 @@
         <div className="flex-1 min-w-0 flex items-center gap-3.5">
           <div className={cn("size-2.5 rounded-full shrink-0 transition-colors", isSelected ? "bg-brand-gold shadow-[0_0_10px_rgba(209,180,111,0.6)]" : "bg-white/20")} />
          {!isCollapsed && (
-            <span className="text-sm font-bold truncate tracking-tight">
+             <span className="text-sm font-medium truncate tracking-tight">
              {BLOCK_LABELS[block.type as BlockType] || block.type}
            </span>
          )}

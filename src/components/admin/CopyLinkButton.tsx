@@ -73,9 +73,14 @@ export function CopyLinkButton({ slug, status, variant = "default", className }:
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={handleCopy} className={className}>
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      onClick={handleCopy} 
+      className={cn("font-medium", className)}
+    >
       <Icon className="size-3.5 mr-1.5" />
-      {copied ? "Copiado!" : label}
+      <span className="text-sm">{copied ? "Copiado!" : label}</span>
     </Button>
   );
 }

@@ -215,8 +215,14 @@ export default function PageEditor() {
           <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 mr-4">
             <CopyLinkButton slug={data?.page?.slug || ""} status={data?.page?.status as any} />
             <Button variant="ghost" size="sm" asChild className="h-8 text-white/60 hover:text-white hover:bg-white/5 rounded-lg px-3 transition-colors">
-              <a href={data?.page?.status === "published" ? `/p/${data?.page?.slug}` : `/p/${data?.page?.slug}?preview=1`} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-3.5 mr-2" /> <span className="text-sm font-bold">Preview</span>
+              <a 
+                href={data?.page?.status === "published" ? `/p/${data?.page?.slug}` : `/p/${data?.page?.slug}?preview=1`} 
+                target="_blank" 
+                rel="noreferrer"
+                className="flex items-center"
+              >
+                <ExternalLink className="size-3.5 mr-2" /> 
+                <span className="text-sm font-medium">Preview</span>
               </a>
             </Button>
           </div>
@@ -227,19 +233,19 @@ export default function PageEditor() {
             </Badge>
           )}
 
-          <Button variant="ghost" size="sm" onClick={handleRevert} className="h-9 text-white/40 hover:text-white rounded-xl px-3 transition-colors">
+          <Button variant="ghost" size="sm" onClick={handleRevert} className="h-9 text-white/40 hover:text-white rounded-xl px-3 transition-colors font-medium">
             <Undo2 className="size-3.5 mr-2" />
-            <span className="text-sm font-bold">Reverter</span>
+            <span className="text-sm">Reverter</span>
           </Button>
 
-          <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty} className="h-9 bg-white/[0.02] border-white/10 text-white rounded-xl px-4 hover:bg-white/5 transition-all">
+          <Button variant="outline" size="sm" onClick={handleSave} disabled={saving || !dirty} className="h-9 bg-white/[0.02] border-white/10 text-white rounded-xl px-4 hover:bg-white/5 transition-all font-medium">
             {saving ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Save className="size-3.5 mr-2" />} 
-            <span className="text-sm font-bold">Salvar</span>
+            <span className="text-sm">Salvar</span>
           </Button>
 
-          <Button size="sm" onClick={handlePublish} disabled={publishing || dirty} className="h-9 bg-brand-gold text-brand-green hover:bg-brand-gold/90 rounded-xl px-6 font-bold shadow-[0_0_20px_rgba(209,180,111,0.2)] transition-all active:scale-95">
+          <Button size="sm" onClick={handlePublish} disabled={publishing || dirty} className="h-9 bg-brand-gold text-brand-green hover:bg-brand-gold/90 rounded-xl px-6 font-medium shadow-[0_0_20px_rgba(209,180,111,0.2)] transition-all active:scale-95">
             {publishing ? <Loader2 className="size-3.5 animate-spin mr-2" /> : <Send className="size-3.5 mr-2" />} 
-            <span className="text-xs font-bold uppercase tracking-wider">Publicar</span>
+            <span className="text-xs uppercase tracking-wider">Publicar</span>
           </Button>
         </div>
       }
@@ -266,7 +272,7 @@ export default function PageEditor() {
             <>
               <div className="flex items-center gap-3 mb-2">
                 <div className="size-8 rounded-xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20"><Layout className="size-4 text-brand-gold" /></div>
-                <div><h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Editando</h4><p className="text-sm font-semibold text-white/90">{BLOCK_LABELS[selected.type]}</p></div>
+                <div><h4 className="text-xs uppercase tracking-[0.2em] text-white/40 font-medium">Editando</h4><p className="text-sm font-medium text-white/90">{BLOCK_LABELS[selected.type]}</p></div>
               </div>
               <BlockForm type={selected.type} data={selected.data} onChange={(next) => markDirty(selected.id, { data: next })} pageTitle={pageMeta.title} />
             </>
@@ -274,18 +280,18 @@ export default function PageEditor() {
             <div className="space-y-8">
               <div className="flex items-center gap-3 mb-2">
                 <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><Settings2 className="size-4 text-white/60" /></div>
-                <div><h4 className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Página</h4><p className="text-sm font-semibold text-white/90">Configurações Gerais</p></div>
+                <div><h4 className="text-xs uppercase tracking-[0.2em] text-white/40 font-medium">Página</h4><p className="text-sm font-medium text-white/90">Configurações Gerais</p></div>
               </div>
               <div className="space-y-6">
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
-                <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
+                <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
+                <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
+                <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
               </div>
               <div className="pt-8 border-t border-white/5 space-y-6">
-                <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] font-bold uppercase text-brand-gold/80">IA Context</h3></div>
+                <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context</h3></div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
-                  <div className="space-y-2"><Label className="text-[11px] font-bold uppercase text-white/30">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
+                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
+                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
                 </div>
               </div>
             </div>
