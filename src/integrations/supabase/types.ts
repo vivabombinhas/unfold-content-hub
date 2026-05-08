@@ -340,6 +340,45 @@ export type Database = {
         }
         Relationships: []
       }
+      scraping_logs: {
+        Row: {
+          content_snapshot: string | null
+          created_at: string
+          error_message: string | null
+          extracted_data: Json | null
+          id: string
+          metadata: Json | null
+          source_origin: string | null
+          status: string | null
+          task_type: string
+          url: string | null
+        }
+        Insert: {
+          content_snapshot?: string | null
+          created_at?: string
+          error_message?: string | null
+          extracted_data?: Json | null
+          id?: string
+          metadata?: Json | null
+          source_origin?: string | null
+          status?: string | null
+          task_type: string
+          url?: string | null
+        }
+        Update: {
+          content_snapshot?: string | null
+          created_at?: string
+          error_message?: string | null
+          extracted_data?: Json | null
+          id?: string
+          metadata?: Json | null
+          source_origin?: string | null
+          status?: string | null
+          task_type?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           address: string | null
