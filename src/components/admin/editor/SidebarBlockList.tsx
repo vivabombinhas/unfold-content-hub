@@ -117,7 +117,7 @@
              onClick={() => setShowAddMenu(!showAddMenu)}
            >
              <Plus className={cn("size-4", !isCollapsed && "mr-2")} />
-             {!isCollapsed && "Adicionar"}
+              {!isCollapsed && <span className="text-sm font-bold">Adicionar</span>}
            </Button>
          </div>
          <Button 
@@ -130,7 +130,7 @@
            onClick={onImportBlock}
          >
            <Download className={cn("size-4", !isCollapsed && "mr-2")} />
-           {!isCollapsed && "Importar"}
+            {!isCollapsed && <span className="text-sm font-bold">Importar</span>}
          </Button>
        </div>
      </div>
