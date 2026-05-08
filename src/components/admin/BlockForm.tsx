@@ -60,7 +60,7 @@ import { MediaInput } from "./MediaInput";
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-gold/15 via-transparent to-brand-black/60" />
               )}
               {bgStyle === "solid" && (
-                <div className="absolute inset-0 bg-brand-graphite/40" />
+                <div className="absolute inset-0 bg-brand-graphite" />
               )}
  
              <div 
@@ -179,7 +179,7 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                    <SelectTrigger className="h-9 bg-white/5 border-white/10">
                      <SelectValue placeholder="Selecione o estilo" />
                    </SelectTrigger>
-                   <SelectContent>
+                  <SelectContent className="z-[100]">
                      <SelectItem value="full">Normal (Full)</SelectItem>
                      <SelectItem value="cutout">Recortada (Cutout)</SelectItem>
                      <SelectItem value="soft-card">Card Suave</SelectItem>
@@ -194,12 +194,12 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                    <SelectTrigger className="h-9 bg-white/5 border-white/10">
                      <SelectValue placeholder="Selecione o fundo" />
                    </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="solid">Sólido Escuro</SelectItem>
-                     <SelectItem value="gradient">Degradê Sutil</SelectItem>
-                     <SelectItem value="glow">Brilho (Halo)</SelectItem>
-                     <SelectItem value="none">Transparente</SelectItem>
-                   </SelectContent>
+                    <SelectContent className="z-[100]">
+                      <SelectItem value="solid">Sólido Profundo (Solid)</SelectItem>
+                      <SelectItem value="gradient">Degradê Sutil (Padrão)</SelectItem>
+                      <SelectItem value="glow">Brilho Suave (Glow)</SelectItem>
+                      <SelectItem value="none">Sem Fundo (Transparente)</SelectItem>
+                    </SelectContent>
                  </Select>
                </div>
              </div>
@@ -211,7 +211,7 @@ export function BlockForm({ type, data, onChange, pageTitle }: Props) {
                    <SelectTrigger className="h-9 bg-white/5 border-white/10">
                      <SelectValue placeholder="Alinhamento" />
                    </SelectTrigger>
-                   <SelectContent>
+                    <SelectContent className="z-[100]">
                      <SelectItem value="left">Esquerda</SelectItem>
                      <SelectItem value="center">Centralizado</SelectItem>
                      <SelectItem value="right">Direita</SelectItem>
