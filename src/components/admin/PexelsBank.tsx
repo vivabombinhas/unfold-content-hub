@@ -55,10 +55,13 @@ import { supabase } from "@/integrations/supabase/client";
     }
   }, []);
 
-   useEffect(() => {
-     setPage(1);
-     fetchPhotos(searchQuery, 1);
-   }, [searchQuery, fetchPhotos]);
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setPage(1);
+        fetchPhotos(searchQuery, 1);
+      }, 500);
+      return () => clearTimeout(timer);
+    }, [searchQuery, fetchPhotos]);
 
    const loadMore = () => {
      const nextPage = page + 1;
