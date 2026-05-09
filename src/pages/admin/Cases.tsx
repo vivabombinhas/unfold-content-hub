@@ -362,10 +362,10 @@ export default function Cases() {
               </div>
 
               <div className="space-y-6">
-                <MediaInput label="Foto de Capa" value={caseData.cover_url || ""} onChange={url => setCaseData(p => ({...p, cover_url: url}))} />
+                <MediaInput label="Foto de Capa" value={caseData.cover_url || ""} onChange={url => setCaseData(p => ({...p, cover_url: url}))} isolateImageBankKeyboardEvents />
                 <div className="grid grid-cols-2 gap-4">
-                  <MediaInput label="Antes" value={caseData.before_url || ""} onChange={url => setCaseData(p => ({...p, before_url: url}))} />
-                  <MediaInput label="Depois" value={caseData.after_url || ""} onChange={url => setCaseData(p => ({...p, after_url: url}))} />
+                  <MediaInput label="Antes" value={caseData.before_url || ""} onChange={url => setCaseData(p => ({...p, before_url: url}))} isolateImageBankKeyboardEvents />
+                  <MediaInput label="Depois" value={caseData.after_url || ""} onChange={url => setCaseData(p => ({...p, after_url: url}))} isolateImageBankKeyboardEvents />
                 </div>
               </div>
 
