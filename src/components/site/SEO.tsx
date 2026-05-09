@@ -66,14 +66,7 @@
         {image && <meta name="twitter:image" content={image} />}
 
         {/* Performance: Preload hero image if available */}
-        {heroImage && (
-          <link
-            rel="preload"
-            as="image"
-            href={heroImage}
-            {...({ fetchpriority: "high" } as any)}
-          />
-        )}
+         {heroImage && <link rel="preload" as="image" href={heroImage} fetchPriority="high" />}
      </Helmet>
    );
  };
