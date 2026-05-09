@@ -183,12 +183,14 @@ interface Props {
                       className={`relative ${columns === 4 ? 'aspect-square' : 'aspect-[4/5] sm:aspect-[3/4]'} overflow-hidden cursor-pointer bg-black/20`} 
                       onClick={() => setPreviewPhoto(photo)}
                     >
-                      <img 
-                        src={columns === 4 ? photo.src.small : photo.src.medium} 
-                        alt={photo.alt} 
-                        className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-105' : ''}`}
-                        loading="lazy"
-                      />
+                       <div className="w-full h-full flex items-center justify-center p-0.5">
+                         <img 
+                           src={columns === 4 ? photo.src.small : photo.src.medium} 
+                           alt={photo.alt} 
+                           className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain p-2'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-105' : ''}`}
+                           loading="lazy"
+                         />
+                       </div>
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <div className="flex flex-col items-center gap-2">
                           <div className="size-10 rounded-full bg-brand-gold/20 backdrop-blur-md flex items-center justify-center border border-brand-gold/30">
@@ -286,11 +288,11 @@ interface Props {
           
           {previewPhoto && (
             <div className="flex flex-col h-[70vh] md:h-auto">
-              <div className="flex-1 relative overflow-hidden bg-black/40 min-h-[300px] flex items-center justify-center">
+              <div className="flex-1 relative overflow-hidden bg-black/60 min-h-[300px] flex items-center justify-center p-4 md:p-8">
                 <img 
                   src={previewPhoto.src.large2x} 
                   alt={previewPhoto.alt}
-                  className="max-w-full max-h-[60vh] object-contain shadow-2xl"
+                  className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-lg"
                 />
                 <Button
                   variant="ghost"
