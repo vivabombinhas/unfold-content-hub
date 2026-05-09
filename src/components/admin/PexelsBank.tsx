@@ -212,8 +212,9 @@ interface Props {
                       <div className="flex gap-1.5">
                         <Button 
                           onClick={() => onSelect(photo.src.large2x)}
-                          className="flex-1 h-8 text-[9px] uppercase tracking-[0.1em] bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold"
+                          className="flex-1 h-9 text-[10px] uppercase tracking-widest bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold"
                         >
+                          <Check className="size-3.5 mr-2" />
                           Selecionar
                         </Button>
                         <Button 
