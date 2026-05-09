@@ -332,7 +332,9 @@ function truncate(s: string | null | undefined, n: number) {
         const content = scrape.markdown || scrape.html;
         if (content) {
           const label = scrape.markdown ? "MARKDOWN" : "HTML";
-          ownCorpusParts.push(`[Página antiga ${i + 1} — ${sourceUrl}]\n${label}:\n${truncate(content, 12000)}`);
+          // Aumentado de 12k → 45k: testimonials/FAQs costumam aparecer abaixo
+          // do meio da página (>20k chars) e estavam sendo cortados antes da IA ler.
+          ownCorpusParts.push(`[Página antiga ${i + 1} — ${sourceUrl}]\n${label}:\n${truncate(content, 45000)}`);
           if (scrape.markdown) ownRawMarkdown.push(`# ${sourceUrl}\n\n${scrape.markdown}`);
         }
         if (scrape.html) {
