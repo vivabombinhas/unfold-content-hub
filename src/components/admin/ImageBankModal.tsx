@@ -181,13 +181,13 @@ import { toast } from "@/hooks/use-toast";
                 </div>
 
                 <div className="flex items-center justify-center mb-2">
-                <TabsList className="bg-white/5 border border-white/10 p-1">
-                  <TabsTrigger value="internal" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg">
-                    <Library className="size-3 mr-2" />
+                 <TabsList className="bg-white/5 border border-white/10 p-1.5 h-12">
+                   <TabsTrigger value="internal" className="text-xs uppercase tracking-[0.2em] data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg px-6">
+                     <Library className="size-4 mr-2" />
                     Acervo Interno
                   </TabsTrigger>
-                  <TabsTrigger value="external" className="text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg relative px-2 md:px-4">
-                    <Globe className="size-3 mr-1.5 md:mr-2" />
+                   <TabsTrigger value="external" className="text-xs uppercase tracking-[0.2em] data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg relative px-6">
+                     <Globe className="size-4 mr-2" />
                     Banco Externo (Pexels)
                     <span className="absolute -top-1 -right-1 flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75"></span>
