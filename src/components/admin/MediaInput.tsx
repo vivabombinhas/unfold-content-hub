@@ -57,9 +57,17 @@ export function MediaInput({ value, onChange, label }: Props) {
           <>
             <img src={value} alt="" className="w-full h-full object-contain max-h-[200px]" />
             <div className="absolute inset-0 bg-brand-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <Button type="button" size="sm" variant="secondary" onClick={() => fileRef.current?.click()} className="h-8 bg-brand-gold text-brand-bg">
-                Alterar
-              </Button>
+               <div className="flex flex-col gap-2">
+                 <div className="flex gap-2">
+                   <Button type="button" size="sm" variant="secondary" onClick={() => fileRef.current?.click()} className="h-8 bg-brand-gold text-brand-bg">
+                     Upload
+                   </Button>
+                   <ImageBankModal onSelect={onChange} />
+                 </div>
+                 <Button type="button" size="sm" variant="destructive" onClick={() => onChange("")} className="h-8 w-full">
+                   Remover
+                 </Button>
+               </div>
               <Button type="button" size="sm" variant="destructive" onClick={() => onChange("")} className="h-8">
                 Remover
               </Button>

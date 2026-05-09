@@ -127,15 +127,18 @@ import { toast } from "@/hooks/use-toast";
            Banco de Imagens
          </Button>
        </DialogTrigger>
-        <DialogContent className="max-w-[1200px] w-[98vw] max-h-[98vh] h-[95vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden">
+        <DialogContent className="max-w-[1400px] w-[95vw] h-[90vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden shadow-2xl">
           <Tabs defaultValue="internal" className="flex-1 flex flex-col overflow-hidden">
-             <div className="px-4 md:px-6 pt-6 pb-2 border-b border-white/5 bg-brand-black/80 sticky top-0 z-30 backdrop-blur-md">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+              <div className="px-4 md:px-8 pt-8 pb-4 border-b border-white/10 bg-brand-black/90 sticky top-0 z-30 backdrop-blur-md">
+                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
-                      <Library className="size-5 text-brand-gold" />
+                    <div className="size-12 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
+                       <Library className="size-6 text-brand-gold" />
                     </div>
-                    <DialogTitle className="text-xl md:text-2xl font-display italic text-brand-gold">Biblioteca de Mídia</DialogTitle>
+                    <div>
+                      <DialogTitle className="text-2xl md:text-3xl font-display italic text-brand-gold">Biblioteca de Mídia</DialogTitle>
+                      <p className="text-[10px] text-brand-text-muted uppercase tracking-[0.2em] mt-1">Gerencie seus ativos visuais com facilidade</p>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -178,13 +181,13 @@ import { toast } from "@/hooks/use-toast";
                 </div>
 
                 <div className="flex items-center justify-center mb-2">
-                <TabsList className="bg-white/5 border border-white/10 p-1">
-                  <TabsTrigger value="internal" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg">
-                    <Library className="size-3 mr-2" />
+                 <TabsList className="bg-white/5 border border-white/10 p-1.5 h-12">
+                   <TabsTrigger value="internal" className="text-xs uppercase tracking-[0.2em] data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg px-6">
+                     <Library className="size-4 mr-2" />
                     Acervo Interno
                   </TabsTrigger>
-                  <TabsTrigger value="external" className="text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg relative px-2 md:px-4">
-                    <Globe className="size-3 mr-1.5 md:mr-2" />
+                   <TabsTrigger value="external" className="text-xs uppercase tracking-[0.2em] data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg relative px-6">
+                     <Globe className="size-4 mr-2" />
                     Banco Externo (Pexels)
                     <span className="absolute -top-1 -right-1 flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75"></span>
@@ -195,26 +198,26 @@ import { toast } from "@/hooks/use-toast";
                 </div>
             </div>
 
-            <TabsContent value="internal" className="flex-1 flex flex-col overflow-hidden m-0">
-              <div className="p-6 pb-2">
+            <TabsContent value="internal" className="flex-1 flex flex-col overflow-hidden m-0 bg-brand-bg/30">
+              <div className="p-4 md:p-8 pb-4">
                 <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-gold/50" />
+                  <div className="relative flex-1 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-brand-gold/50 group-focus-within:text-brand-gold transition-colors" />
                     <Input 
                       placeholder="Buscar por procedimento ou nome..." 
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="pl-10 bg-white/5 border-white/10 text-xs h-10 focus-visible:ring-brand-gold/50"
+                      className="pl-12 bg-white/5 border-white/10 text-sm h-12 focus-visible:ring-brand-gold/50 rounded-xl"
                     />
                   </div>
-                  <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                  <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                     <Button 
                       variant={category === null ? "secondary" : "outline"} 
                       size="sm" 
                       onClick={() => setCategory(null)}
                       className={cn(
-                        "h-9 text-[10px] uppercase tracking-widest",
-                        category === null ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold"
+                        "h-10 text-xs uppercase tracking-[0.15em] px-5 rounded-lg",
+                        category === null ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
                       )}
                     >
                       Todos
@@ -226,8 +229,8 @@ import { toast } from "@/hooks/use-toast";
                         size="sm" 
                         onClick={() => setCategory(cat)}
                         className={cn(
-                          "h-9 text-[10px] uppercase tracking-widest whitespace-nowrap",
-                          category === cat ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold"
+                          "h-10 text-xs uppercase tracking-[0.15em] whitespace-nowrap px-5 rounded-lg",
+                          category === cat ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
                         )}
                       >
                         {cat}
@@ -237,34 +240,28 @@ import { toast } from "@/hooks/use-toast";
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 p-6 pt-2">
+              <ScrollArea className="flex-1 p-4 md:p-8 pt-2">
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3">
                     <Loader2 className="size-8 text-brand-gold animate-spin" />
                     <p className="text-xs text-brand-text-muted uppercase tracking-widest">Carregando acervo...</p>
                   </div>
                 ) : images.length > 0 ? (
-                   <div className={cn(
-                     "grid gap-4 md:gap-6",
-                     columns === 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
-                   )}>
+                   <div className="grid gap-4 md:gap-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                     {images.map((img) => (
                       <div 
                         key={img.id}
-                        className="group relative flex flex-col rounded-xl border border-white/5 bg-white/5 overflow-hidden hover:border-brand-gold/50 transition-all shadow-xl"
+                        className="group relative flex flex-col rounded-2xl border border-white/5 bg-white/5 overflow-hidden hover:border-brand-gold/50 transition-all duration-300 shadow-2xl hover:-translate-y-1"
                       >
                         <div 
-                           className={cn(
-                             "relative overflow-hidden cursor-pointer",
-                             columns === 2 ? "aspect-video" : "aspect-[3/4]"
-                           )}
+                           className="relative overflow-hidden cursor-pointer aspect-[3/4]"
                           onClick={() => setPreviewImage(img)}
                         >
-                          <div className="w-full h-full bg-black/20">
+                          <div className="w-full h-full bg-black/40">
                             <img 
                               src={img.url} 
                               alt={img.title || ""} 
-                              className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain p-2'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-110' : ''}`}
+                              className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain p-4'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-110' : ''}`}
                               loading="lazy"
                             />
                           </div>
