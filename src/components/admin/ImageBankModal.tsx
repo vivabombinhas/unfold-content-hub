@@ -9,7 +9,7 @@
  } from "@/components/ui/dialog";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
- import { Search, Library, Loader2, X, Globe } from "lucide-react";
+ import { Search, Library, Loader2, X, Globe, Maximize2, Minimize2 } from "lucide-react";
  import { cn } from "@/lib/utils";
  import { ScrollArea } from "@/components/ui/scroll-area";
  import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,7 @@
    const [loading, setLoading] = useState(false);
    const [search, setSearch] = useState("");
    const [category, setCategory] = useState<string | null>(null);
+   const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
  
    const fetchImages = async () => {
      setLoading(true);
@@ -76,21 +77,46 @@
            Banco de Imagens
          </Button>
        </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] h-[85vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden">
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] h-[85vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden sm:w-full">
           <Tabs defaultValue="internal" className="flex-1 flex flex-col overflow-hidden">
             <div className="px-6 pt-6 border-b border-white/5">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <DialogTitle className="text-xl font-display italic text-brand-gold">Biblioteca de Mídia</DialogTitle>
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+                <div className="flex items-center justify-between w-full lg:w-auto">
+                  <DialogTitle className="text-xl font-display italic text-brand-gold">Biblioteca de Mídia</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
+                    className={`lg:hidden size-8 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
+                    title={fitMode === 'cover' ? "Ajustar Imagens" : "Preencher Imagens"}
+                  >
+                    {fitMode === 'cover' ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />}
+                  </Button>
+                </div>
                 <TabsList className="bg-white/5 border border-white/10 p-1">
                   <TabsTrigger value="internal" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg">
                     <Library className="size-3 mr-2" />
                     Acervo Interno
                   </TabsTrigger>
-                  <TabsTrigger value="external" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg">
+                  <TabsTrigger value="external" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg relative">
                     <Globe className="size-3 mr-2" />
                     Banco Externo (Pexels)
+                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-gold"></span>
+                    </span>
                   </TabsTrigger>
                 </TabsList>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
+                  className={`hidden lg:flex size-9 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
+                  title={fitMode === 'cover' ? "Mudar para Ajustar (Contain)" : "Mudar para Preencher (Cover)"}
+                >
+                  {fitMode === 'cover' ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />}
+                </Button>
               </div>
             </div>
 
@@ -143,7 +169,7 @@
                     <p className="text-xs text-brand-text-muted uppercase tracking-widest">Carregando acervo...</p>
                   </div>
                 ) : images.length > 0 ? (
-                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
                     {images.map((img) => (
                       <div 
                         key={img.id}
@@ -154,12 +180,14 @@
                         }}
                       >
                         <div className="relative aspect-[3/4] overflow-hidden">
-                          <img 
-                            src={img.url} 
-                            alt={img.title || ""} 
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            loading="lazy"
-                          />
+                          <div className="w-full h-full bg-black/20">
+                            <img 
+                              src={img.url} 
+                              alt={img.title || ""} 
+                              className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-110' : ''}`}
+                              loading="lazy"
+                            />
+                          </div>
                           <div className="absolute inset-0 bg-gradient-to-t from-brand-black/90 via-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
                             <p className="text-[10px] font-bold text-white truncate">{img.title}</p>
                             <p className="text-[8px] text-brand-gold uppercase tracking-widest mt-1">{img.category}</p>
@@ -192,10 +220,13 @@
             </TabsContent>
 
             <TabsContent value="external" className="flex-1 flex flex-col overflow-hidden m-0">
-              <PexelsBank onSelect={(url) => {
-                onSelect(url);
-                setIsOpen(false);
-              }} />
+               <PexelsBank 
+                 externalFitMode={fitMode}
+                 onSelect={(url) => {
+                   onSelect(url);
+                   setIsOpen(false);
+                 }} 
+               />
             </TabsContent>
           </Tabs>
        </DialogContent>
