@@ -65,6 +65,9 @@ const TEMPLATE_SLUG = "botox-masculino";
       });
     }
 
+   // Fetch global settings for defaults
+   const { data: siteSettings } = await admin.from("site_settings").select("*").eq("id", 1).maybeSingle();
+
     // DNA template (Botox Masculino)
     const { data: templatePage } = await admin.from("pages").select("id").eq("slug", TEMPLATE_SLUG).maybeSingle();
     const { data: templateBlocks } = templatePage 
@@ -152,7 +155,17 @@ REGRAS:
           { title: "Segurança Clínica", text: "Protocolos rigorosos e acompanhamento especializado." }
         ]
       };
-      if (type === "faq" && faqBase) data = { title: "Dúvidas Frequentes", items: faqBase.split("\n").map(q => ({ question: q, answer: "..." })) };
+       if (type === "faq" && faqBase) data = { title: "Dúvidas Frequentes", items: faqBase.split("\n").map(q => ({ question: q, answer: "..." })) };
+       
+       if (type === "equipe_rt") {
+         data = {
+           eyebrow: "Quem cuida de você",
+           title_html: `Conheça a Dra. <em>${siteSettings?.rt_name || "Daniele"}</em>`,
+           register_label: siteSettings?.rt_register || "",
+           image_url: siteSettings?.rt_image || "",
+           bio: "Especialista em resultados naturais e harmonização facial de alto padrão."
+         };
+       }
       
       return {
         page_id: newPage.id,
