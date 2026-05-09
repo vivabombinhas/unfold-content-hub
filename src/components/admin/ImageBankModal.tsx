@@ -62,10 +62,10 @@ import { toast } from "@/hooks/use-toast";
    };
  
     useEffect(() => {
-      if (isOpen) {
+      if (isOpen && activeTab === "internal") {
         fetchImages();
       }
-    }, [isOpen, search, category, onlyHero]);
+    }, [isOpen, search, category, onlyHero, activeTab]);
 
     const close = useCallback(() => setIsOpen(false), []);
     const select = useCallback((url: string) => {
