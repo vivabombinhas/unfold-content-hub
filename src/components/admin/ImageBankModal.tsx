@@ -28,7 +28,8 @@ import { toast } from "@/hooks/use-toast";
     const searchInputRef = useRef<HTMLInputElement>(null);
    const [images, setImages] = useState<ImageAsset[]>([]);
    const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState("");
+     const [search, setSearch] = useState("");
+     const [debouncedSearch, setDebouncedSearch] = useState("");
     const [category, setCategory] = useState<string | null>(null);
     const [onlyHero, setOnlyHero] = useState(false);
    const [columns, setColumns] = useState<2 | 4>(4);
@@ -62,10 +63,17 @@ import { toast } from "@/hooks/use-toast";
    };
  
     useEffect(() => {
+      const timer = setTimeout(() => {
+        setDebouncedSearch(search);
+      }, 400);
+      return () => clearTimeout(timer);
+    }, [search]);
+
+    useEffect(() => {
       if (isOpen && activeTab === "internal") {
         fetchImages();
       }
-    }, [isOpen, search, category, onlyHero, activeTab]);
+    }, [isOpen, debouncedSearch, category, onlyHero, activeTab]);
 
     const close = useCallback(() => setIsOpen(false), []);
     const select = useCallback((url: string) => {
@@ -186,6 +194,12 @@ import { toast } from "@/hooks/use-toast";
                     placeholder={activeTab === 'internal' ? "Pesquisar no seu acervo..." : "Explorar fotos no Pexels..."} 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setDebouncedSearch(search);
+                        if (activeTab === "internal") fetchImages();
+                      }
+                    }}
                     className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl w-full transition-all focus:bg-white/10"
                   />
                 </div>
@@ -406,14 +420,14 @@ import { toast } from "@/hooks/use-toast";
                         <p className="text-sm font-light uppercase tracking-[0.2em]">Nenhuma imagem encontrada</p>
                       </div>
                     )
-                  ) : (
-                       <PexelsBank 
-                         externalFitMode={fitMode}
-                         searchQuery={search}
-                         onFocusImage={setFocusedImage}
-                         onSelect={select} 
-                       />
-                  )}
+                   ) : (
+                        <PexelsBank 
+                          externalFitMode={fitMode}
+                          searchQuery={debouncedSearch}
+                          onFocusImage={setFocusedImage}
+                          onSelect={select} 
+                        />
+                   )}
                 </div>
               </main>
 
