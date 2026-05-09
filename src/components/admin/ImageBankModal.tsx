@@ -143,31 +143,33 @@
                     <p className="text-xs text-brand-text-muted uppercase tracking-widest">Carregando acervo...</p>
                   </div>
                 ) : images.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
                     {images.map((img) => (
                       <div 
                         key={img.id}
-                        className="group relative aspect-square rounded-lg border border-white/5 bg-white/5 overflow-hidden cursor-pointer hover:border-brand-gold/50 transition-all shadow-xl"
+                        className="group relative flex flex-col rounded-xl border border-white/5 bg-white/5 overflow-hidden cursor-pointer hover:border-brand-gold/50 transition-all shadow-xl"
                         onClick={() => {
                           onSelect(img.url);
                           setIsOpen(false);
                         }}
                       >
-                        <img 
-                          src={img.url} 
-                          alt={img.title || ""} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-brand-black/90 via-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
-                          <p className="text-[10px] font-bold text-white truncate">{img.title}</p>
-                          <p className="text-[8px] text-brand-gold uppercase tracking-tighter">{img.category}</p>
+                        <div className="relative aspect-[3/4] overflow-hidden">
+                          <img 
+                            src={img.url} 
+                            alt={img.title || ""} 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-brand-black/90 via-transparent opacity-0 group-hover:opacity-100 transition-opacity p-4 flex flex-col justify-end">
+                            <p className="text-[10px] font-bold text-white truncate">{img.title}</p>
+                            <p className="text-[8px] text-brand-gold uppercase tracking-widest mt-1">{img.category}</p>
+                          </div>
+                          {img.category && (
+                            <Badge className="absolute top-2 right-2 bg-brand-gold/90 text-brand-bg text-[8px] h-4 hover:bg-brand-gold px-2 uppercase font-bold border-none">
+                              {img.category}
+                            </Badge>
+                          )}
                         </div>
-                        {img.category && (
-                          <Badge className="absolute top-2 right-2 bg-brand-gold/80 text-brand-bg text-[8px] h-4 hover:bg-brand-gold px-1.5 uppercase font-bold border-none">
-                            {img.category}
-                          </Badge>
-                        )}
                       </div>
                     ))}
                   </div>
