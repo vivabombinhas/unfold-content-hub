@@ -168,11 +168,16 @@ import { toast } from "@/hooks/use-toast";
          </Button>
        )}
 
-       {isOpen && createPortal(
-         <div 
-           className="fixed inset-0 z-[99999] bg-brand-black text-white flex flex-col overflow-hidden animate-in fade-in duration-300 pointer-events-auto"
-           onClick={(e) => e.stopPropagation()}
-         >
+        {isOpen && createPortal(
+          <div 
+            className="fixed inset-0 z-[99999] bg-brand-black text-white flex flex-col overflow-hidden animate-in fade-in duration-300 pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                e.stopPropagation();
+              }
+            }}
+          >
             {/* Header / Top Bar: Search, Tabs, Actions */}
             <div className="h-20 shrink-0 border-b border-white/10 bg-brand-black/95 flex items-center justify-between px-8 backdrop-blur-md z-50">
               <div className="flex items-center gap-8 flex-1">
