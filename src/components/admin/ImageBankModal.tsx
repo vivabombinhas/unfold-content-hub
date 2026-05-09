@@ -1,14 +1,8 @@
- import { useState, useEffect } from "react";
+  import { useState, useEffect, useCallback, useRef } from "react";
+  import { createPortal } from "react-dom";
  import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
- import {
-   Dialog,
-   DialogContent,
-   DialogHeader,
-   DialogTitle,
-   DialogTrigger,
- } from "@/components/ui/dialog";
- import { Button } from "@/components/ui/button";
+  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
    import { Search, Library, Loader2, X, Globe, Maximize2, Minimize2, Upload, Eye, Check, Filter, Image as ImageIcon, Info, ChevronRight, MousePointer2, ExternalLink, Download, Star } from "lucide-react";
  import { cn } from "@/lib/utils";
@@ -29,8 +23,9 @@ import { toast } from "@/hooks/use-toast";
    onSelect: (url: string) => void;
  }
  
-  export function ImageBankModal({ onSelect }: Props) {
-   const [isOpen, setIsOpen] = useState(false);
+  export function ImageBankModal({ onSelect, trigger }: Props & { trigger?: React.ReactNode }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
    const [images, setImages] = useState<ImageAsset[]>([]);
    const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -72,19 +67,33 @@ import { toast } from "@/hooks/use-toast";
       }
     }, [isOpen, search, category, onlyHero]);
 
-    // Keyboard navigation
+    const close = useCallback(() => setIsOpen(false), []);
+    const select = useCallback((url: string) => {
+      onSelect(url);
+      setIsOpen(false);
+    }, [onSelect]);
+
     useEffect(() => {
+      if (!isOpen) return;
+      
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (!isOpen) return;
-        if (e.key === "Escape") setIsOpen(false);
+        if (e.key === "Escape") close();
         if (e.key === "Enter" && focusedImage) {
-          onSelect(focusedImage.url);
-          setIsOpen(false);
+          select(focusedImage.url);
         }
       };
       window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, focusedImage, onSelect]);
+      document.body.style.overflow = "hidden";
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
+        clearTimeout(timer);
+      };
+    }, [isOpen, focusedImage, close, select]);
  
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -135,33 +144,51 @@ import { toast } from "@/hooks/use-toast";
    const categories = Array.from(new Set(images.map(img => img.category).filter(Boolean))) as string[];
  
    return (
-     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-       <DialogTrigger asChild>
-         <Button 
-           type="button" 
-           size="sm" 
-           variant="outline" 
-           className="h-8 text-[11px] border-brand-gold/20 hover:bg-brand-gold/10"
-         >
-           <Library className="size-3.5 mr-1.5" />
-           Banco de Imagens
-         </Button>
-       </DialogTrigger>
-          <DialogContent className="max-w-none w-screen h-screen m-0 rounded-none bg-brand-black border-none text-white flex flex-col p-0 overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
-            {/* Header / Top Bar */}
-            <div className="h-16 shrink-0 border-b border-white/10 bg-brand-black/95 flex items-center justify-between px-6 backdrop-blur-md z-50">
-              <div className="flex items-center gap-4">
-                <div className="size-10 rounded-xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
-                  <Library className="size-5 text-brand-gold" />
+     <>
+       <div onClick={() => setIsOpen(true)}>
+         {trigger || (
+           <Button 
+             type="button" 
+             size="sm" 
+             variant="outline" 
+             className="h-8 text-[11px] border-brand-gold/20 hover:bg-brand-gold/10"
+           >
+             <Library className="size-3.5 mr-1.5" />
+             Banco de Imagens
+           </Button>
+         )}
+       </div>
+
+       {isOpen && createPortal(
+         <div className="fixed inset-0 z-[99999] bg-brand-black text-white flex flex-col overflow-hidden animate-in fade-in duration-300">
+            {/* Header / Top Bar: Search, Tabs, Actions */}
+            <div className="h-20 shrink-0 border-b border-white/10 bg-brand-black/95 flex items-center justify-between px-8 backdrop-blur-md z-50">
+              <div className="flex items-center gap-8 flex-1">
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="size-10 rounded-xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
+                    <Library className="size-5 text-brand-gold" />
+                  </div>
+                  <div className="hidden xl:block">
+                    <h2 className="text-lg font-display italic text-brand-gold tracking-tight">Media Library</h2>
+                    <p className="text-[9px] text-brand-text-muted uppercase tracking-widest font-sans not-italic">Premium Assets</p>
+                  </div>
                 </div>
-                <div>
-                  <DialogTitle className="text-xl font-display italic text-brand-gold tracking-tight">Media Library Premium</DialogTitle>
-                  <p className="text-[10px] text-brand-text-muted uppercase tracking-[0.2em] font-sans not-italic">Acervo de Imagens de Alta Estética</p>
+
+                {/* SEARCH IN TOP BAR */}
+                <div className="relative group max-w-md w-full">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
+                  <Input 
+                    ref={searchInputRef}
+                    placeholder={activeTab === 'internal' ? "Pesquisar no seu acervo..." : "Explorar fotos no Pexels..."} 
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl w-full transition-all focus:bg-white/10"
+                  />
                 </div>
               </div>
 
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+              <div className="flex items-center gap-8">
+                <div className="flex items-center gap-1 bg-white/5 p-1.5 rounded-2xl border border-white/10">
                   <Button
                     variant="ghost"
                     onClick={() => setActiveTab("internal")}
@@ -184,9 +211,9 @@ import { toast } from "@/hooks/use-toast";
                   </Button>
                 </div>
 
-                <div className="h-8 w-px bg-white/10" />
+                <div className="h-10 w-px bg-white/10" />
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                    <input
                      type="file"
                      id="image-upload"
@@ -210,7 +237,7 @@ import { toast } from "@/hooks/use-toast";
                    <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setIsOpen(false)}
+                    onClick={close}
                     className="size-9 rounded-xl hover:bg-white/10 text-white/60 hover:text-white"
                    >
                     <X className="size-5" />
@@ -221,31 +248,17 @@ import { toast } from "@/hooks/use-toast";
 
             {/* Main Content: 3 Columns */}
             <div className="flex-1 flex overflow-hidden bg-[#0a0a0a]">
-              {/* LEFT SIDEBAR: Filters & Categories */}
-              <aside className="w-72 shrink-0 border-r border-white/10 flex flex-col bg-brand-black/40">
-                <div className="p-6 space-y-8">
-                  {/* Search */}
-                  <div className="space-y-3">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/60 font-bold ml-1">Pesquisar</label>
-                    <div className="relative group">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
-                      <Input 
-                        placeholder={activeTab === 'internal' ? "No acervo..." : "No Pexels..."} 
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Categories (Internal only) */}
+              {/* LEFT SIDEBAR: Categories & Visualization */}
+              <aside className="w-64 shrink-0 border-r border-white/10 flex flex-col bg-brand-black/40">
+                <div className="p-6 space-y-10">
+                  {/* Categories */}
                   {activeTab === 'internal' && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between ml-1">
                         <label className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/60 font-bold">Categorias</label>
                         <Filter className="size-3 text-brand-gold/40" />
                       </div>
-                      <ScrollArea className="h-[40vh]">
+                      <ScrollArea className="h-[50vh]">
                         <div className="space-y-1.5 pr-4">
                             <Button 
                               variant="ghost" 
@@ -295,7 +308,7 @@ import { toast } from "@/hooks/use-toast";
                     </div>
                   )}
 
-                  {/* Display Options */}
+                  {/* Visualization Options */}
                   <div className="space-y-4 pt-4 border-t border-white/5">
                     <label className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/60 font-bold ml-1">Visualização</label>
                     <div className="grid grid-cols-2 gap-2">
@@ -333,9 +346,9 @@ import { toast } from "@/hooks/use-toast";
                 </div>
               </aside>
 
-              {/* CENTER: Image Grid */}
+              {/* MAIN CENTER: Image Grid */}
               <main className="flex-1 flex flex-col overflow-hidden relative">
-                <ScrollArea className="flex-1 px-8 py-8">
+                <ScrollArea className="flex-1 px-10 py-10">
                   {activeTab === 'internal' ? (
                     loading ? (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-brand-black/20 backdrop-blur-sm z-10">
@@ -347,10 +360,7 @@ import { toast } from "@/hooks/use-toast";
                         {images.map((img) => (
                           <div 
                             key={img.id}
-                            onDoubleClick={() => {
-                              onSelect(img.url);
-                              setIsOpen(false);
-                            }}
+                             onDoubleClick={() => select(img.url)}
                             onClick={() => setFocusedImage(img)}
                             className={cn(
                               "group relative flex flex-col rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 shadow-2xl bg-brand-black/40",
@@ -393,15 +403,12 @@ import { toast } from "@/hooks/use-toast";
                       </div>
                     )
                   ) : (
-                    <PexelsBank 
-                      externalFitMode={fitMode}
-                      searchQuery={search}
-                      onFocusImage={setFocusedImage}
-                      onSelect={(url) => {
-                        onSelect(url);
-                        setIsOpen(false);
-                      }} 
-                    />
+                       <PexelsBank 
+                         externalFitMode={fitMode}
+                         searchQuery={search}
+                         onFocusImage={setFocusedImage}
+                         onSelect={select} 
+                       />
                   )}
                 </ScrollArea>
               </main>
@@ -485,56 +492,52 @@ import { toast } from "@/hooks/use-toast";
                         </Button>
                       )}
                       
-                      <Button 
-                        onClick={() => {
-                          onSelect(focusedImage.url);
-                          setIsOpen(false);
-                        }}
-                        className="w-full h-14 bg-brand-gold text-brand-bg hover:bg-brand-gold/90 text-xs uppercase tracking-[0.2em] font-bold rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
-                      >
-                        Usar no Hero
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        onClick={() => {
-                          onSelect(focusedImage.url);
-                          setIsOpen(false);
-                        }}
-                        className="w-full h-12 border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-[10px] uppercase tracking-[0.15em] rounded-xl"
-                      >
-                        Usar no Bloco
-                      </Button>
+                        <Button 
+                          onClick={() => select(focusedImage.url)}
+                          className="w-full h-14 bg-brand-gold text-brand-bg hover:bg-brand-gold/90 text-xs uppercase tracking-[0.2em] font-bold rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          Usar no Hero
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => select(focusedImage.url)}
+                          className="w-full h-12 border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-[10px] uppercase tracking-[0.15em] rounded-xl"
+                        >
+                          Usar no Bloco
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 opacity-20">
-                    <div className="size-20 rounded-full border-2 border-dashed border-white/30 flex items-center justify-center">
-                      <MousePointer2 className="size-8" />
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 opacity-20">
+                      <div className="size-20 rounded-full border-2 border-dashed border-white/30 flex items-center justify-center">
+                        <MousePointer2 className="size-8" />
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] font-bold">Nenhuma seleção</p>
+                        <p className="text-[10px] mt-2 leading-relaxed">Clique em uma imagem para ver os detalhes e opções de uso.</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.2em] font-bold">Nenhuma seleção</p>
-                      <p className="text-[10px] mt-2 leading-relaxed">Clique em uma imagem para ver os detalhes e opções de uso.</p>
-                    </div>
-                  </div>
-                )}
-              </aside>
-            </div>
+                  )}
+                </aside>
+              </div>
 
-            {/* Bottom Status Bar */}
-            <footer className="h-10 shrink-0 border-t border-white/10 bg-brand-black/90 px-6 flex items-center justify-between text-[9px] uppercase tracking-[0.2em] text-white/30 z-50">
-              <div className="flex items-center gap-6">
-                <span className="flex items-center gap-2">
-                  <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Banco de dados conectado
-                </span>
-                <span>{images.length} imagens no acervo</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span>ESC para fechar</span>
-                <span>ENTER para confirmar</span>
-              </div>
-            </footer>
-       </DialogContent>
-     </Dialog>
+              {/* Bottom Status Bar */}
+              <footer className="h-10 shrink-0 border-t border-white/10 bg-brand-black/90 px-6 flex items-center justify-between text-[9px] uppercase tracking-[0.2em] text-white/30 z-50">
+                <div className="flex items-center gap-6">
+                  <span className="flex items-center gap-2">
+                    <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Banco de dados conectado
+                  </span>
+                  <span>{images.length} imagens no acervo</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span>ESC para fechar</span>
+                  <span>ENTER para confirmar</span>
+                </div>
+              </footer>
+         </div>,
+         document.body
+       )}
+     </>
    );
  }
