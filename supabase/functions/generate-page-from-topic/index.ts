@@ -742,10 +742,23 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
             if (h.intro) merged.intro = h.intro;
             if (h.footnote) merged.footnote = h.footnote;
           }
-          if (type === "casos" && research?.area_anatomica) {
-            merged.area_filter = String(research.area_anatomica);
-          }
-          // Fase 1.2: depoimentos próprios da página antiga têm prioridade
+           if (type === "casos") {
+             if (clinicalCaseImages.length > 0) {
+               // Se temos fotos AD extraídas, criamos casos manuais
+               merged.cases = clinicalCaseImages.slice(0, 6).map((img, idx) => ({
+                 source: "manual",
+                 title: `${tema} — Caso ${idx + 1}`,
+                 image_url: img.url,
+                 description: img.alt || `Registro de resultado real do procedimento ${tema}.`,
+                 highlight: true
+               }));
+               merged.show_count = clinicalCaseImages.length;
+             } else if (research?.area_anatomica) {
+               merged.area_filter = String(research.area_anatomica);
+             }
+           }
+ 
+           // Fase 1.2: depoimentos próprios da página antiga têm prioridade
           // sobre o pool de Google reviews.
           // Fase B: depoimentos APENAS da página antiga quando ela tem.
           // Quando tem, desliga o pool global setando source explícito.
