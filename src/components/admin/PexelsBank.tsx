@@ -1,5 +1,6 @@
  import { useState, useEffect, useCallback } from "react";
- import { Search, Loader2, X, ExternalLink, Download, Check, Eye, Globe, Maximize2, Minimize2, LayoutGrid, List } from "lucide-react";
+import { Search, Loader2, X, ExternalLink, Download, Check, Eye, Globe, Maximize2, Minimize2, LayoutGrid, List } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
