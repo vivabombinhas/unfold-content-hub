@@ -216,8 +216,8 @@ import { toast } from "@/hooks/use-toast";
                       size="sm" 
                       onClick={() => setCategory(null)}
                       className={cn(
-                        "h-9 text-[10px] uppercase tracking-widest",
-                        category === null ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold"
+                        "h-10 text-xs uppercase tracking-[0.15em] px-5 rounded-lg",
+                        category === null ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
                       )}
                     >
                       Todos
@@ -229,8 +229,8 @@ import { toast } from "@/hooks/use-toast";
                         size="sm" 
                         onClick={() => setCategory(cat)}
                         className={cn(
-                          "h-9 text-[10px] uppercase tracking-widest whitespace-nowrap",
-                          category === cat ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold"
+                          "h-10 text-xs uppercase tracking-[0.15em] whitespace-nowrap px-5 rounded-lg",
+                          category === cat ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
                         )}
                       >
                         {cat}
