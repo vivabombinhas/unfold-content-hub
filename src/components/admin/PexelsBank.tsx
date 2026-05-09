@@ -15,9 +15,10 @@ import {
 
 interface Props {
   onSelect: (url: string) => void;
+   externalFitMode?: 'cover' | 'contain';
 }
 
- export function PexelsBank({ onSelect }: Props) {
+ export function PexelsBank({ onSelect, externalFitMode }: Props) {
   const [photos, setPhotos] = useState<PexelsPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState<number | null>(null);
@@ -25,7 +26,9 @@ interface Props {
   const [page, setPage] = useState(1);
   const [previewPhoto, setPreviewPhoto] = useState<PexelsPhoto | null>(null);
   const [importedIds, setImportedIds] = useState<Set<number>>(new Set());
-   const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
+   const [internalFitMode, setInternalFitMode] = useState<'cover' | 'contain'>('cover');
+   const fitMode = externalFitMode || internalFitMode;
+   const setFitMode = setInternalFitMode;
    const [columns, setColumns] = useState<2 | 3 | 4>(3);
 
   const fetchPhotos = useCallback(async (query: string, p: number) => {
