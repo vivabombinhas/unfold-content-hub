@@ -65,8 +65,9 @@ export default function PublicPage() {
     [data?.blocks],
   );
 
-  useEffect(() => {
-    if (!previewMode) return;
+   useEffect(() => {
+     window.scrollTo(0, 0);
+     if (!previewMode) return;
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === "SELECT_BLOCK") {
         const id = e.data.id;
