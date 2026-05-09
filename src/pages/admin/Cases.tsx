@@ -342,8 +342,8 @@ export default function Cases() {
         </div>
       )}
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl bg-brand-graphite border-brand-gold/20 text-brand-text-light overflow-y-auto max-h-[90vh]">
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen} modal={false}>
+        <DialogContent className="max-w-4xl bg-brand-graphite border-brand-gold/20 text-brand-text-light overflow-y-auto max-h-[90vh] z-[100] pointer-events-auto">
           <DialogHeader>
             <DialogTitle>{editingCase ? "Editar Caso" : "Novo Caso"}</DialogTitle>
           </DialogHeader>
