@@ -612,6 +612,25 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     const candidateImages = (oldPageContent?.images || [])
       .filter((img) => img && typeof img.url === "string")
       .slice(0, 30);
+    // Prioriza imagens cujo nome do arquivo contém palavras-chave do tema
+    // (ex: "diamantacao", "labial", "AD" para antes/depois). Empurra para o
+    // topo as fotos reais do procedimento; logos/genéricas vão pro fim.
+    const themeKeywords = tema
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .split(/\s+/)
+      .filter((w) => w.length >= 4);
+    function imageScore(url: string) {
+      const u = url.toLowerCase();
+      let s = 0;
+      for (const k of themeKeywords) if (u.includes(k)) s += 10;
+      if (/-ad\d|antes-?e?-?depois|antes_depois/i.test(u)) s += 8;
+      if (/\/wp-content\/uploads\//i.test(u)) s += 2;
+      if (/\.(jpe?g|webp)(\?|$)/i.test(u)) s += 1;
+      return s;
+    }
+    candidateImages.sort((a, b) => imageScore(b.url) - imageScore(a.url));
     // -----------------------------------------------------------------------
 
      // -----------------------------------------------------------------------
