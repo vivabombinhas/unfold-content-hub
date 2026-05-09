@@ -106,51 +106,52 @@ interface Props {
   };
 
   return (
-    <div className="flex flex-col h-full bg-brand-bg/50">
-        <div className="p-4 md:p-6 pb-2 sticky top-0 z-20 bg-brand-black/95 backdrop-blur-sm border-b border-white/5">
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-center">
-              <div className="relative flex-1 w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-gold/50" />
+    <div className="flex flex-col h-full bg-brand-bg/30">
+        <div className="p-4 md:p-8 pb-4 sticky top-0 z-20 bg-brand-black/95 backdrop-blur-sm border-b border-white/10">
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-6 items-center">
+              <div className="relative flex-1 w-full group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-brand-gold/50 group-focus-within:text-brand-gold transition-colors" />
                 <Input 
                   placeholder="Buscar por estética, clínica, skincare..." 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 bg-white/5 border-white/10 text-xs h-10 md:h-12 focus-visible:ring-brand-gold/50 w-full"
+                  className="pl-12 bg-white/5 border-white/10 text-sm h-14 focus-visible:ring-brand-gold/50 w-full rounded-xl"
                 />
               </div>
               
-              <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-lg border border-white/10 shrink-0">
-                <div className="flex items-center border-r border-white/10 pr-2 mr-2">
+              <div className="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/10 shrink-0">
+                <div className="flex items-center border-r border-white/10 pr-3 mr-1">
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
-                    className={`size-8 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
+                    className={`h-10 px-3 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50 hover:text-white'}`}
                     title={fitMode === 'cover' ? "Mudar para Ajustar (Contain)" : "Mudar para Preencher (Cover)"}
                   >
-                    {fitMode === 'cover' ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />}
+                    {fitMode === 'cover' ? <Maximize2 className="size-4 mr-2" /> : <Minimize2 className="size-4 mr-2" />}
+                    <span className="text-[10px] uppercase tracking-widest hidden sm:inline">{fitMode === 'cover' ? 'Preencher' : 'Ajustar'}</span>
                   </Button>
                 </div>
                 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => setColumns(2)}
-                    className={`size-8 ${columns === 2 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                    title="Visualização Ampla"
+                    className={`h-10 px-3 ${columns === 2 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50 hover:text-white'}`}
                   >
-                    <LayoutGrid className="size-4" />
+                    <LayoutGrid className="size-4 mr-2" />
+                    <span className="text-[10px] uppercase tracking-widest hidden sm:inline">Amplo</span>
                   </Button>
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => setColumns(4)}
-                    className={`size-8 ${columns === 4 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                    title="Visualização Compacta"
+                    className={`h-10 px-3 ${columns === 4 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50 hover:text-white'}`}
                   >
-                    <List className="size-4" />
+                    <List className="size-4 mr-2" />
+                    <span className="text-[10px] uppercase tracking-widest hidden sm:inline">Lista</span>
                   </Button>
                 </div>
               </div>
@@ -161,8 +162,8 @@ interface Props {
           </div>
         </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4 md:p-6 pt-0">
+      <ScrollArea className="flex-1 min-h-[400px]">
+        <div className="p-4 md:p-8 pt-4">
           {loading && photos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <Loader2 className="size-8 text-brand-gold animate-spin" />
@@ -170,24 +171,24 @@ interface Props {
             </div>
           ) : photos.length > 0 ? (
             <div className="space-y-6">
-               <div className={`grid gap-3 md:gap-4 ${
-                 columns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+               <div className={`grid gap-4 md:gap-8 ${
+                 columns === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
                  'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                }`}>
                 {photos.map((photo) => (
                   <div 
                     key={photo.id}
-                    className="group relative flex flex-col rounded-lg border border-white/5 bg-brand-black/40 overflow-hidden transition-all shadow-xl hover:border-brand-gold/30"
+                    className="group relative flex flex-col rounded-2xl border border-white/5 bg-brand-black/40 overflow-hidden transition-all duration-300 shadow-2xl hover:border-brand-gold/30 hover:-translate-y-1"
                   >
                     <div 
-                      className={`relative ${columns === 4 ? 'aspect-square' : 'aspect-[4/5] sm:aspect-[3/4]'} overflow-hidden cursor-pointer bg-black/20`} 
+                       className={`relative ${columns === 4 ? 'aspect-square' : 'aspect-[3/4]'} overflow-hidden cursor-pointer bg-black/40`} 
                       onClick={() => setPreviewPhoto(photo)}
                     >
                        <div className="w-full h-full flex items-center justify-center p-0.5">
                          <img 
                            src={columns === 4 ? photo.src.small : photo.src.medium} 
                            alt={photo.alt} 
-                           className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain p-2'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-105' : ''}`}
+                           className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain p-4'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-110' : ''}`}
                            loading="lazy"
                          />
                        </div>
