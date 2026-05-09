@@ -1,9 +1,9 @@
-import case1 from "@/assets/case-1.jpg";
-import case2 from "@/assets/case-2.jpg";
-import case3 from "@/assets/case-3.jpg";
-import case4 from "@/assets/case-4.jpg";
-import case5 from "@/assets/case-5.jpg";
-import case6 from "@/assets/case-6.jpg";
+import case1 from "@/assets/case-1.webp";
+import case2 from "@/assets/case-2.webp";
+import case3 from "@/assets/case-3.webp";
+import case4 from "@/assets/case-4.webp";
+import case5 from "@/assets/case-5.webp";
+import case6 from "@/assets/case-6.webp";
 
 export interface ClinicalCase {
   id: string;

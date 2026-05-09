@@ -30,9 +30,9 @@ import { cases, faqs, reviews, aiOpinions, courses, type ClinicalCase } from "@/
 import { useReveal } from "@/hooks/use-reveal";
 import { useCountUp } from "@/hooks/use-count-up";
 import { cn } from "@/lib/utils";
-import heroMale from "@/assets/hero-male.jpg";
-import draRT from "@/assets/dra-rt.jpg";
-import clinicInterior from "@/assets/clinic-interior.jpg";
+import heroMale from "@/assets/hero-male.webp";
+import draRT from "@/assets/dra-rt.webp";
+import clinicInterior from "@/assets/clinic-interior.webp";
 
 const Index = () => {
   // Compat: links antigos no formato "/?preview=<slug>" agora redirecionam

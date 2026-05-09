@@ -25,7 +25,7 @@ import {
   Star,
 } from "lucide-react";
  import { useState, useEffect } from "react";
- import draRT from "@/assets/dra-rt.jpg";
+ import draRT from "@/assets/dra-rt.webp";
 import { GoldButton } from "@/components/site/GoldButton";
 import { Medal } from "@/components/site/Medal";
 import { InlineExpand } from "@/components/site/InlineExpand";
