@@ -359,28 +359,34 @@ const generatePageSchema = {
    const { data: siteSettings } = await admin.from("site_settings").select("*").eq("id", 1).maybeSingle();
 
     // Read template DNA — usado SOMENTE como referência de tom/estrutura (não copiado).
-    let templatePage = await admin
+    const { data: templatePageData } = await admin
       .from("pages")
       .select("id")
       .eq("slug", TEMPLATE_SLUG)
       .maybeSingle();
 
+    let templateId = templatePageData?.id;
+
     // Fallback: use any page if botox-masculino is missing
-    if (!templatePage.data) {
+    if (!templateId) {
       console.log("Template botox-masculino not found, falling back to any page");
-      templatePage = await admin.from("pages").select("id").limit(1).maybeSingle();
+      const { data: fallbackPage } = await admin.from("pages").select("id").limit(1).maybeSingle();
+      templateId = fallbackPage?.id;
     }
 
     let dnaPayload = [];
-    if (templatePage.data) {
-      const { data: templateBlocks } = await admin
+    let templateBlocks = [];
+    if (templateId) {
+      const { data: blocks } = await admin
         .from("page_blocks")
         .select("type,data")
-        .eq("page_id", templatePage.data.id)
+        .eq("page_id", templateId)
         .order("position");
+      
+      templateBlocks = blocks || [];
 
       // DNA enxuto: só estrutura/forma de cada bloco para a IA imitar a cadência
-      dnaPayload = (templateBlocks || []).map((b) => ({
+      dnaPayload = templateBlocks.map((b) => ({
         type: b.type,
         campos: Object.keys((b.data as Record<string, unknown>) || {}),
       }));
