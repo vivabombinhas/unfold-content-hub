@@ -90,6 +90,12 @@ import { toast } from "@/hooks/use-toast";
       }, 100);
 
       const handleKeyDown = (e: KeyboardEvent) => {
+        if (!isolateKeyboardEvents) {
+          if (e.key === "Escape") close();
+          if (e.key === "Enter" && focusedImage) select(focusedImage.url);
+          return;
+        }
+
         if (e.key === "Escape") {
           e.preventDefault();
           if (isolateKeyboardEvents) e.stopImmediatePropagation();
