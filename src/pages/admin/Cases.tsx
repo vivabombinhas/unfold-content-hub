@@ -248,8 +248,8 @@ export default function Cases() {
       </div>
 
       <div className="mb-6 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-text-muted" />
-         <div className="relative group">
+          <div className="relative group mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-text-muted z-10" />
            <input 
              placeholder="Buscar por área, notas, slug ou toxina..." 
              className="w-full pl-10 pr-10 h-12 rounded-lg bg-brand-graphite/40 border border-brand-gold/20 text-brand-text-light focus:outline-none focus:ring-2 focus:ring-brand-gold/30 transition-all placeholder:text-brand-text-muted/50"
