@@ -27,7 +27,8 @@
    const shouldNoIndex = status !== "published" || previewMode || isAdmin;
    
    // Canonical URL: only for published pages, and should not include /p/
-   const canonicalUrl = !shouldNoIndex && slug ? `${siteUrl}/${slug}/` : undefined;
+   // If no slug is provided and it's not noindex, it's the home page.
+   const canonicalUrl = !shouldNoIndex ? (slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`) : undefined;
  
    const defaultDescription = "Protocolos exclusivos de estética avançada na Clínica Batel, Curitiba — excelência desde 1995.";
    const metaDescription = description || defaultDescription;
