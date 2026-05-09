@@ -90,21 +90,30 @@ export default function PublicPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-brand-black text-brand-text-muted grid place-items-center">
-        Carregando…
+      <div className="min-h-screen bg-brand-black flex flex-col items-center justify-center text-center p-10">
+        <div className="w-12 h-12 border-t-2 border-brand-gold rounded-full animate-spin mb-4" />
+        <p className="text-brand-text-light font-display text-xl tracking-widest animate-pulse">Carregando conteúdo...</p>
       </div>
     );
   }
 
   if (error || !data?.page) {
     return (
-      <div className="min-h-screen bg-brand-black text-brand-text-light flex flex-col items-center justify-center gap-4 px-6 text-center">
-        <h1 className="font-display text-3xl">Página não encontrada</h1>
-        <p className="text-brand-text-muted text-sm max-w-md">
-          A página <code className="text-brand-gold">/{slug}</code> não existe ou ainda não foi publicada.
-        </p>
-         <Link to="/#" className="text-brand-gold text-sm border-b border-brand-gold/40 pb-1 hover:border-brand-gold">
-          Voltar para a home
+      <div className="min-h-screen bg-brand-black text-brand-text-light flex flex-col items-center justify-center gap-6 px-6 text-center">
+        <div className="size-20 border border-brand-gold/20 rounded-full flex items-center justify-center mb-2">
+          <span className="text-brand-gold font-display text-4xl">!</span>
+        </div>
+        <div className="space-y-2">
+          <h1 className="font-display text-3xl md:text-4xl text-brand-gold">Página não encontrada</h1>
+          <p className="text-brand-text-soft text-base max-w-md mx-auto">
+            A página <code className="bg-brand-graphite px-2 py-0.5 rounded text-brand-gold">/{slug}</code> não existe ou o link pode estar incorreto.
+          </p>
+        </div>
+        <Link 
+          to="/#" 
+          className="inline-flex items-center gap-2 bg-brand-gold text-brand-green px-8 py-4 text-xs font-body font-semibold uppercase tracking-[0.2em] hover:bg-brand-gold-soft transition-all duration-500"
+        >
+          Voltar para a Home
         </Link>
       </div>
     );
