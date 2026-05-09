@@ -220,10 +220,13 @@
             </TabsContent>
 
             <TabsContent value="external" className="flex-1 flex flex-col overflow-hidden m-0">
-              <PexelsBank onSelect={(url) => {
-                onSelect(url);
-                setIsOpen(false);
-              }} />
+               <PexelsBank 
+                 externalFitMode={fitMode}
+                 onSelect={(url) => {
+                   onSelect(url);
+                   setIsOpen(false);
+                 }} 
+               />
             </TabsContent>
           </Tabs>
        </DialogContent>
