@@ -168,11 +168,16 @@ import { toast } from "@/hooks/use-toast";
          </Button>
        )}
 
-       {isOpen && createPortal(
-         <div 
-           className="fixed inset-0 z-[99999] bg-brand-black text-white flex flex-col overflow-hidden animate-in fade-in duration-300 pointer-events-auto"
-           onClick={(e) => e.stopPropagation()}
-         >
+        {isOpen && createPortal(
+          <div 
+            className="fixed inset-0 z-[99999] bg-brand-black text-white flex flex-col overflow-hidden animate-in fade-in duration-300 pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                e.stopPropagation();
+              }
+            }}
+          >
             {/* Header / Top Bar: Search, Tabs, Actions */}
             <div className="h-20 shrink-0 border-b border-white/10 bg-brand-black/95 flex items-center justify-between px-8 backdrop-blur-md z-50">
               <div className="flex items-center gap-8 flex-1">
@@ -188,20 +193,28 @@ import { toast } from "@/hooks/use-toast";
 
                 {/* SEARCH IN TOP BAR */}
                 <div className="relative group max-w-md w-full">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
-                  <Input 
-                    ref={searchInputRef}
-                    placeholder={activeTab === 'internal' ? "Pesquisar no seu acervo..." : "Explorar fotos no Pexels..."} 
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        setDebouncedSearch(search);
-                        if (activeTab === "internal") fetchImages();
-                      }
-                    }}
-                    className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl w-full transition-all focus:bg-white/10"
-                  />
+                      <div 
+                        className="relative w-full"
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
+                       <input 
+                         ref={searchInputRef}
+                         placeholder={activeTab === 'internal' ? "Pesquisar no seu acervo..." : "Explorar fotos no Pexels..."} 
+                         value={search}
+                         onChange={(e) => setSearch(e.target.value)}
+                         onKeyDown={(e) => {
+                           e.stopPropagation();
+                           if (e.key === "Enter") {
+                             setDebouncedSearch(search);
+                             if (activeTab === "internal") fetchImages();
+                           }
+                         }}
+                         onFocus={(e) => e.stopPropagation()}
+                         className="flex h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-3 text-xs ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all focus:bg-white/10 text-white relative z-[100001]"
+                         autoFocus
+                       />
+                      </div>
                 </div>
               </div>
 
