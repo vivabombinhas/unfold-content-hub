@@ -42,7 +42,10 @@ export default function PublicPage() {
       const pageQuery = supabase.from("pages").select("*").eq("slug", slug).maybeSingle();
       const { data: page, error: pe } = await pageQuery;
       if (pe) throw pe;
-      if (!page) return null;
+      if (!page) {
+        console.log("Page not found for slug:", slug);
+        return null;
+      }
       const p = page as unknown as PageRow;
       if (!previewMode && p.status !== "published") return null;
 
