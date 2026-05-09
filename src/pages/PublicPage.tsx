@@ -106,11 +106,17 @@ export default function PublicPage() {
     );
   }
 
-   const pageImage = useMemo(() => {
-     const meta = data?.page?.metadata as any;
-     return meta?.og_image || meta?.hero_image || "";
-   }, [data?.page?.metadata]);
- 
+    const { pageImage, heroImage } = useMemo(() => {
+      const meta = data?.page?.metadata as any;
+      const heroBlock = data?.blocks?.find(b => b.type === 'hero');
+      const heroUrl = (heroBlock?.data as any)?.image_url;
+      
+      return {
+        pageImage: meta?.og_image || meta?.hero_image || heroUrl || "",
+        heroImage: heroUrl
+      };
+    }, [data?.page?.metadata, data?.blocks]);
+
    return (
      <div className={cn("bg-brand-black text-brand-text-light min-h-screen", previewMode && "preview-mode")}>
        <SEO 
@@ -119,7 +125,8 @@ export default function PublicPage() {
          slug={data.page.slug}
          status={data.page.status}
          previewMode={previewMode}
-         image={pageImage}
+          image={pageImage}
+          heroImage={heroImage}
        />
        <Header breadcrumbCurrent={data.page.title} />
 
