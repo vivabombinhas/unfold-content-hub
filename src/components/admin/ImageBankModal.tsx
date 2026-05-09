@@ -188,20 +188,26 @@ import { toast } from "@/hooks/use-toast";
 
                 {/* SEARCH IN TOP BAR */}
                 <div className="relative group max-w-md w-full">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
-                  <Input 
-                    ref={searchInputRef}
-                    placeholder={activeTab === 'internal' ? "Pesquisar no seu acervo..." : "Explorar fotos no Pexels..."} 
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        setDebouncedSearch(search);
-                        if (activeTab === "internal") fetchImages();
-                      }
-                    }}
-                    className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl w-full transition-all focus:bg-white/10"
-                  />
+                      <div 
+                        className="relative w-full"
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
+                        <Input 
+                          ref={searchInputRef}
+                          placeholder={activeTab === 'internal' ? "Pesquisar no seu acervo..." : "Explorar fotos no Pexels..."} 
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === "Enter") {
+                              setDebouncedSearch(search);
+                              if (activeTab === "internal") fetchImages();
+                            }
+                          }}
+                          className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl w-full transition-all focus:bg-white/10"
+                        />
+                      </div>
                 </div>
               </div>
 
