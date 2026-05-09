@@ -360,8 +360,9 @@ function truncate(s: string | null | undefined, n: number) {
              try { abs = new URL(url, sourceUrl).toString(); } catch { /* ignore */ }
 
               // Filtro agressivo de ruído e imagens inadequadas para Hero (logos, ícones, diagramas técnicos)
-              const isNoise = /\/(logo|icon|favicon|sprite|whatsapp|social|header|footer|menu|estrela|star|review|google-review|fb-icon|ig-icon|arrow|loader|placeholder)/i.test(abs) 
-                || /logo|icon|favicon|whatsapp|social|badge|selo|banner/i.test(m[2] || "");
+              const isNoise = /\/(logo|icon|favicon|sprite|whatsapp|social|header|footer|menu|estrela|star|review|google-review|fb-icon|ig-icon|arrow|loader|placeholder|clinica-batel|na-midia|midia|institucional|instituticional|avaliacao-clinica|google-reviews?|5-estrelas|maps\/|ggpht|youtube|yt3\.|gstatic|googleusercontent)/i.test(abs)
+                || /\.(svg|ico|gif)(\?|$)/i.test(abs)
+                || /logo|icon|favicon|whatsapp|social|badge|selo|banner|google|review|estrela|mídia|midia/i.test(m[2] || "");
               
               // Filtro de imagens técnicas (desenhos no rosto, marcações, diagramas)
               const isTechnical = /\/(esquema|diagrama|desenho|anatomia|marcado|marcas|antes-depois|tecnica|passo-a-passo|step-by-step)/i.test(abs)
