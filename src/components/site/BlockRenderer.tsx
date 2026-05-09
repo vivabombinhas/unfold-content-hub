@@ -272,9 +272,9 @@ function HeroBlock({ data }: { data: BlockData }) {
                       "w-full h-full transition-transform duration-[4s] group-hover:scale-110",
                       imageStyle === "cutout" ? "object-contain" : "object-cover"
                     )} 
-                    loading="eager" 
-                    {...{ fetchPriority: "high" }}
-                  />
+                     loading="eager"
+                     fetchPriority="high"
+                   />
                </div>
  
                {/* Overlays */}

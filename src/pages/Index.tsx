@@ -162,15 +162,15 @@ const Index = () => {
           </div>
           <div className="relative reveal mx-auto lg:mx-0 w-full max-w-md lg:max-w-none">
             <div className="aspect-[4/5] overflow-hidden bg-brand-graphite relative">
-              <img 
-                src={heroMale} 
-                alt="Retrato editorial de paciente masculino com resultado natural de Botox" 
-                className="w-full h-full object-cover" 
-                loading="eager" 
-                width={896} 
-                height={1120} 
-                {...({ fetchpriority: "high" } as any)} 
-              />
+               <img
+                 src={heroMale}
+                 alt="Retrato editorial de paciente masculino com resultado natural de Botox"
+                 className="w-full h-full object-cover"
+                 loading="eager"
+                 width={896}
+                 height={1120}
+                 fetchPriority="high"
+               />
               <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 50%, hsl(0 0% 0% / 0.6) 100%)" }} />
             </div>
             <div className="absolute -top-6 -right-4 md:-top-8 md:-right-8 z-10">
