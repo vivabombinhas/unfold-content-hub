@@ -1,5 +1,6 @@
-import { Navigate, NavLink, Outlet, useLocation, Link } from "react-router-dom";
+ import { Navigate, NavLink, Outlet, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
+ import { SEO } from "@/components/site/SEO";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -58,8 +59,9 @@ export default function AdminLayout() {
     return <Outlet />;
   }
 
-  return (
-    <div className="min-h-screen flex bg-[#0A0A0A] text-brand-text-soft">
+   return (
+     <div className="min-h-screen flex bg-[#0A0A0A] text-brand-text-soft">
+       <SEO isAdmin title="Admin" />
       {/* Sidebar Administrativa */}
       <aside 
         className={cn(

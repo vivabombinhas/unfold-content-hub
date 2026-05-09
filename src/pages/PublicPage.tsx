@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+ import { useEffect, useMemo } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { Footer } from "@/components/site/Footer";
 import { FloatingCTA } from "@/components/site/FloatingCTA";
 import { BlockRenderer } from "@/components/site/BlockRenderer";
 import { LocalizacaoSection } from "@/components/site/LocalizacaoSection";
+ import { SEO } from "@/components/site/SEO";
 import { useReveal } from "@/hooks/use-reveal";
 import { PoolsProvider, usePoolsQuery } from "@/hooks/use-pools";
 import type { BlockType } from "@/types/blocks";
@@ -20,14 +21,15 @@ interface BlockRow {
   data: Record<string, unknown>;
 }
 
-interface PageRow {
-  id: string;
-  slug: string;
-  title: string;
-  meta_title: string | null;
-  meta_description: string | null;
-  status: "draft" | "published";
-}
+ interface PageRow {
+   id: string;
+   slug: string;
+   title: string;
+   meta_title: string | null;
+   meta_description: string | null;
+   status: "draft" | "published";
+   metadata?: any;
+ }
 
 export default function PublicPage() {
   const { slug = "" } = useParams();
@@ -57,21 +59,6 @@ export default function PublicPage() {
 
   const poolsQuery = usePoolsQuery();
   const pools = poolsQuery.data ?? { cases: [], reviews: [], aiOpinions: [], courses: [], faqs: [] };
-
-  useEffect(() => {
-    if (!data?.page) return;
-    const t = data.page.meta_title || data.page.title;
-    if (t) document.title = t;
-    if (data.page.meta_description) {
-      let m = document.querySelector('meta[name="description"]');
-      if (!m) {
-        m = document.createElement("meta");
-        m.setAttribute("name", "description");
-        document.head.appendChild(m);
-      }
-      m.setAttribute("content", data.page.meta_description);
-    }
-  }, [data?.page]);
 
   const blocks = useMemo(
     () => (data?.blocks ?? []).slice().sort((a, b) => a.position - b.position),
@@ -119,9 +106,22 @@ export default function PublicPage() {
     );
   }
 
-  return (
-    <div className={cn("bg-brand-black text-brand-text-light min-h-screen", previewMode && "preview-mode")}>
-      <Header breadcrumbCurrent={data.page.title} />
+   const pageImage = useMemo(() => {
+     const meta = data?.page?.metadata as any;
+     return meta?.og_image || meta?.hero_image || "";
+   }, [data?.page?.metadata]);
+ 
+   return (
+     <div className={cn("bg-brand-black text-brand-text-light min-h-screen", previewMode && "preview-mode")}>
+       <SEO 
+         title={data.page.meta_title || data.page.title}
+         description={data.page.meta_description || ""}
+         slug={data.page.slug}
+         status={data.page.status}
+         previewMode={previewMode}
+         image={pageImage}
+       />
+       <Header breadcrumbCurrent={data.page.title} />
 
       {previewMode && data.page.status !== "published" && (
         <div className="bg-brand-bordeaux/30 text-brand-text-light text-center text-xs uppercase tracking-[0.22em] py-2 border-b border-brand-bordeaux/40">
