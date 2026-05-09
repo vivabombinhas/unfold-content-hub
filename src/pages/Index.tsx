@@ -39,13 +39,13 @@ const Index = () => {
   // para a rota dinâmica "/p/<slug>?preview=1".
   const [searchParams] = useSearchParams();
   const legacyPreview = searchParams.get("preview");
-  if (legacyPreview && legacyPreview !== "1") {
-    return <Navigate to={`/p/${legacyPreview}?preview=1`} replace />;
-  }
-   useEffect(() => {
-     window.scrollTo(0, 0);
-   }, []);
-   useReveal();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  
+  useReveal();
+  
   const [manifestoOpen, setManifestoOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -59,6 +59,10 @@ const Index = () => {
   const restFaqs = faqs.filter((f) => !f.featured);
   const areas = ["Todos", ...Array.from(new Set(cases.map((c) => c.area)))];
   const filtered = caseFilter === "Todos" ? cases : cases.filter((c) => c.area === caseFilter);
+
+  if (legacyPreview && legacyPreview !== "1") {
+    return <Navigate to={`/p/${legacyPreview}?preview=1`} replace />;
+  }
 
   // ========================================================
   // Snapshot publicado: define ordem e quais blocos renderizar.
