@@ -71,7 +71,7 @@
             rel="preload"
             as="image"
             href={heroImage}
-            {...{ fetchPriority: "high" }}
+            {...({ fetchpriority: "high" } as any)}
           />
         )}
      </Helmet>
