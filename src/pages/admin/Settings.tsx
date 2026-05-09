@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Save, 
-  Loader2, 
-  MapPin, 
-  UserCheck, 
-  ShieldCheck 
-} from "lucide-react";
+ import { 
+   Save, 
+   Loader2, 
+   MapPin, 
+   UserCheck, 
+   ShieldCheck,
+   Image as ImageIcon
+ } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+ import { MediaInput } from "@/components/admin/MediaInput";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -27,7 +29,8 @@ export default function Settings() {
     whatsapp: "",
     google_maps_url: "",
     cnpj: "",
-    alvara: ""
+     alvara: "",
+     rt_image: ""
   });
 
   useEffect(() => {
@@ -101,23 +104,35 @@ export default function Settings() {
             </CardTitle>
             <CardDescription>Informações legais da profissional responsável.</CardDescription>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-widest text-brand-text-muted">Nome Completo</Label>
-              <Input 
-                value={settings.rt_name || ""} 
-                onChange={e => setSettings({...settings, rt_name: e.target.value})}
-                className="bg-brand-black/50 border-brand-gold/10 text-brand-text-light" 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-widest text-brand-text-muted">Registro Profissional (Ex: CRM/CRBM)</Label>
-              <Input 
-                value={settings.rt_register || ""} 
-                onChange={e => setSettings({...settings, rt_register: e.target.value})}
-                className="bg-brand-black/50 border-brand-gold/10 text-brand-text-light" 
-              />
-            </div>
+           <CardContent className="space-y-6">
+             <div className="grid md:grid-cols-2 gap-4">
+               <div className="space-y-2">
+                 <Label className="text-xs uppercase tracking-widest text-brand-text-muted">Nome Completo</Label>
+                 <Input 
+                   value={settings.rt_name || ""} 
+                   onChange={e => setSettings({...settings, rt_name: e.target.value})}
+                   className="bg-brand-black/50 border-brand-gold/10 text-brand-text-light" 
+                 />
+               </div>
+               <div className="space-y-2">
+                 <Label className="text-xs uppercase tracking-widest text-brand-text-muted">Registro Profissional (Ex: CRM/CRBM)</Label>
+                 <Input 
+                   value={settings.rt_register || ""} 
+                   onChange={e => setSettings({...settings, rt_register: e.target.value})}
+                   className="bg-brand-black/50 border-brand-gold/10 text-brand-text-light" 
+                 />
+               </div>
+             </div>
+
+             <div className="space-y-3 pt-4 border-t border-brand-gold/10">
+               <Label className="text-xs uppercase tracking-widest text-brand-text-muted flex items-center gap-2">
+                 <ImageIcon className="size-3 text-brand-gold" /> Foto da Responsável (Padrão para novas páginas)
+               </Label>
+               <MediaInput 
+                 value={settings.rt_image || ""} 
+                 onChange={v => setSettings({...settings, rt_image: v})} 
+               />
+             </div>
           </CardContent>
         </Card>
 

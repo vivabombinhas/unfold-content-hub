@@ -419,6 +419,7 @@ export type Database = {
           google_maps_url: string | null
           id: number
           phone: string | null
+          rt_image: string | null
           rt_name: string | null
           rt_register: string | null
           updated_at: string
@@ -433,6 +434,7 @@ export type Database = {
           google_maps_url?: string | null
           id?: number
           phone?: string | null
+          rt_image?: string | null
           rt_name?: string | null
           rt_register?: string | null
           updated_at?: string
@@ -447,6 +449,7 @@ export type Database = {
           google_maps_url?: string | null
           id?: number
           phone?: string | null
+          rt_image?: string | null
           rt_name?: string | null
           rt_register?: string | null
           updated_at?: string

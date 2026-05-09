@@ -88,9 +88,18 @@ export default function PageEditor() {
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+ const [siteSettings, setSiteSettings] = useState<any>(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+ useEffect(() => {
+   const fetchSiteSettings = async () => {
+     const { data } = await supabase.from("site_settings").select("*").eq("id", 1).maybeSingle();
+     if (data) setSiteSettings(data);
+   };
+   fetchSiteSettings();
+ }, []);
 
   useEffect(() => {
     if (!data?.page) return;
@@ -137,12 +146,34 @@ export default function PageEditor() {
     });
   }
 
-  function addBlock(type: BlockType) {
-    const id = `new-${crypto.randomUUID()}`;
-    setBlocks((prev) => [...prev, { id, type, position: prev.length, enabled: true, mode: "structured", data: {}, html_content: null, _new: true, _dirty: true }]);
-    setSelectedId(id);
-    setShowAddMenu(false);
-  }
+ function addBlock(type: BlockType) {
+   const id = `new-${crypto.randomUUID()}`;
+   let initialData: Record<string, any> = {};
+   
+   if (type === "equipe_rt" && siteSettings?.rt_image) {
+     initialData = {
+       image_url: siteSettings.rt_image,
+       register_label: siteSettings.rt_register || "",
+     };
+   }
+
+   setBlocks((prev) => [
+     ...prev, 
+     { 
+       id, 
+       type, 
+       position: prev.length, 
+       enabled: true, 
+       mode: "structured", 
+       data: initialData, 
+       html_content: null, 
+       _new: true, 
+       _dirty: true 
+     }
+   ]);
+   setSelectedId(id);
+   setShowAddMenu(false);
+ }
 
   function handleImportBlock(type: BlockType, data: any) {
     const id = `new-${crypto.randomUUID()}`;

@@ -355,6 +355,9 @@ const generatePageSchema = {
       });
     }
 
+   // Fetch global settings for defaults
+   const { data: siteSettings } = await admin.from("site_settings").select("*").eq("id", 1).maybeSingle();
+
     // Read template DNA — usado SOMENTE como referência de tom/estrutura (não copiado).
     const { data: templatePage } = await admin
       .from("pages")
@@ -735,13 +738,10 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
           if (h.bio) merged.bio = h.bio;
           if (Array.isArray(h.accordions) && h.accordions.length > 0) merged.accordions = h.accordions;
           merged.cta_label = h.cta_label || "Conhecer a equipe completa";
-          // Garante campos institucionais mínimos vindos do template/page-mãe.
-          if (!merged.image_url && (equipeInstitutional as { photo_url?: string }).photo_url) {
-            merged.image_url = (equipeInstitutional as { photo_url?: string }).photo_url;
-          }
-          if (!merged.register_label && (equipeInstitutional as { register?: string }).register) {
-            merged.register_label = (equipeInstitutional as { register?: string }).register;
-          }
+           // Garante campos institucionais mínimos vindos das configurações globais ou template.
+           merged.image_url = siteSettings?.rt_image || (equipeInstitutional as { photo_url?: string }).photo_url || "";
+           merged.register_label = siteSettings?.rt_register || (equipeInstitutional as { register?: string }).register || "";
+           
           data = merged;
           break;
         }
