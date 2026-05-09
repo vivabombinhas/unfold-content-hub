@@ -5,6 +5,7 @@
    description?: string;
    slug?: string;
    image?: string;
+  heroImage?: string;
    status?: "draft" | "published";
    previewMode?: boolean;
    isAdmin?: boolean;
@@ -70,7 +71,7 @@
             rel="preload"
             as="image"
             href={heroImage}
-            fetchpriority="high"
+            {...{ fetchPriority: "high" }}
           />
         )}
      </Helmet>
