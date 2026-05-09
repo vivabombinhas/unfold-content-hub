@@ -285,26 +285,34 @@ interface Props {
           </DialogHeader>
           
           {previewPhoto && (
-            <div className="flex flex-col">
-              <div className="aspect-video relative overflow-hidden bg-black/20">
+            <div className="flex flex-col h-[70vh] md:h-auto">
+              <div className="flex-1 relative overflow-hidden bg-black/40 min-h-[300px] flex items-center justify-center">
                 <img 
                   src={previewPhoto.src.large2x} 
                   alt={previewPhoto.alt}
-                  className="w-full h-full object-contain"
+                  className="max-w-full max-h-[60vh] object-contain shadow-2xl"
                 />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white rounded-full z-10"
+                  onClick={() => setPreviewPhoto(null)}
+                >
+                  <X className="size-5" />
+                </Button>
               </div>
-              <div className="p-6 bg-brand-black/40 flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-white/80 line-clamp-1">{previewPhoto.alt}</p>
-                  <p className="text-[10px] text-brand-text-muted uppercase mt-1">Alta Resolução • Gratuita via Pexels</p>
+              <div className="p-4 md:p-6 bg-brand-black/90 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex-1 min-w-0 text-center md:text-left">
+                  <p className="text-xs text-white/90 line-clamp-2 md:line-clamp-1 italic font-display">{previewPhoto.alt || "Sem descrição disponível"}</p>
+                  <p className="text-[10px] text-brand-gold uppercase tracking-[0.2em] mt-1 font-bold">Resolução Original • Créditos: {previewPhoto.photographer}</p>
                 </div>
-                <div className="flex gap-3 shrink-0">
+                <div className="flex gap-3 w-full md:w-auto">
                   <Button 
                     variant="outline" 
                     size="sm"
                     disabled={importedIds.has(previewPhoto.id) || importing === previewPhoto.id}
                     onClick={() => saveToLibrary(previewPhoto)}
-                    className="text-[10px] uppercase tracking-widest border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
+                    className="flex-1 md:flex-none text-[10px] uppercase tracking-widest border-brand-gold/30 text-brand-gold hover:bg-brand-gold/10 h-10 px-4"
                   >
                     {importing === previewPhoto.id ? (
                       <Loader2 className="size-3 mr-2 animate-spin" />
@@ -321,7 +329,7 @@ interface Props {
                       onSelect(previewPhoto.src.large2x);
                       setPreviewPhoto(null);
                     }}
-                    className="text-[10px] uppercase tracking-widest bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold"
+                    className="flex-1 md:flex-none text-[10px] uppercase tracking-widest bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold h-10 px-6"
                   >
                     Usar esta Imagem
                   </Button>
