@@ -89,15 +89,23 @@ import { toast } from "@/hooks/use-toast";
       }, 100);
 
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Escape") close();
-        if (e.key === "Enter" && focusedImage) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          close();
+          return;
+        }
+
+        if (e.key === "Enter" && focusedImage && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
           select(focusedImage.url);
         }
       };
-      window.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("keydown", handleKeyDown, true);
       document.body.style.overflow = "hidden";
       return () => {
-        window.removeEventListener("keydown", handleKeyDown);
+        window.removeEventListener("keydown", handleKeyDown, true);
         document.body.style.overflow = "";
         clearTimeout(timer);
       };
