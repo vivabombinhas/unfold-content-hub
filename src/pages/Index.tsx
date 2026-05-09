@@ -17,7 +17,7 @@ import {
   MessageCircle,
   CheckCircle2,
 } from "lucide-react";
-import { Header } from "@/components/site/Header";
+ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { FloatingCTA } from "@/components/site/FloatingCTA";
 import { Medal } from "@/components/site/Medal";
@@ -25,6 +25,7 @@ import { GoldButton } from "@/components/site/GoldButton";
 import { SideSheet } from "@/components/site/SideSheet";
 import { InlineExpand } from "@/components/site/InlineExpand";
 import { CaseModal } from "@/components/site/CaseModal";
+ import { SEO } from "@/components/site/SEO";
 import { cases, faqs, reviews, aiOpinions, courses, type ClinicalCase } from "@/data/landing";
 import { useReveal } from "@/hooks/use-reveal";
 import { useCountUp } from "@/hooks/use-count-up";
@@ -391,9 +392,13 @@ const Index = () => {
     );
   }
 
-  return (
-    <div className="bg-brand-black text-brand-text-light min-h-screen">
-      <Header />
+   return (
+     <div className="bg-brand-black text-brand-text-light min-h-screen">
+       <SEO 
+         title="Botox Masculino" 
+         description="Protocolo de Botox com dosagem calibrada para a anatomia masculina. Clínica de Estética Batel, Curitiba — desde 1995."
+       />
+       <Header />
 
       {/* ========================================================
           BLOCOS DA PÁGINA — ordem e visibilidade vêm do snapshot
