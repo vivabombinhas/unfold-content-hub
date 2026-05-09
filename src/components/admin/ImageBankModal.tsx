@@ -35,6 +35,7 @@ import { toast } from "@/hooks/use-toast";
    const [loading, setLoading] = useState(false);
    const [search, setSearch] = useState("");
    const [category, setCategory] = useState<string | null>(null);
+   const [columns, setColumns] = useState<2 | 4>(4);
    const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<ImageAsset | null>(null);
@@ -243,14 +244,20 @@ import { toast } from "@/hooks/use-toast";
                     <p className="text-xs text-brand-text-muted uppercase tracking-widest">Carregando acervo...</p>
                   </div>
                 ) : images.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+                   <div className={cn(
+                     "grid gap-4 md:gap-6",
+                     columns === 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                   )}>
                     {images.map((img) => (
                       <div 
                         key={img.id}
                         className="group relative flex flex-col rounded-xl border border-white/5 bg-white/5 overflow-hidden hover:border-brand-gold/50 transition-all shadow-xl"
                       >
                         <div 
-                          className="relative aspect-[3/4] overflow-hidden cursor-pointer"
+                           className={cn(
+                             "relative overflow-hidden cursor-pointer",
+                             columns === 2 ? "aspect-video" : "aspect-[3/4]"
+                           )}
                           onClick={() => setPreviewImage(img)}
                         >
                           <div className="w-full h-full bg-black/20">
@@ -297,14 +304,48 @@ import { toast } from "@/hooks/use-toast";
                 )}
               </ScrollArea>
 
-              <div className="p-4 border-t border-white/5 flex justify-between items-center bg-white/[0.02]">
-                <p className="text-[10px] text-brand-text-muted uppercase tracking-widest">
-                  {images.length} imagens disponíveis no acervo interno
-                </p>
-                <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="text-[10px] uppercase tracking-widest text-white/50 hover:text-white">
-                  Fechar
-                </Button>
-              </div>
+               <div className="p-4 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-brand-black/90">
+                 <div className="flex items-center gap-4">
+                   <p className="text-[10px] text-brand-text-muted uppercase tracking-widest">
+                     {images.length} imagens no acervo
+                   </p>
+                   
+                   <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
+                     <Button
+                       variant="ghost"
+                       size="icon"
+                       onClick={() => setColumns(2)}
+                       className={`size-8 ${columns === 2 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
+                       title="Visualização Ampla"
+                     >
+                       <Maximize2 className="size-3.5" />
+                     </Button>
+                     <Button
+                       variant="ghost"
+                       size="icon"
+                       onClick={() => setColumns(4)}
+                       className={`size-8 ${columns === 4 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
+                       title="Visualização Compacta"
+                     >
+                       <div className="grid grid-cols-2 gap-0.5">
+                         <div className="size-1.5 bg-current rounded-sm"></div>
+                         <div className="size-1.5 bg-current rounded-sm"></div>
+                         <div className="size-1.5 bg-current rounded-sm"></div>
+                         <div className="size-1.5 bg-current rounded-sm"></div>
+                       </div>
+                     </Button>
+                   </div>
+                 </div>
+                 
+                 <div className="flex items-center gap-3">
+                    <span className="text-[9px] text-brand-gold/60 uppercase tracking-widest animate-pulse">
+                      Clique para ampliar
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="text-[10px] uppercase tracking-widest text-white/50 hover:text-white h-8">
+                      Fechar
+                    </Button>
+                 </div>
+               </div>
             </TabsContent>
 
             <TabsContent value="external" className="flex-1 flex flex-col overflow-hidden m-0">
