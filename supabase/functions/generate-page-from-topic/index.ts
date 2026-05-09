@@ -611,53 +611,48 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
 
     const candidateImages = (oldPageContent?.images || [])
       .filter((img) => img && typeof img.url === "string")
-      .slice(0, 30);
-    // Prioriza imagens cujo nome do arquivo contém palavras-chave do tema
-    // (ex: "diamantacao", "labial", "AD" para antes/depois). Empurra para o
-    // topo as fotos reais do procedimento; logos/genéricas vão pro fim.
+      .slice(0, 50);
+
     const themeKeywords = tema
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .split(/\s+/)
       .filter((w) => w.length >= 4);
+
     function imageScore(url: string) {
       const u = url.toLowerCase();
       let s = 0;
       for (const k of themeKeywords) if (u.includes(k)) s += 10;
-      if (/-ad\d|antes-?e?-?depois|antes_depois/i.test(u)) s += 8;
+      if (/-ad\d|antes-?e?-?depois|antes_depois/i.test(u)) s += 15; // AD ganha muito peso agora
       if (/\/wp-content\/uploads\//i.test(u)) s += 2;
       if (/\.(jpe?g|webp)(\?|$)/i.test(u)) s += 1;
       return s;
     }
     candidateImages.sort((a, b) => imageScore(b.url) - imageScore(a.url));
-    // -----------------------------------------------------------------------
 
-     // -----------------------------------------------------------------------
-     // Distribuição Inteligente de Imagens
-     // -----------------------------------------------------------------------
-     // -----------------------------------------------------------------------
-     // Distribuição Inteligente de Imagens (Premium & Editorial)
-     // -----------------------------------------------------------------------
-     
-     // Tentamos pegar a melhor imagem para Hero (que não seja inadequada)
-     const heroCandidate = candidateImages.find(img => !(img as any).inadequate_for_hero) || candidateImages[0];
-     const heroImage = heroCandidate ? heroCandidate.url : null;
-     
-     // Filtramos imagens para os outros blocos (removendo a escolhida para o Hero)
-     const remainingImages = candidateImages.filter(img => img.url !== heroImage);
-     
-     // Imagem para o bloco de procedimento (se houver pelo menos 2 imagens)
-     const procedimentoImage = remainingImages.length > 0 ? remainingImages[0].url : null;
-     
-     // Imagens para o grid de benefícios (até 4)
-     const gridImages = remainingImages.slice(1, 5).map(img => img.url);
- 
-     // Fallback neutro caso não tenha imagens extraídas (NÃO usar do Botox se o tema for outro)
-     const isBotox = /\b(botox|toxina|botulin)/i.test(tema);
-     const genericAestheticImage = "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=2070&auto=format&fit=crop";
- 
-     const finalHeroImage = heroImage || (isBotox ? "https://esteticabatel.com.br/wp-content/uploads/2024/09/Botox-Masculino-Curitiba.jpg" : genericAestheticImage);
+    // -----------------------------------------------------------------------
+    // Distribuição de Imagens (Ajustada p/ pedido do usuário)
+    // -----------------------------------------------------------------------
+    
+    // HERO: NÃO usa fotos extraídas automaticamente (pedido do usuário)
+    const isBotox = /\b(botox|toxina|botulin)/i.test(tema);
+    const genericAestheticImage = "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=2070&auto=format&fit=crop";
+    // Placeholder premium de clínica se não for botox
+    const finalHeroImage = isBotox 
+      ? "https://esteticabatel.com.br/wp-content/uploads/2024/09/Botox-Masculino-Curitiba.jpg" 
+      : genericAestheticImage;
+
+    // CASOS CLÍNICOS: Identifica imagens que parecem ser Antes/Depois
+    const clinicalCaseImages = candidateImages.filter(img => 
+      /-ad\d|antes-?e?-?depois|antes_depois/i.test(img.url.toLowerCase()) || (img as any).inadequate_for_hero
+    );
+
+    // Outras imagens "bonitas" (procedimento, detalhes)
+    const editorialImages = candidateImages.filter(img => !clinicalCaseImages.includes(img));
+    
+    const procedimentoImage = editorialImages.length > 0 ? editorialImages[0].url : null;
+    const gridImages = editorialImages.slice(1, 5).map(img => img.url);
  
     const equipeBase =
       ((templateBlocks || []).find((b) => b.type === "equipe_rt")?.data as Record<string, unknown> | undefined) || {};
