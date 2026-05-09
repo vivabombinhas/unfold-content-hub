@@ -14,7 +14,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const FIRECRAWL_V2 = "https://api.firecrawl.dev/v2";
+const FIRECRAWL_API = "https://api.firecrawl.dev/v1";
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 interface ResearchInput {
@@ -31,81 +31,90 @@ interface FirecrawlSearchResultItem {
 }
 
 async function firecrawlSearch(apiKey: string, query: string) {
-  const res = await fetch(`${FIRECRAWL_V2}/search`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query,
-      limit: 6,
-      lang: "pt",
-      country: "br",
-      scrapeOptions: { formats: ["markdown"] },
-    }),
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    console.error("Firecrawl search error", res.status, t);
+  try {
+    const res = await fetch(`${FIRECRAWL_API}/search`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query,
+        limit: 6,
+        lang: "pt",
+        country: "br",
+        scrapeOptions: { formats: ["markdown"] },
+      }),
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      console.error("Firecrawl search error", res.status, t.slice(0, 300));
+      return [];
+    }
+    const data = await res.json().catch(() => ({}));
+    const items: FirecrawlSearchResultItem[] =
+      (Array.isArray(data?.data) && data.data) ||
+      data?.web?.results ||
+      [];
+    return items.slice(0, 6);
+  } catch (e) {
+    console.error("Firecrawl search exception:", e);
     return [];
   }
-  const data = await res.json();
-  // v2 may return { data: [...] } or { web: { results: [...] } }
-  const items: FirecrawlSearchResultItem[] =
-    (Array.isArray(data?.data) && data.data) ||
-    data?.web?.results ||
-    [];
-  return items.slice(0, 6);
 }
 
 async function firecrawlScrape(apiKey: string, url: string) {
-  const res = await fetch(`${FIRECRAWL_V2}/scrape`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        url, 
-        formats: ["markdown", "html", "links"], 
-        onlyMainContent: false, 
-        actions: [
-          { type: "wait", milliseconds: 1000 },
-          { type: "scroll", direction: "down" },
-          { type: "wait", milliseconds: 1000 },
-          { type: "scroll", direction: "down" },
-          { type: "wait", milliseconds: 1000 }
-        ]
-      }),
-  });
-  if (res.ok) {
-    const data = await res.json();
-    const root = data?.data ?? data;
-    return {
-      ok: true,
-      status: 200,
-      markdown: root?.markdown || null,
-      html: root?.html || null,
-      links: Array.isArray(root?.links) ? root.links : [],
-      metadata: root?.metadata || null,
-    };
-  }
-
-  const errorText = await res.text().catch(() => "");
-  console.error("Firecrawl scrape failed", url, res.status, errorText.slice(0, 300));
-
-  // Fallback: Tentativa de fetch direto se for do próprio domínio e Firecrawl falhou por créditos
-  if (res.status === 402 && url.includes("esteticabatel.com.br")) {
-    try {
-      console.log("Tentando fallback de fetch direto para", url);
-      const directRes = await fetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" }
-      });
-      if (directRes.ok) {
-        const html = await directRes.text();
-        return { ok: true, status: 200, markdown: null, html, links: [], metadata: null, note: "Fallback direct fetch" };
-      }
-    } catch (e) {
-      console.error("Fallback fetch failed", e);
+  try {
+    const res = await fetch(`${FIRECRAWL_API}/scrape`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          url, 
+          formats: ["markdown", "html", "links"], 
+          onlyMainContent: false, 
+          actions: [
+            { type: "wait", milliseconds: 1000 },
+            { type: "scroll", direction: "down" },
+            { type: "wait", milliseconds: 1000 },
+            { type: "scroll", direction: "down" },
+            { type: "wait", milliseconds: 1000 }
+          ]
+        }),
+    });
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const root = data?.data ?? data;
+      return {
+        ok: true,
+        status: 200,
+        markdown: root?.markdown || null,
+        html: root?.html || null,
+        links: Array.isArray(root?.links) ? root.links : [],
+        metadata: root?.metadata || null,
+      };
     }
-  }
 
-   return { ok: false, status: res.status, error: errorText.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
+    const errorText = await res.text().catch(() => "");
+    console.error("Firecrawl scrape failed", url, res.status, errorText.slice(0, 300));
+
+    // Fallback: Tentativa de fetch direto se for do próprio domínio e Firecrawl falhou por créditos
+    if (res.status === 402 && url.includes("esteticabatel.com.br")) {
+      try {
+        console.log("Tentando fallback de fetch direto para", url);
+        const directRes = await fetch(url, {
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" }
+        });
+        if (directRes.ok) {
+          const html = await directRes.text();
+          return { ok: true, status: 200, markdown: null, html, links: [], metadata: null, note: "Fallback direct fetch" };
+        }
+      } catch (e) {
+        console.error("Fallback fetch failed", e);
+      }
+    }
+
+    return { ok: false, status: res.status, error: errorText.slice(0, 300), markdown: null, html: null, links: [], metadata: null };
+  } catch (e) {
+    console.error("Firecrawl scrape exception for", url, e);
+    return { ok: false, status: 0, error: String(e), markdown: null, html: null, links: [], metadata: null };
+  }
 }
 
 function truncate(s: string | null | undefined, n: number) {
