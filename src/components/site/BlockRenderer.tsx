@@ -25,7 +25,7 @@ import {
   Star,
 } from "lucide-react";
  import { useState, useEffect } from "react";
- import draRT from "@/assets/dra-rt.jpg";
+ import draRT from "@/assets/dra-rt.webp";
 import { GoldButton } from "@/components/site/GoldButton";
 import { Medal } from "@/components/site/Medal";
 import { InlineExpand } from "@/components/site/InlineExpand";
@@ -265,15 +265,16 @@ function HeroBlock({ data }: { data: BlockData }) {
                  className="w-full h-full"
                  style={{ transform: `scale(${imageScale})` }}
                >
-                 <img 
-                   src={imageUrl} 
-                   alt={eyebrow} 
-                   className={cn(
-                     "w-full h-full transition-transform duration-[4s] group-hover:scale-110",
-                     imageStyle === "cutout" ? "object-contain" : "object-cover"
-                   )} 
-                   loading="eager" 
-                 />
+                  <img 
+                    src={imageUrl} 
+                    alt={eyebrow} 
+                    className={cn(
+                      "w-full h-full transition-transform duration-[4s] group-hover:scale-110",
+                      imageStyle === "cutout" ? "object-contain" : "object-cover"
+                    )} 
+                    loading="eager" 
+                    {...{ fetchPriority: "high" }}
+                  />
                </div>
  
                {/* Overlays */}
