@@ -19,11 +19,12 @@ import { toast } from "@/hooks/use-toast";
    tags: string[] | null;
  }
  
- interface Props {
-   onSelect: (url: string) => void;
- }
+  interface Props {
+    onSelect: (url: string) => void;
+    isolateKeyboardEvents?: boolean;
+  }
  
-  export function ImageBankModal({ onSelect, trigger }: Props & { trigger?: React.ReactNode }) {
+   export function ImageBankModal({ onSelect, trigger, isolateKeyboardEvents = false }: Props & { trigger?: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
    const [images, setImages] = useState<ImageAsset[]>([]);
@@ -91,25 +92,25 @@ import { toast } from "@/hooks/use-toast";
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
           e.preventDefault();
-          e.stopImmediatePropagation();
+          if (isolateKeyboardEvents) e.stopImmediatePropagation();
           close();
           return;
         }
 
         if (e.key === "Enter" && focusedImage && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
           e.preventDefault();
-          e.stopImmediatePropagation();
+          if (isolateKeyboardEvents) e.stopImmediatePropagation();
           select(focusedImage.url);
         }
       };
-      window.addEventListener("keydown", handleKeyDown, true);
+      window.addEventListener("keydown", handleKeyDown, isolateKeyboardEvents);
       document.body.style.overflow = "hidden";
       return () => {
-        window.removeEventListener("keydown", handleKeyDown, true);
+        window.removeEventListener("keydown", handleKeyDown, isolateKeyboardEvents);
         document.body.style.overflow = "";
         clearTimeout(timer);
       };
-    }, [isOpen, focusedImage, close, select]);
+    }, [isOpen, focusedImage, close, select, isolateKeyboardEvents]);
  
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
