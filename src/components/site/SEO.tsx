@@ -14,7 +14,8 @@
    title,
    description,
    slug,
-   image,
+    image,
+    heroImage,
    status = "published",
    previewMode = false,
    isAdmin = false,
@@ -61,7 +62,17 @@
        <meta name="twitter:url" content={canonicalUrl || siteUrl} />
        <meta name="twitter:title" content={fullTitle} />
        <meta name="twitter:description" content={metaDescription} />
-       {image && <meta name="twitter:image" content={image} />}
+        {image && <meta name="twitter:image" content={image} />}
+
+        {/* Performance: Preload hero image if available */}
+        {heroImage && (
+          <link
+            rel="preload"
+            as="image"
+            href={heroImage}
+            fetchpriority="high"
+          />
+        )}
      </Helmet>
    );
  };
