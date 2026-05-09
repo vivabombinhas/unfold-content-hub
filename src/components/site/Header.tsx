@@ -43,9 +43,9 @@ export const Header = ({ breadcrumbCurrent = "Botox Masculino" }: HeaderProps = 
             aria-label="Breadcrumb"
             className="py-2.5 text-[10px] font-body font-medium uppercase tracking-[0.18em] text-brand-text-soft"
           >
-            <a href="/" className="hover:text-brand-gold transition-colors">Início</a>
-            <span className="mx-3 text-brand-gold/50">/</span>
-            <a href="#procedimentos" className="hover:text-brand-gold transition-colors">Procedimentos</a>
+             <a href="/#" className="hover:text-brand-gold transition-colors">Início</a>
+             <span className="mx-3 text-brand-gold/50">/</span>
+             <a href="/#procedimentos" className="hover:text-brand-gold transition-colors">Procedimentos</a>
             <span className="mx-3 text-brand-gold/50">/</span>
             <span className="text-brand-gold">{breadcrumbCurrent}</span>
           </nav>
@@ -68,7 +68,7 @@ export const Header = ({ breadcrumbCurrent = "Botox Masculino" }: HeaderProps = 
           )}
         >
           {/* Brand */}
-          <a href="/" className="flex items-center gap-3 shrink-0">
+           <a href="/#" className="flex items-center gap-3 shrink-0">
             <svg viewBox="0 0 44 48" className="w-10 h-11 shrink-0" aria-hidden>
               <path
                 d="M22 2 L40 11 L40 28 C40 38 32 44 22 46 C12 44 4 38 4 28 L4 11 Z"
@@ -105,13 +105,13 @@ export const Header = ({ breadcrumbCurrent = "Botox Masculino" }: HeaderProps = 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="relative px-3 py-2 text-[10px] font-body font-semibold uppercase tracking-[0.15em] text-brand-text-light hover:text-brand-gold transition-colors after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:-translate-x-1/2 after:w-0 after:h-px after:bg-brand-gold after:transition-all after:duration-500 hover:after:w-5"
-              >
-                {item.label}
-              </a>
+               <a
+                 key={item.href}
+                 href={item.href.startsWith('#') ? `/${item.href}` : item.href}
+                 className="relative px-3 py-2 text-[10px] font-body font-semibold uppercase tracking-[0.15em] text-brand-text-light hover:text-brand-gold transition-colors after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:-translate-x-1/2 after:w-0 after:h-px after:bg-brand-gold after:transition-all after:duration-500 hover:after:w-5"
+               >
+                 {item.label}
+               </a>
             ))}
           </nav>
 
@@ -155,14 +155,14 @@ export const Header = ({ breadcrumbCurrent = "Botox Masculino" }: HeaderProps = 
         >
           <nav className="flex flex-col gap-2">
             {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="font-display text-2xl py-3 border-b border-brand-gold/10 text-brand-text-light hover:text-brand-gold transition-colors"
-              >
-                {item.label}
-              </a>
+               <a
+                 key={item.href}
+                 href={item.href.startsWith('#') ? `/${item.href}` : item.href}
+                 onClick={() => setOpen(false)}
+                 className="font-display text-2xl py-3 border-b border-brand-gold/10 text-brand-text-light hover:text-brand-gold transition-colors"
+               >
+                 {item.label}
+               </a>
             ))}
           </nav>
           <a
