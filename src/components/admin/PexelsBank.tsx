@@ -1,10 +1,17 @@
-import { useState, useEffect } from "react";
-import { Search, Loader2, X, ExternalLink } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Search, Loader2, X, ExternalLink, Download, Check, Eye, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { searchPhotos, getCuratedPhotos, PexelsPhoto } from "@/lib/pexels";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Props {
   onSelect: (url: string) => void;
@@ -13,15 +20,27 @@ interface Props {
 export function PexelsBank({ onSelect }: Props) {
   const [photos, setPhotos] = useState<PexelsPhoto[]>([]);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [previewPhoto, setPreviewPhoto] = useState<PexelsPhoto | null>(null);
+  const [importedIds, setImportedIds] = useState<Set<number>>(new Set());
 
-  const fetchPhotos = async (query: string, p: number) => {
+  const fetchPhotos = useCallback(async (query: string, p: number) => {
     setLoading(true);
     try {
-      const data = query 
-        ? await searchPhotos(query, p)
-        : await getCuratedPhotos(p);
+      // Enforce aesthetic focus and use English terms for better Pexels results
+      let searchQuery = query.trim();
+      if (!searchQuery) {
+        searchQuery = "aesthetic medical clinic beauty treatment skincare";
+      } else {
+        // Append relevant aesthetic keywords to user query if they are not already there
+        if (!searchQuery.toLowerCase().includes("estética") && !searchQuery.toLowerCase().includes("aesthetic")) {
+          searchQuery += " aesthetic beauty";
+        }
+      }
+      
+      const data = await searchPhotos(searchQuery, p);
       
       if (p === 1) {
         setPhotos(data.photos);
@@ -37,7 +56,7 @@ export function PexelsBank({ onSelect }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -45,7 +64,7 @@ export function PexelsBank({ onSelect }: Props) {
       fetchPhotos(search, 1);
     }, 500);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, fetchPhotos]);
 
   const loadMore = () => {
     const nextPage = page + 1;
@@ -53,78 +72,209 @@ export function PexelsBank({ onSelect }: Props) {
     fetchPhotos(search, nextPage);
   };
 
+  const saveToLibrary = async (photo: PexelsPhoto) => {
+    setImporting(photo.id);
+    try {
+      const { error } = await supabase.from("image_bank").insert({
+        url: photo.src.large2x,
+        title: photo.alt || `Estética por ${photo.photographer}`,
+        category: "Estética",
+        tags: ["Pexels", "Externo"]
+      });
+
+      if (error) throw error;
+
+      setImportedIds(prev => new Set([...prev, photo.id]));
+      toast({
+        title: "Salvo com sucesso!",
+        description: "Imagem adicionada ao seu acervo interno.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar a imagem no acervo.",
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(null);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-6 pb-2">
+    <div className="flex flex-col h-full bg-brand-bg/50">
+      <div className="p-4 md:p-6 pb-2">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-gold/50" />
           <Input 
-            placeholder="Buscar milhões de fotos profissionais (ex: skincare, clinic, luxury)..." 
+            placeholder="Buscar por estética, clínica, skincare..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-white/5 border-white/10 text-xs h-10 focus-visible:ring-brand-gold/50"
+            className="pl-10 bg-white/5 border-white/10 text-xs h-10 md:h-12 focus-visible:ring-brand-gold/50"
           />
         </div>
       </div>
 
-      <ScrollArea className="flex-1 p-6 pt-2">
-        {loading && photos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 className="size-8 text-brand-gold animate-spin" />
-            <p className="text-xs text-brand-text-muted uppercase tracking-widest">Consultando Pexels...</p>
-          </div>
-        ) : photos.length > 0 ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {photos.map((photo) => (
-                <div 
-                  key={photo.id}
-                  className="group relative aspect-square rounded-lg border border-white/5 bg-white/5 overflow-hidden cursor-pointer hover:border-brand-gold/50 transition-all shadow-xl"
-                  onClick={() => onSelect(photo.src.large2x)}
-                >
-                  <img 
-                    src={photo.src.medium} 
-                    alt={photo.alt} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-brand-black/90 via-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
-                    <p className="text-[8px] text-white/70 truncate">Foto por {photo.photographer}</p>
+      <ScrollArea className="flex-1">
+        <div className="p-4 md:p-6 pt-0">
+          {loading && photos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Loader2 className="size-8 text-brand-gold animate-spin" />
+              <p className="text-xs text-brand-text-muted uppercase tracking-widest">Consultando Pexels...</p>
+            </div>
+          ) : photos.length > 0 ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {photos.map((photo) => (
+                  <div 
+                    key={photo.id}
+                    className="group relative flex flex-col rounded-xl border border-white/5 bg-white/5 overflow-hidden transition-all shadow-2xl hover:border-brand-gold/30"
+                  >
+                    <div className="relative aspect-[3/4] overflow-hidden cursor-pointer" onClick={() => setPreviewPhoto(photo)}>
+                      <img 
+                        src={photo.src.medium} 
+                        alt={photo.alt} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="size-10 rounded-full bg-brand-gold/20 backdrop-blur-md flex items-center justify-center border border-brand-gold/30">
+                          <Eye className="size-5 text-brand-gold" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-3 bg-brand-black/40 border-t border-white/5 space-y-2">
+                      <p className="text-[9px] text-white/50 truncate uppercase tracking-tighter">
+                        {photo.photographer}
+                      </p>
+                      <div className="flex gap-1.5">
+                        <Button 
+                          onClick={() => onSelect(photo.src.large2x)}
+                          className="flex-1 h-7 text-[9px] uppercase tracking-widest bg-brand-gold text-brand-bg hover:bg-brand-gold/90"
+                        >
+                          Selecionar
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          size="icon"
+                          disabled={importedIds.has(photo.id) || importing === photo.id}
+                          onClick={() => saveToLibrary(photo)}
+                          className="size-7 border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
+                          title="Salvar no acervo interno"
+                        >
+                          {importing === photo.id ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : importedIds.has(photo.id) ? (
+                            <Check className="size-3" />
+                          ) : (
+                            <Download className="size-3" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              
+              <div className="flex justify-center pb-8 pt-4">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  onClick={loadMore}
+                  disabled={loading}
+                  className="text-xs uppercase tracking-widest border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10 px-8"
+                >
+                  {loading ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+                  Carregar mais resultados
+                </Button>
+              </div>
             </div>
-            
-            <div className="flex justify-center pb-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={loadMore}
-                disabled={loading}
-                className="text-[10px] uppercase tracking-widest border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
-              >
-                {loading ? <Loader2 className="size-3 mr-2 animate-spin" /> : null}
-                Carregar mais fotos
-              </Button>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+              <div className="size-16 rounded-full bg-white/5 flex items-center justify-center">
+                <X className="size-8 text-white/20" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-white/70">Nenhuma imagem encontrada</p>
+                <p className="text-xs text-brand-text-muted">Tente buscar por termos diferentes ou em inglês.</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-2">
-            <X className="size-10 text-white/10" />
-            <p className="text-sm text-brand-text-muted">Nenhuma imagem encontrada no Pexels.</p>
-          </div>
-        )}
+          )}
+        </div>
       </ScrollArea>
       
-      <div className="px-6 py-3 border-t border-white/5 bg-white/[0.02] flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-[8px] text-brand-text-muted uppercase tracking-widest">Powered by</span>
-          <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" className="opacity-50 hover:opacity-100 transition-opacity">
-            <img src="https://images.pexels.com/lib/api/pexels-white.png" alt="Pexels" className="h-3" />
+      <div className="px-6 py-3 border-t border-white/5 bg-brand-black/80 backdrop-blur-md flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-[9px] text-brand-text-muted uppercase tracking-widest">Powered by</span>
+          <a href="https://www.pexels.com" target="_blank" rel="noopener noreferrer" className="opacity-40 hover:opacity-100 transition-opacity">
+            <img src="https://images.pexels.com/lib/api/pexels-white.png" alt="Pexels" className="h-4" />
           </a>
         </div>
-        <p className="text-[8px] text-brand-text-muted uppercase tracking-widest">Imagens gratuitas de alta qualidade</p>
+        <div className="flex items-center gap-2 text-[9px] text-brand-text-muted uppercase tracking-widest">
+          <Globe className="size-3" />
+          Acervo de milhões de fotos
+        </div>
       </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewPhoto} onOpenChange={() => setPreviewPhoto(null)}>
+        <DialogContent className="max-w-3xl border-brand-gold/20 bg-brand-bg p-0 overflow-hidden shadow-2xl">
+          <DialogHeader className="p-4 border-b border-white/5 bg-brand-black/40">
+            <DialogTitle className="text-sm font-display italic text-brand-gold flex items-center justify-between">
+              <span>Pré-visualização da Imagem</span>
+              <span className="text-[10px] text-brand-text-muted uppercase tracking-widest font-sans not-italic">
+                Foto por {previewPhoto?.photographer}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {previewPhoto && (
+            <div className="flex flex-col">
+              <div className="aspect-video relative overflow-hidden bg-black/20">
+                <img 
+                  src={previewPhoto.src.large2x} 
+                  alt={previewPhoto.alt}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="p-6 bg-brand-black/40 flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-white/80 line-clamp-1">{previewPhoto.alt}</p>
+                  <p className="text-[10px] text-brand-text-muted uppercase mt-1">Alta Resolução • Gratuita via Pexels</p>
+                </div>
+                <div className="flex gap-3 shrink-0">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={importedIds.has(previewPhoto.id) || importing === previewPhoto.id}
+                    onClick={() => saveToLibrary(previewPhoto)}
+                    className="text-[10px] uppercase tracking-widest border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
+                  >
+                    {importing === previewPhoto.id ? (
+                      <Loader2 className="size-3 mr-2 animate-spin" />
+                    ) : importedIds.has(previewPhoto.id) ? (
+                      <Check className="size-3 mr-2" />
+                    ) : (
+                      <Download className="size-3 mr-2" />
+                    )}
+                    Salvar no Acervo
+                  </Button>
+                  <Button 
+                    size="sm"
+                    onClick={() => {
+                      onSelect(previewPhoto.src.large2x);
+                      setPreviewPhoto(null);
+                    }}
+                    className="text-[10px] uppercase tracking-widest bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold"
+                  >
+                    Usar esta Imagem
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
