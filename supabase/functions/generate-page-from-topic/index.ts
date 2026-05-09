@@ -359,25 +359,39 @@ const generatePageSchema = {
    const { data: siteSettings } = await admin.from("site_settings").select("*").eq("id", 1).maybeSingle();
 
     // Read template DNA — usado SOMENTE como referência de tom/estrutura (não copiado).
-    const { data: templatePage } = await admin
+    let templatePage = await admin
       .from("pages")
       .select("id")
       .eq("slug", TEMPLATE_SLUG)
       .maybeSingle();
-    if (!templatePage) throw new Error("Template page (botox-masculino) not found");
 
-    const { data: templateBlocks } = await admin
-      .from("page_blocks")
-      .select("type,data,position,enabled,mode")
-      .eq("page_id", templatePage.id)
-      .order("position");
+    // Fallback: use any page if botox-masculino is missing
+    if (!templatePage.data) {
+      console.log("Template botox-masculino not found, falling back to any page");
+      templatePage = await admin.from("pages").select("id").limit(1).maybeSingle();
+    }
 
-    // DNA enxuto: só estrutura/forma de cada bloco para a IA imitar a cadência,
-    // sem despejar copy específica de Botox no prompt.
-    const dnaPayload = (templateBlocks || []).map((b) => ({
-      type: b.type,
-      campos: Object.keys((b.data as Record<string, unknown>) || {}),
-    }));
+    let dnaPayload = [];
+    if (templatePage.data) {
+      const { data: templateBlocks } = await admin
+        .from("page_blocks")
+        .select("type,data")
+        .eq("page_id", templatePage.data.id)
+        .order("position");
+
+      // DNA enxuto: só estrutura/forma de cada bloco para a IA imitar a cadência
+      dnaPayload = (templateBlocks || []).map((b) => ({
+        type: b.type,
+        campos: Object.keys((b.data as Record<string, unknown>) || {}),
+      }));
+    } else {
+      // Hard fallback if no pages exist at all
+      console.log("No pages found in DB, using hardcoded DNA fallback");
+      dnaPayload = BLOCK_ORDER.map(type => ({
+        type,
+        campos: ["eyebrow", "title", "subtitle", "cta_label", "cta_href", "body", "title_html", "paragraphs", "bullets", "cards", "steps", "price_label", "note", "intro", "footnote", "accordions", "bio", "faq_items"]
+      }));
+    }
 
     // Build prompt for AI
     const systemPrompt = `Você é a copywriter chefe da Estética Batel (Curitiba, desde 1995).
