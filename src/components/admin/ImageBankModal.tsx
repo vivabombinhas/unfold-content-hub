@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
  } from "@/components/ui/dialog";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
- import { Search, Library, Loader2, X, Globe, Maximize2, Minimize2, Upload, Eye, Check } from "lucide-react";
+   import { Search, Library, Loader2, X, Globe, Maximize2, Minimize2, Upload, Eye, Check, Filter, Image as ImageIcon, Info, ChevronRight, MousePointer2, ExternalLink, Download, Star } from "lucide-react";
  import { cn } from "@/lib/utils";
  import { ScrollArea } from "@/components/ui/scroll-area";
  import { Badge } from "@/components/ui/badge";
@@ -29,16 +29,18 @@ import { toast } from "@/hooks/use-toast";
    onSelect: (url: string) => void;
  }
  
- export function ImageBankModal({ onSelect }: Props) {
+  export function ImageBankModal({ onSelect }: Props) {
    const [isOpen, setIsOpen] = useState(false);
    const [images, setImages] = useState<ImageAsset[]>([]);
    const [loading, setLoading] = useState(false);
-   const [search, setSearch] = useState("");
-   const [category, setCategory] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    const [category, setCategory] = useState<string | null>(null);
+    const [onlyHero, setOnlyHero] = useState(false);
    const [columns, setColumns] = useState<2 | 4>(4);
    const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
-  const [uploading, setUploading] = useState(false);
-  const [previewImage, setPreviewImage] = useState<ImageAsset | null>(null);
+    const [uploading, setUploading] = useState(false);
+    const [focusedImage, setFocusedImage] = useState<any | null>(null);
+    const [activeTab, setActiveTab] = useState<"internal" | "external">("internal");
  
    const fetchImages = async () => {
      setLoading(true);
@@ -48,9 +50,13 @@ import { toast } from "@/hooks/use-toast";
        query = query.or(`title.ilike.%${search}%,category.ilike.%${search}%`);
      }
      
-     if (category) {
-       query = query.eq("category", category);
-     }
+      if (category) {
+        query = query.eq("category", category);
+      }
+
+      if (onlyHero) {
+        query = query.ilike("title", "%hero%");
+      }
  
      const { data, error } = await query.order("created_at", { ascending: false });
      
@@ -60,11 +66,25 @@ import { toast } from "@/hooks/use-toast";
      setLoading(false);
    };
  
-   useEffect(() => {
-     if (isOpen) {
-       fetchImages();
-     }
-   }, [isOpen, search, category]);
+    useEffect(() => {
+      if (isOpen) {
+        fetchImages();
+      }
+    }, [isOpen, search, category, onlyHero]);
+
+    // Keyboard navigation
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (!isOpen) return;
+        if (e.key === "Escape") setIsOpen(false);
+        if (e.key === "Enter" && focusedImage) {
+          onSelect(focusedImage.url);
+          setIsOpen(false);
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, focusedImage, onSelect]);
  
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -127,289 +147,393 @@ import { toast } from "@/hooks/use-toast";
            Banco de Imagens
          </Button>
        </DialogTrigger>
-         <DialogContent className="max-w-[1400px] w-[98vw] h-[95vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden shadow-2xl">
-           <Tabs defaultValue="internal" className="flex-1 flex flex-col h-full overflow-hidden">
-               <div className="px-4 md:px-6 py-4 border-b border-white/10 bg-brand-black/95 sticky top-0 z-30 backdrop-blur-md">
-                  <div className="flex items-center justify-between gap-4 mb-4">
-                   <div className="flex items-center gap-2">
-                     <Library className="size-5 text-brand-gold" />
-                     <DialogTitle className="text-xl font-display italic text-brand-gold">Biblioteca de Mídia</DialogTitle>
-                   </div>
- 
-                   <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <input
-                        type="file"
-                        id="image-upload"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleUpload}
-                        disabled={uploading}
-                      />
-                      <Button
-                        asChild
-                        variant="outline"
-                        size="sm"
-                        className="h-9 text-[10px] uppercase tracking-widest border-brand-gold/30 text-brand-gold hover:bg-brand-gold/10 cursor-pointer"
-                      >
-                       <label htmlFor="image-upload" className="flex items-center">
-                          {uploading ? (
-                            <Loader2 className="size-3.5 mr-2 animate-spin" />
-                          ) : (
-                            <Upload className="size-3.5 mr-2" />
-                          )}
-                          Enviar Foto
-                        </label>
-                      </Button>
-                    </div>
-                    
-                     <TabsList className="bg-white/5 border border-white/10 p-1 h-9">
-                       <TabsTrigger value="internal" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg px-4">Acervo</TabsTrigger>
-                       <TabsTrigger value="external" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg px-4">Pexels</TabsTrigger>
-                    </TabsList>
-
-                     <Button
-                       variant="ghost"
-                       size="icon"
-                       onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
-                       className={`size-9 border border-white/5 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                       title={fitMode === 'cover' ? "Ver imagem inteira" : "Preencher espaço"}
-                     >
-                       {fitMode === 'cover' ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />}
-                     </Button>
-                   </div>
-                 </div>
-             </div>
- 
-             <TabsContent value="internal" className="flex-1 flex flex-col h-full overflow-hidden m-0 bg-brand-bg/10">
-               <div className="px-4 md:px-6 py-4 bg-brand-black/40 border-b border-white/5">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative flex-1 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-brand-gold/50 group-focus-within:text-brand-gold transition-colors" />
-                    <Input 
-                      placeholder="Buscar por procedimento ou nome..." 
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="pl-12 bg-white/5 border-white/10 text-sm h-12 focus-visible:ring-brand-gold/50 rounded-xl"
-                    />
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                    <Button 
-                      variant={category === null ? "secondary" : "outline"} 
-                      size="sm" 
-                      onClick={() => setCategory(null)}
-                      className={cn(
-                        "h-10 text-xs uppercase tracking-[0.15em] px-5 rounded-lg",
-                        category === null ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
-                      )}
-                    >
-                      Todos
-                    </Button>
-                    {categories.map(cat => (
-                      <Button 
-                        key={cat}
-                        variant={category === cat ? "secondary" : "outline"} 
-                        size="sm" 
-                        onClick={() => setCategory(cat)}
-                        className={cn(
-                          "h-10 text-xs uppercase tracking-[0.15em] whitespace-nowrap px-5 rounded-lg",
-                          category === cat ? "bg-brand-gold text-brand-bg" : "border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
-                        )}
-                      >
-                        {cat}
-                      </Button>
-                    ))}
-                  </div>
+          <DialogContent className="max-w-none w-screen h-screen m-0 rounded-none bg-brand-black border-none text-white flex flex-col p-0 overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+            {/* Header / Top Bar */}
+            <div className="h-16 shrink-0 border-b border-white/10 bg-brand-black/95 flex items-center justify-between px-6 backdrop-blur-md z-50">
+              <div className="flex items-center gap-4">
+                <div className="size-10 rounded-xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
+                  <Library className="size-5 text-brand-gold" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-display italic text-brand-gold tracking-tight">Media Library Premium</DialogTitle>
+                  <p className="text-[10px] text-brand-text-muted uppercase tracking-[0.2em] font-sans not-italic">Acervo de Imagens de Alta Estética</p>
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 p-4 md:p-6 pt-2">
-                {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <Loader2 className="size-8 text-brand-gold animate-spin" />
-                    <p className="text-xs text-brand-text-muted uppercase tracking-widest">Carregando acervo...</p>
-                  </div>
-                ) : images.length > 0 ? (
-                   <div className={cn(
-                     "grid gap-4 md:gap-6",
-                     columns === 2 
-                       ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
-                       : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-                   )}>
-                    {images.map((img) => (
-                      <div 
-                        key={img.id}
-                        className="group relative flex flex-col rounded-2xl border border-white/5 bg-white/5 overflow-hidden hover:border-brand-gold/50 transition-all duration-300 shadow-2xl hover:-translate-y-1"
-                      >
-                        <div 
-                           className="relative overflow-hidden cursor-pointer aspect-[3/4]"
-                          onClick={() => setPreviewImage(img)}
-                        >
-                          <div className="w-full h-full bg-black/40">
-                            <img 
-                              src={img.url} 
-                              alt={img.title || ""} 
-                              className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain p-4'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-110' : ''}`}
-                              loading="lazy"
-                            />
-                          </div>
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <div className="flex flex-col items-center gap-2">
-                              <div className="size-8 rounded-full bg-brand-gold/20 backdrop-blur-md flex items-center justify-center border border-brand-gold/30">
-                                <Eye className="size-4 text-brand-gold" />
-                              </div>
-                              <span className="text-[8px] text-brand-gold uppercase tracking-widest font-bold">Ver</span>
-                            </div>
-                          </div>
-                          {img.category && (
-                            <Badge className="absolute top-2 right-2 bg-brand-gold/90 text-brand-bg text-[8px] h-4 hover:bg-brand-gold px-2 uppercase font-bold border-none">
-                              {img.category}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="p-2 border-t border-white/5 bg-brand-black/40">
-                          <Button 
-                            onClick={() => {
-                              onSelect(img.url);
-                              setIsOpen(false);
-                            }}
-                            className="w-full h-7 text-[9px] uppercase tracking-[0.1em] bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold"
-                          >
-                            Selecionar
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-20 text-center space-y-2">
-                    <X className="size-10 text-white/10" />
-                    <p className="text-sm text-brand-text-muted">Nenhuma imagem encontrada para os filtros selecionados.</p>
-                  </div>
-                )}
-              </ScrollArea>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setActiveTab("internal")}
+                    className={cn(
+                      "h-9 px-6 text-[11px] uppercase tracking-widest transition-all rounded-lg",
+                      activeTab === "internal" ? "bg-brand-gold text-brand-bg font-bold shadow-lg" : "text-white/60 hover:text-white"
+                    )}
+                  >
+                    Acervo Interno
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setActiveTab("external")}
+                    className={cn(
+                      "h-9 px-6 text-[11px] uppercase tracking-widest transition-all rounded-lg",
+                      activeTab === "external" ? "bg-brand-gold text-brand-bg font-bold shadow-lg" : "text-white/60 hover:text-white"
+                    )}
+                  >
+                    Pexels Global
+                  </Button>
+                </div>
 
-               <div className="p-4 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 bg-brand-black/90">
-                 <div className="flex items-center gap-4">
-                   <p className="text-[10px] text-brand-text-muted uppercase tracking-widest">
-                     {images.length} imagens no acervo
-                   </p>
-                   
-                   <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
-                     <Button
-                       variant="ghost"
-                       size="icon"
-                       onClick={() => setColumns(2)}
-                       className={`size-8 ${columns === 2 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                       title="Visualização Ampla"
-                     >
-                       <Maximize2 className="size-3.5" />
-                     </Button>
-                     <Button
-                       variant="ghost"
-                       size="icon"
-                       onClick={() => setColumns(4)}
-                       className={`size-8 ${columns === 4 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                       title="Visualização Compacta"
-                     >
-                       <div className="grid grid-cols-2 gap-0.5">
-                         <div className="size-1.5 bg-current rounded-sm"></div>
-                         <div className="size-1.5 bg-current rounded-sm"></div>
-                         <div className="size-1.5 bg-current rounded-sm"></div>
-                         <div className="size-1.5 bg-current rounded-sm"></div>
-                       </div>
-                     </Button>
-                   </div>
-                 </div>
-                 
-                 <div className="flex items-center gap-3">
-                    <span className="text-[9px] text-brand-gold/60 uppercase tracking-widest animate-pulse">
-                      Clique para ampliar
-                    </span>
-                    <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)} className="text-[10px] uppercase tracking-widest text-white/50 hover:text-white h-8">
-                      Fechar
-                    </Button>
-                 </div>
-               </div>
-            </TabsContent>
+                <div className="h-8 w-px bg-white/10" />
 
-            <TabsContent value="external" className="flex-1 flex flex-col overflow-hidden m-0">
-               <PexelsBank 
-                 externalFitMode={fitMode}
-                 onSelect={(url) => {
-                   onSelect(url);
-                   setIsOpen(false);
-                 }} 
-               />
-            </TabsContent>
-          </Tabs>
+                <div className="flex items-center gap-2">
+                   <input
+                     type="file"
+                     id="image-upload"
+                     className="hidden"
+                     accept="image/*"
+                     onChange={handleUpload}
+                     disabled={uploading}
+                   />
+                   <Button
+                     asChild
+                     variant="ghost"
+                     size="sm"
+                     className="h-9 text-[11px] uppercase tracking-widest text-white/60 hover:text-brand-gold hover:bg-brand-gold/10 cursor-pointer px-4"
+                   >
+                    <label htmlFor="image-upload" className="flex items-center gap-2">
+                       {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                       Upload
+                     </label>
+                   </Button>
 
-          {/* Internal Preview Dialog */}
-          <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-            <DialogContent className="max-w-3xl border-brand-gold/20 bg-brand-bg p-0 overflow-hidden shadow-2xl z-[100]">
-              <DialogHeader className="p-4 border-b border-white/5 bg-brand-black/40">
-                <DialogTitle className="text-sm font-display italic text-brand-gold flex items-center justify-between">
-                  <span>Visualização de Imagem Interna</span>
-                  <span className="text-[10px] text-brand-text-muted uppercase tracking-widest font-sans not-italic">
-                    {previewImage?.category}
-                  </span>
-                </DialogTitle>
-              </DialogHeader>
-              
-              {previewImage && (
-                <div className="flex flex-col h-[70vh] md:h-auto">
-                  <div className="flex-1 relative overflow-hidden bg-black/60 min-h-[300px] flex items-center justify-center p-4 md:p-8">
-                    <img 
-                      src={previewImage.url} 
-                      alt={previewImage.title || ""}
-                      className="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-lg"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white rounded-full z-10"
-                      onClick={() => setPreviewImage(null)}
-                    >
-                      <X className="size-5" />
-                    </Button>
-                  </div>
-                  <div className="p-4 md:p-6 bg-brand-black/90 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex-1 min-w-0 text-center md:text-left">
-                      <p className="text-sm text-white/90 italic font-display">{previewImage.title || "Imagem sem título"}</p>
-                      <div className="flex flex-wrap justify-center md:justify-start gap-1 mt-2">
-                        {previewImage.tags?.map(tag => (
-                          <span key={tag} className="text-[8px] px-1.5 py-0.5 rounded border border-white/10 text-white/40 uppercase tracking-widest">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
+                   <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsOpen(false)}
+                    className="size-9 rounded-xl hover:bg-white/10 text-white/60 hover:text-white"
+                   >
+                    <X className="size-5" />
+                   </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content: 3 Columns */}
+            <div className="flex-1 flex overflow-hidden bg-[#0a0a0a]">
+              {/* LEFT SIDEBAR: Filters & Categories */}
+              <aside className="w-72 shrink-0 border-r border-white/10 flex flex-col bg-brand-black/40">
+                <div className="p-6 space-y-8">
+                  {/* Search */}
+                  <div className="space-y-3">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/60 font-bold ml-1">Pesquisar</label>
+                    <div className="relative group">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
+                      <Input 
+                        placeholder={activeTab === 'internal' ? "No acervo..." : "No Pexels..."} 
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl"
+                      />
                     </div>
-                    <div className="flex gap-3 w-full md:w-auto">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => setPreviewImage(null)}
-                        className="flex-1 md:flex-none text-[10px] uppercase tracking-widest border-white/10 text-white/50 hover:text-white h-10 px-4"
+                  </div>
+
+                  {/* Categories (Internal only) */}
+                  {activeTab === 'internal' && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between ml-1">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/60 font-bold">Categorias</label>
+                        <Filter className="size-3 text-brand-gold/40" />
+                      </div>
+                      <ScrollArea className="h-[40vh]">
+                        <div className="space-y-1.5 pr-4">
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => {
+                                setCategory(null);
+                                setOnlyHero(false);
+                              }}
+                              className={cn(
+                                "w-full justify-start h-10 text-[11px] uppercase tracking-widest rounded-xl px-4",
+                                category === null && !onlyHero ? "bg-brand-gold/10 text-brand-gold border border-brand-gold/20" : "text-white/50 hover:text-white hover:bg-white/5"
+                              )}
+                            >
+                              <ImageIcon className="size-3.5 mr-3 opacity-60" />
+                              Todas as Fotos
+                            </Button>
+                            
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => {
+                                setCategory(null);
+                                setOnlyHero(true);
+                              }}
+                              className={cn(
+                                "w-full justify-start h-10 text-[11px] uppercase tracking-widest rounded-xl px-4",
+                                onlyHero ? "bg-brand-gold/10 text-brand-gold border border-brand-gold/20" : "text-white/50 hover:text-white hover:bg-white/5"
+                              )}
+                            >
+                              <Star className="size-3.5 mr-3 opacity-60" />
+                              Sugestões Hero
+                            </Button>
+                          {categories.map(cat => (
+                            <Button 
+                              key={cat}
+                              variant="ghost" 
+                              onClick={() => setCategory(cat)}
+                              className={cn(
+                                "w-full justify-start h-10 text-[11px] uppercase tracking-widest rounded-xl px-4",
+                                category === cat ? "bg-brand-gold/10 text-brand-gold border border-brand-gold/20" : "text-white/50 hover:text-white hover:bg-white/5"
+                              )}
+                            >
+                              <ChevronRight className="size-3.5 mr-3 opacity-60" />
+                              {cat}
+                            </Button>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  )}
+
+                  {/* Display Options */}
+                  <div className="space-y-4 pt-4 border-t border-white/5">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/60 font-bold ml-1">Visualização</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={() => setFitMode('cover')}
+                        className={cn(
+                          "h-12 flex flex-col gap-1 rounded-xl border",
+                          fitMode === 'cover' ? "border-brand-gold/30 bg-brand-gold/5 text-brand-gold" : "border-white/5 text-white/40 hover:bg-white/5"
+                        )}
                       >
-                        Fechar
+                        <Maximize2 className="size-4" />
+                        <span className="text-[8px] uppercase tracking-widest font-bold">Preencher</span>
                       </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => {
-                          onSelect(previewImage.url);
-                          setPreviewImage(null);
-                          setIsOpen(false);
-                        }}
-                        className="flex-1 md:flex-none text-[10px] uppercase tracking-widest bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold h-10 px-6"
+                      <Button
+                        variant="ghost"
+                        onClick={() => setFitMode('contain')}
+                        className={cn(
+                          "h-12 flex flex-col gap-1 rounded-xl border",
+                          fitMode === 'contain' ? "border-brand-gold/30 bg-brand-gold/5 text-brand-gold" : "border-white/5 text-white/40 hover:bg-white/5"
+                        )}
                       >
-                        Usar esta Imagem
+                        <Minimize2 className="size-4" />
+                        <span className="text-[8px] uppercase tracking-widest font-bold">Inteira</span>
                       </Button>
                     </div>
                   </div>
                 </div>
-              )}
-            </DialogContent>
-          </Dialog>
+
+                <div className="mt-auto p-6 bg-brand-black/60 border-t border-white/10">
+                  <div className="flex items-center gap-3 text-white/30">
+                    <MousePointer2 className="size-4" />
+                    <span className="text-[9px] uppercase tracking-[0.2em]">Double click para escolher</span>
+                  </div>
+                </div>
+              </aside>
+
+              {/* CENTER: Image Grid */}
+              <main className="flex-1 flex flex-col overflow-hidden relative">
+                <ScrollArea className="flex-1 px-8 py-8">
+                  {activeTab === 'internal' ? (
+                    loading ? (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-brand-black/20 backdrop-blur-sm z-10">
+                        <Loader2 className="size-10 text-brand-gold animate-spin" />
+                        <p className="text-sm text-brand-gold uppercase tracking-[0.3em] font-light animate-pulse">Carregando Acervo Premium...</p>
+                      </div>
+                    ) : images.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pb-20">
+                        {images.map((img) => (
+                          <div 
+                            key={img.id}
+                            onDoubleClick={() => {
+                              onSelect(img.url);
+                              setIsOpen(false);
+                            }}
+                            onClick={() => setFocusedImage(img)}
+                            className={cn(
+                              "group relative flex flex-col rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 shadow-2xl bg-brand-black/40",
+                              focusedImage?.id === img.id ? "ring-2 ring-brand-gold scale-[0.98] z-10" : "hover:scale-[1.02] hover:shadow-brand-gold/10"
+                            )}
+                          >
+                            <div className="aspect-[3/4] overflow-hidden relative">
+                              <img 
+                                src={img.url} 
+                                alt={img.title || ""} 
+                                className={cn(
+                                  "w-full h-full transition-all duration-1000",
+                                  fitMode === 'cover' ? 'object-cover' : 'object-contain p-4 bg-white/5',
+                                  focusedImage?.id === img.id ? "scale-105 contrast-110" : "group-hover:scale-110"
+                                )}
+                                loading="lazy"
+                              />
+                              {/* Overlay on select/hover */}
+                              <div className={cn(
+                                "absolute inset-0 transition-opacity duration-300 flex flex-col items-center justify-center gap-3",
+                                focusedImage?.id === img.id ? "bg-brand-gold/10 opacity-100" : "bg-black/40 opacity-0 group-hover:opacity-100"
+                              )}>
+                                <div className="size-10 rounded-full bg-brand-gold text-brand-bg flex items-center justify-center shadow-2xl scale-0 group-hover:scale-100 transition-transform duration-300">
+                                  <Check className="size-5" />
+                                </div>
+                              </div>
+                            </div>
+                            {img.title && (
+                              <div className="p-3 bg-brand-black/80 backdrop-blur-md border-t border-white/5">
+                                <p className="text-[10px] text-white/60 truncate uppercase tracking-widest font-medium">{img.title}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                        <ImageIcon className="size-16" />
+                        <p className="text-sm font-light uppercase tracking-[0.2em]">Nenhuma imagem encontrada</p>
+                      </div>
+                    )
+                  ) : (
+                    <PexelsBank 
+                      externalFitMode={fitMode}
+                      searchQuery={search}
+                      onFocusImage={setFocusedImage}
+                      onSelect={(url) => {
+                        onSelect(url);
+                        setIsOpen(false);
+                      }} 
+                    />
+                  )}
+                </ScrollArea>
+              </main>
+
+              {/* RIGHT SIDEBAR: Selection Preview & Metadata */}
+              <aside className="w-80 shrink-0 border-l border-white/10 bg-brand-black flex flex-col shadow-2xl z-40">
+                {focusedImage ? (
+                  <div className="flex flex-col h-full animate-in slide-in-from-right duration-500">
+                    <div className="p-6 border-b border-white/10 flex items-center justify-between bg-brand-black/40">
+                      <div className="flex items-center gap-2">
+                        <Info className="size-4 text-brand-gold" />
+                        <h3 className="text-xs font-display italic text-brand-gold">Detalhes do Arquivo</h3>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => setFocusedImage(null)} className="size-8 rounded-lg text-white/30 hover:text-white">
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+
+                    <ScrollArea className="flex-1 p-6">
+                      <div className="space-y-8">
+                        {/* Big Preview */}
+                        <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 shadow-2xl aspect-video relative group">
+                          <img 
+                            src={focusedImage.url} 
+                            className="w-full h-full object-cover"
+                            alt="Preview"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button variant="outline" className="text-[10px] uppercase tracking-widest border-brand-gold/50 text-brand-gold hover:bg-brand-gold/10" onClick={() => window.open(focusedImage.url, '_blank')}>
+                              <ExternalLink className="size-3 mr-2" />
+                              Ver Original
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Metadata grid */}
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-[9px] uppercase tracking-[0.2em] text-white/30 font-bold">Título / Nome</p>
+                            <p className="text-sm text-white italic font-display">{focusedImage.title || "Sem título"}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[9px] uppercase tracking-[0.2em] text-white/30 font-bold">Categoria</p>
+                            <Badge variant="outline" className="bg-brand-gold/5 border-brand-gold/20 text-brand-gold text-[10px] uppercase tracking-widest px-3 py-1">
+                              {focusedImage.category || "Geral"}
+                            </Badge>
+                          </div>
+                          {focusedImage.photographer && (
+                            <div className="space-y-1">
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-white/30 font-bold">Créditos</p>
+                              <p className="text-xs text-white/60">@{focusedImage.photographer}</p>
+                            </div>
+                          )}
+                          {focusedImage.tags && focusedImage.tags.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-white/30 font-bold">Tags Relacionadas</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {focusedImage.tags.map(tag => (
+                                  <span key={tag} className="text-[9px] px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-white/50 uppercase tracking-widest">
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </ScrollArea>
+
+                    {/* Action Buttons */}
+                    <div className="p-6 border-t border-white/10 space-y-3 bg-brand-black/95">
+                      {focusedImage.onSave && !focusedImage.isImported && (
+                        <Button 
+                          onClick={focusedImage.onSave}
+                          disabled={focusedImage.importing}
+                          variant="outline"
+                          className="w-full h-12 border-brand-gold/30 text-brand-gold hover:bg-brand-gold/5 text-[10px] uppercase tracking-[0.15em] rounded-xl"
+                        >
+                          {focusedImage.importing ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Download className="size-4 mr-2" />}
+                          Salvar no Acervo
+                        </Button>
+                      )}
+                      
+                      <Button 
+                        onClick={() => {
+                          onSelect(focusedImage.url);
+                          setIsOpen(false);
+                        }}
+                        className="w-full h-14 bg-brand-gold text-brand-bg hover:bg-brand-gold/90 text-xs uppercase tracking-[0.2em] font-bold rounded-2xl shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        Usar no Hero
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          onSelect(focusedImage.url);
+                          setIsOpen(false);
+                        }}
+                        className="w-full h-12 border-white/10 text-white/60 hover:text-white hover:bg-white/5 text-[10px] uppercase tracking-[0.15em] rounded-xl"
+                      >
+                        Usar no Bloco
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 opacity-20">
+                    <div className="size-20 rounded-full border-2 border-dashed border-white/30 flex items-center justify-center">
+                      <MousePointer2 className="size-8" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] font-bold">Nenhuma seleção</p>
+                      <p className="text-[10px] mt-2 leading-relaxed">Clique em uma imagem para ver os detalhes e opções de uso.</p>
+                    </div>
+                  </div>
+                )}
+              </aside>
+            </div>
+
+            {/* Bottom Status Bar */}
+            <footer className="h-10 shrink-0 border-t border-white/10 bg-brand-black/90 px-6 flex items-center justify-between text-[9px] uppercase tracking-[0.2em] text-white/30 z-50">
+              <div className="flex items-center gap-6">
+                <span className="flex items-center gap-2">
+                  <div className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Banco de dados conectado
+                </span>
+                <span>{images.length} imagens no acervo</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span>ESC para fechar</span>
+                <span>ENTER para confirmar</span>
+              </div>
+            </footer>
        </DialogContent>
      </Dialog>
    );
