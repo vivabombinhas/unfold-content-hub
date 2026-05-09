@@ -77,29 +77,19 @@
            Banco de Imagens
          </Button>
        </DialogTrigger>
-        <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] h-[85vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden sm:w-full">
+        <DialogContent className="max-w-[1200px] w-[98vw] max-h-[98vh] h-[95vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden">
           <Tabs defaultValue="internal" className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-6 pt-6 border-b border-white/5">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-                <div className="flex items-center justify-between w-full lg:w-auto">
-                  <DialogTitle className="text-xl font-display italic text-brand-gold">Biblioteca de Mídia</DialogTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
-                    className={`lg:hidden size-8 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                    title={fitMode === 'cover' ? "Ajustar Imagens" : "Preencher Imagens"}
-                  >
-                    {fitMode === 'cover' ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />}
-                  </Button>
-                </div>
+            <div className="px-4 md:px-6 pt-6 pb-2 border-b border-white/5 bg-brand-black/50">
+               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-4">
+                 <DialogTitle className="text-xl md:text-2xl font-display italic text-brand-gold">Biblioteca de Mídia</DialogTitle>
+                 
                 <TabsList className="bg-white/5 border border-white/10 p-1">
                   <TabsTrigger value="internal" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg">
                     <Library className="size-3 mr-2" />
                     Acervo Interno
                   </TabsTrigger>
-                  <TabsTrigger value="external" className="text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg relative">
-                    <Globe className="size-3 mr-2" />
+                  <TabsTrigger value="external" className="text-[9px] md:text-[10px] uppercase tracking-widest data-[state=active]:bg-brand-gold data-[state=active]:text-brand-bg relative px-2 md:px-4">
+                    <Globe className="size-3 mr-1.5 md:mr-2" />
                     Banco Externo (Pexels)
                     <span className="absolute -top-1 -right-1 flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-gold opacity-75"></span>
