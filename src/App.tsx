@@ -1,4 +1,5 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+ import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -23,36 +24,38 @@ import Settings from "./pages/admin/Settings.tsx";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/p/:slug" element={<AuthProvider><PublicPage /></AuthProvider>} />
-          <Route path="/admin/login" element={<AuthProvider><AdminLogin /></AuthProvider>} />
-          <Route path="/admin" element={<AuthProvider><AdminLayout /></AuthProvider>}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="paginas" element={<PagesList />} />
-             <Route path="paginas/nova" element={<PageCreationWizard />} />
-             <Route path="paginas/lote" element={<BatchPageCreation />} />
-            <Route path="paginas/nova-legado" element={<NewPageFromTopic />} />
-             <Route path="paginas/:slug" element={<PageEditor />} />
-              <Route path="faqs" element={<Faqs />} />
-               <Route path="depoimentos" element={<Reviews />} />
-                <Route path="casos" element={<Cases />} />
-                <Route path="ia-opinions" element={<div className="p-8 text-brand-text-muted">Página de Opiniões de IAs em desenvolvimento...</div>} />
-              <Route path="cursos" element={<Courses />} />
-            <Route path="configuracoes" element={<Settings />} />
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+ const App = () => (
+   <QueryClientProvider client={queryClient}>
+     <HelmetProvider>
+       <TooltipProvider>
+         <Toaster />
+         <Sonner />
+         <BrowserRouter>
+           <Routes>
+             <Route path="/" element={<Index />} />
+             <Route path="/p/:slug" element={<AuthProvider><PublicPage /></AuthProvider>} />
+             <Route path="/admin/login" element={<AuthProvider><AdminLogin /></AuthProvider>} />
+             <Route path="/admin" element={<AuthProvider><AdminLayout /></AuthProvider>}>
+               <Route index element={<AdminDashboard />} />
+               <Route path="paginas" element={<PagesList />} />
+                <Route path="paginas/nova" element={<PageCreationWizard />} />
+                <Route path="paginas/lote" element={<BatchPageCreation />} />
+               <Route path="paginas/nova-legado" element={<NewPageFromTopic />} />
+                <Route path="paginas/:slug" element={<PageEditor />} />
+                 <Route path="faqs" element={<Faqs />} />
+                  <Route path="depoimentos" element={<Reviews />} />
+                   <Route path="casos" element={<Cases />} />
+                   <Route path="ia-opinions" element={<div className="p-8 text-brand-text-muted">Página de Opiniões de IAs em desenvolvimento...</div>} />
+                 <Route path="cursos" element={<Courses />} />
+               <Route path="configuracoes" element={<Settings />} />
+             </Route>
+             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+             <Route path="*" element={<NotFound />} />
+           </Routes>
+         </BrowserRouter>
+       </TooltipProvider>
+     </HelmetProvider>
+   </QueryClientProvider>
+ );
 
 export default App;
