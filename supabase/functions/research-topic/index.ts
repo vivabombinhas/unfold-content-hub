@@ -540,6 +540,56 @@ function truncate(s: string | null | undefined, n: number) {
         (oldPageContent as Record<string, unknown>).raw_markdown = ownRawMarkdown.join("\n\n---\n\n").slice(0, 80000);
         (oldPageContent as Record<string, unknown>).raw_html_size = ownRawHtml.reduce((a, b) => a + b.length, 0);
       }
+
+      // Fallback determinístico: extrai depoimentos do markdown via regex.
+      // Pattern típico WordPress: "Nome\n\nVia Whatsapp\n\nTexto do depoimento".
+      // Roda independente da IA — mescla com o resultado dela quando a IA falha.
+      try {
+        const allMd = ownRawMarkdown.join("\n\n---\n\n");
+        const regexFound: { name: string; text: string; source: string }[] = [];
+        // Captura: Nome próprio + linha "Via X" + bloco de texto até próxima linha em branco dupla / próximo Nome
+        const re = /(^|\n)([A-ZÁÉÍÓÚÂÊÔÃÕÇ][\wÀ-ÿ' .-]{2,60})\s*\n+\s*(Via\s+[\wÀ-ÿ ]+)\s*\n+\s*([^\n][^]{30,800}?)(?=\n\s*\n[A-ZÁÉÍÓÚÂÊÔÃÕÇ][\wÀ-ÿ' .-]{2,60}\s*\n+\s*Via\s|\n\s*##|\n\s*\[|$)/g;
+        // Também aceita ordem invertida: texto + nome + "Via X"
+        const reInv = /(^|\n)["']?([^\n"']{40,600})["']?\s*\n+\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][\wÀ-ÿ' .-]{2,60})\s*\n+\s*(Via\s+[\wÀ-ÿ ]+)/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(allMd)) !== null) {
+          const name = m[2].trim();
+          const text = m[4].trim().replace(/\s+/g, " ");
+          if (text.length < 30) continue;
+          if (/^(Iniciar|Agendar|Quais|Como|Por que|O que)/i.test(text)) continue;
+          regexFound.push({ name, text, source: "old_page_regex" });
+        }
+        while ((m = reInv.exec(allMd)) !== null) {
+          const text = m[2].trim().replace(/\s+/g, " ");
+          const name = m[3].trim();
+          if (text.length < 30) continue;
+          regexFound.push({ name, text, source: "old_page_regex" });
+        }
+        // dedup por texto
+        const seen = new Set<string>();
+        const unique = regexFound.filter((t) => {
+          const k = t.text.slice(0, 60).toLowerCase();
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+        if (unique.length > 0) {
+          const obj = (oldPageContent && typeof oldPageContent === "object")
+            ? oldPageContent as Record<string, unknown>
+            : (oldPageContent = { testimonials: [], faqs: [], sections: [], ctas: [], images: candidateImages } as Record<string, unknown>);
+          const existing = Array.isArray(obj.testimonials) ? obj.testimonials as { text?: string }[] : [];
+          const existingKeys = new Set(existing.map((t) => (t.text || "").slice(0, 60).toLowerCase()));
+          const merged = [...existing];
+          for (const t of unique) {
+            const k = t.text.slice(0, 60).toLowerCase();
+            if (!existingKeys.has(k)) merged.push(t);
+          }
+          obj.testimonials = merged;
+          console.log(`[regex_testimonials] adicionados ${unique.length} (total ${merged.length})`);
+        }
+      } catch (e) {
+        console.error("regex testimonial fallback failed", e);
+      }
     }
 
     const responsePayload = {
