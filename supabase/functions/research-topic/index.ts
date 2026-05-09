@@ -429,7 +429,7 @@ function truncate(s: string | null | undefined, n: number) {
               },
               {
                 role: "user",
-                content: `Tema da nova página: "${tema}"\n\nConteúdo bruto das páginas antigas (extraia LITERALMENTE):\n\n${ownCorpusParts.join("\n\n---\n\n").slice(0, 45000)}`,
+                content: `Tema da nova página: "${tema}"\n\nConteúdo bruto das páginas antigas (extraia LITERALMENTE):\n\n${ownCorpusParts.join("\n\n---\n\n").slice(0, 90000)}`,
               },
             ],
             tools: [
