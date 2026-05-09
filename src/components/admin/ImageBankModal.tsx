@@ -1,4 +1,4 @@
-  import { useState, useEffect, useCallback } from "react";
+  import { useState, useEffect, useCallback, useRef } from "react";
   import { createPortal } from "react-dom";
  import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -24,7 +24,8 @@ import { toast } from "@/hooks/use-toast";
  }
  
   export function ImageBankModal({ onSelect, trigger }: Props & { trigger?: React.ReactNode }) {
-   const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
    const [images, setImages] = useState<ImageAsset[]>([]);
    const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -74,6 +75,11 @@ import { toast } from "@/hooks/use-toast";
 
     useEffect(() => {
       if (!isOpen) return;
+      
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape") close();
         if (e.key === "Enter" && focusedImage) {
@@ -85,6 +91,7 @@ import { toast } from "@/hooks/use-toast";
       return () => {
         window.removeEventListener("keydown", handleKeyDown);
         document.body.style.overflow = "";
+        clearTimeout(timer);
       };
     }, [isOpen, focusedImage, close, select]);
  
@@ -171,10 +178,11 @@ import { toast } from "@/hooks/use-toast";
                 <div className="relative group max-w-md w-full">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/40 group-focus-within:text-brand-gold transition-colors" />
                   <Input 
+                    ref={searchInputRef}
                     placeholder={activeTab === 'internal' ? "Pesquisar no seu acervo..." : "Explorar fotos no Pexels..."} 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl w-full"
+                    className="pl-11 bg-white/5 border-white/10 h-11 text-xs focus-visible:ring-brand-gold/30 rounded-xl w-full transition-all focus:bg-white/10"
                   />
                 </div>
               </div>
