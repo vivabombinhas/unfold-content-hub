@@ -34,18 +34,17 @@ interface Props {
   const fetchPhotos = useCallback(async (query: string, p: number) => {
     setLoading(true);
     try {
-      // Enforce aesthetic focus and use English terms for better Pexels results
-      let searchQuery = query.trim();
-      if (!searchQuery) {
-        searchQuery = "aesthetic medical clinic beauty treatment skincare";
+      let data;
+      if (!query.trim()) {
+        data = await getCuratedPhotos(p);
       } else {
-        // Append relevant aesthetic keywords to user query if they are not already there
-        if (!searchQuery.toLowerCase().includes("estética") && !searchQuery.toLowerCase().includes("aesthetic")) {
+        let searchQuery = query.trim();
+        // Append aesthetic keywords if not present to maintain the requested "estética" focus
+        if (!searchQuery.toLowerCase().includes("aesthetic") && !searchQuery.toLowerCase().includes("estética")) {
           searchQuery += " aesthetic beauty";
         }
+        data = await searchPhotos(searchQuery, p);
       }
-      
-      const data = await searchPhotos(searchQuery, p);
       
       if (p === 1) {
         setPhotos(data.photos);
@@ -53,9 +52,10 @@ interface Props {
         setPhotos(prev => [...prev, ...data.photos]);
       }
     } catch (error) {
+      console.error("Pexels fetch error:", error);
       toast({
         title: "Erro ao buscar fotos",
-        description: "Não foi possível carregar as imagens do Pexels.",
+        description: "Não foi possível carregar as imagens do Pexels. Verifique sua conexão.",
         variant: "destructive",
       });
     } finally {
@@ -162,8 +162,8 @@ interface Props {
           </div>
         </div>
 
-      <ScrollArea className="flex-1 min-h-[400px]">
-        <div className="p-4 md:p-8 pt-4">
+      <ScrollArea className="flex-1">
+        <div className="p-4 md:p-6 lg:p-8">
           {loading && photos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <Loader2 className="size-8 text-brand-gold animate-spin" />
@@ -171,10 +171,12 @@ interface Props {
             </div>
           ) : photos.length > 0 ? (
             <div className="space-y-6">
-               <div className={`grid gap-4 md:gap-8 ${
-                 columns === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
-                 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-               }`}>
+               <div className={cn(
+                 "grid gap-4 md:gap-6",
+                 columns === 2 
+                   ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
+                   : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+               )}>
                 {photos.map((photo) => (
                   <div 
                     key={photo.id}

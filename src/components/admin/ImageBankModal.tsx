@@ -127,8 +127,8 @@ import { toast } from "@/hooks/use-toast";
            Banco de Imagens
          </Button>
        </DialogTrigger>
-        <DialogContent className="max-w-[1400px] w-[95vw] h-[90vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden shadow-2xl">
-          <Tabs defaultValue="internal" className="flex-1 flex flex-col overflow-hidden">
+         <DialogContent className="max-w-[1400px] w-[98vw] h-[95vh] bg-brand-black border-brand-gold/20 text-white flex flex-col p-0 overflow-hidden shadow-2xl">
+           <Tabs defaultValue="internal" className="flex-1 flex flex-col h-full overflow-hidden">
               <div className="px-4 md:px-8 pt-8 pb-4 border-b border-white/10 bg-brand-black/90 sticky top-0 z-30 backdrop-blur-md">
                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
                   <div className="flex items-center gap-3">
@@ -198,8 +198,8 @@ import { toast } from "@/hooks/use-toast";
                 </div>
             </div>
 
-            <TabsContent value="internal" className="flex-1 flex flex-col overflow-hidden m-0 bg-brand-bg/30">
-              <div className="p-4 md:p-8 pb-4">
+            <TabsContent value="internal" className="flex-1 flex flex-col h-full overflow-hidden m-0 bg-brand-bg/30">
+              <div className="p-4 md:p-6 pb-4">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-brand-gold/50 group-focus-within:text-brand-gold transition-colors" />
@@ -240,14 +240,19 @@ import { toast } from "@/hooks/use-toast";
                 </div>
               </div>
 
-              <ScrollArea className="flex-1 p-4 md:p-8 pt-2">
+              <ScrollArea className="flex-1 p-4 md:p-6 pt-2">
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3">
                     <Loader2 className="size-8 text-brand-gold animate-spin" />
                     <p className="text-xs text-brand-text-muted uppercase tracking-widest">Carregando acervo...</p>
                   </div>
                 ) : images.length > 0 ? (
-                   <div className="grid gap-4 md:gap-8 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                   <div className={cn(
+                     "grid gap-4 md:gap-6",
+                     columns === 2 
+                       ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
+                       : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+                   )}>
                     {images.map((img) => (
                       <div 
                         key={img.id}
