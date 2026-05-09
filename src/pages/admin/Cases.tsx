@@ -132,24 +132,20 @@ export default function Cases() {
     enabled: !authLoading && isAdmin,
   });
 
-   // Update debounced search
-   useEffect(() => {
-     const timer = setTimeout(() => {
-       setDebouncedSearch(searchTerm);
-     }, 300);
-     return () => clearTimeout(timer);
-   }, [searchTerm]);
-
-   const filteredCases = cases?.filter(c => {
-     if (!debouncedSearch) return true;
-     const s = debouncedSearch.toLowerCase();
-     return (
-       (c.area?.toLowerCase().includes(s) || 
-        c.notes?.toLowerCase().includes(s) ||
-        c.slug?.toLowerCase().includes(s) ||
-        c.toxin?.toLowerCase().includes(s))
-     );
-   });
+  // Define filteredCases using local searchTerm to make it feel immediate
+  // while we also have the debounced version for more heavy operations if needed
+  const filteredCases = cases?.filter(c => {
+    if (!searchTerm) return true;
+    const s = searchTerm.toLowerCase();
+    return (
+      (c.area?.toLowerCase().includes(s) || 
+       c.notes?.toLowerCase().includes(s) ||
+       c.slug?.toLowerCase().includes(s) ||
+       c.toxin?.toLowerCase().includes(s) ||
+       c.age?.toLowerCase().includes(s) ||
+       c.dosage?.toLowerCase().includes(s))
+    );
+  });
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
