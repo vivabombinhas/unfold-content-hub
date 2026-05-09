@@ -1,5 +1,6 @@
  import { useState, useEffect, useCallback } from "react";
- import { Search, Loader2, X, ExternalLink, Download, Check, Eye, Globe, Maximize2, Minimize2, LayoutGrid, List } from "lucide-react";
+import { Search, Loader2, X, ExternalLink, Download, Check, Eye, Globe, Maximize2, Minimize2, LayoutGrid, List } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -34,18 +35,17 @@ interface Props {
   const fetchPhotos = useCallback(async (query: string, p: number) => {
     setLoading(true);
     try {
-      // Enforce aesthetic focus and use English terms for better Pexels results
-      let searchQuery = query.trim();
-      if (!searchQuery) {
-        searchQuery = "aesthetic medical clinic beauty treatment skincare";
+      let data;
+      if (!query.trim()) {
+        data = await getCuratedPhotos(p);
       } else {
-        // Append relevant aesthetic keywords to user query if they are not already there
-        if (!searchQuery.toLowerCase().includes("estética") && !searchQuery.toLowerCase().includes("aesthetic")) {
+        let searchQuery = query.trim();
+        // Append aesthetic keywords if not present to maintain the requested "estética" focus
+        if (!searchQuery.toLowerCase().includes("aesthetic") && !searchQuery.toLowerCase().includes("estética")) {
           searchQuery += " aesthetic beauty";
         }
+        data = await searchPhotos(searchQuery, p);
       }
-      
-      const data = await searchPhotos(searchQuery, p);
       
       if (p === 1) {
         setPhotos(data.photos);
@@ -53,9 +53,10 @@ interface Props {
         setPhotos(prev => [...prev, ...data.photos]);
       }
     } catch (error) {
+      console.error("Pexels fetch error:", error);
       toast({
         title: "Erro ao buscar fotos",
-        description: "Não foi possível carregar as imagens do Pexels.",
+        description: "Não foi possível carregar as imagens do Pexels. Verifique sua conexão.",
         variant: "destructive",
       });
     } finally {
@@ -107,63 +108,63 @@ interface Props {
 
   return (
     <div className="flex flex-col h-full bg-brand-bg/30">
-        <div className="p-4 md:p-8 pb-4 sticky top-0 z-20 bg-brand-black/95 backdrop-blur-sm border-b border-white/10">
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-6 items-center">
-              <div className="relative flex-1 w-full group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-brand-gold/50 group-focus-within:text-brand-gold transition-colors" />
-                <Input 
-                  placeholder="Buscar por estética, clínica, skincare..." 
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-12 bg-white/5 border-white/10 text-sm h-14 focus-visible:ring-brand-gold/50 w-full rounded-xl"
-                />
-              </div>
+        <div className="px-4 md:px-6 py-4 sticky top-0 z-20 bg-brand-black/95 backdrop-blur-md border-b border-white/5">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-brand-gold/50 group-focus-within:text-brand-gold transition-colors" />
+              <Input 
+                placeholder="Buscar no Pexels..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 bg-white/5 border-white/10 text-xs h-10 focus-visible:ring-brand-gold/50 w-full rounded-lg"
+              />
+              {search && (
+                <button 
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
+                className={cn(
+                  "h-10 border-white/10 text-[10px] uppercase tracking-widest",
+                  fitMode === 'contain' ? "bg-brand-gold text-brand-bg border-brand-gold" : "text-white/60"
+                )}
+              >
+                {fitMode === 'cover' ? 'Ver Inteira' : 'Preencher'}
+              </Button>
               
-              <div className="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/10 shrink-0">
-                <div className="flex items-center border-r border-white/10 pr-3 mr-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
-                    className={`h-10 px-3 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50 hover:text-white'}`}
-                    title={fitMode === 'cover' ? "Mudar para Ajustar (Contain)" : "Mudar para Preencher (Cover)"}
-                  >
-                    {fitMode === 'cover' ? <Maximize2 className="size-4 mr-2" /> : <Minimize2 className="size-4 mr-2" />}
-                    <span className="text-[10px] uppercase tracking-widest hidden sm:inline">{fitMode === 'cover' ? 'Preencher' : 'Ajustar'}</span>
-                  </Button>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setColumns(2)}
-                    className={`h-10 px-3 ${columns === 2 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50 hover:text-white'}`}
-                  >
-                    <LayoutGrid className="size-4 mr-2" />
-                    <span className="text-[10px] uppercase tracking-widest hidden sm:inline">Amplo</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setColumns(4)}
-                    className={`h-10 px-3 ${columns === 4 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50 hover:text-white'}`}
-                  >
-                    <List className="size-4 mr-2" />
-                    <span className="text-[10px] uppercase tracking-widest hidden sm:inline">Lista</span>
-                  </Button>
-                </div>
+              <div className="flex items-center bg-white/5 rounded-lg border border-white/10 p-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setColumns(2)}
+                  className={cn("size-9", columns === 2 ? "text-brand-gold bg-brand-gold/10" : "text-white/40")}
+                >
+                  <LayoutGrid className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setColumns(4)}
+                  className={cn("size-9", columns === 4 ? "text-brand-gold bg-brand-gold/10" : "text-white/40")}
+                >
+                  <List className="size-4" />
+                </Button>
               </div>
             </div>
-            <p className="text-[10px] text-brand-gold/60 uppercase tracking-widest text-center sm:text-left">
-              Dica: Clique na imagem para ver em tela cheia antes de selecionar
-            </p>
           </div>
         </div>
 
-      <ScrollArea className="flex-1 min-h-[400px]">
-        <div className="p-4 md:p-8 pt-4">
+      <ScrollArea className="flex-1">
+        <div className="p-4 md:p-6 lg:p-8">
           {loading && photos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <Loader2 className="size-8 text-brand-gold animate-spin" />
@@ -171,10 +172,12 @@ interface Props {
             </div>
           ) : photos.length > 0 ? (
             <div className="space-y-6">
-               <div className={`grid gap-4 md:gap-8 ${
-                 columns === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
-                 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
-               }`}>
+               <div className={cn(
+                 "grid gap-4 md:gap-6",
+                 columns === 2 
+                   ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
+                   : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+               )}>
                 {photos.map((photo) => (
                   <div 
                     key={photo.id}
@@ -209,8 +212,9 @@ interface Props {
                       <div className="flex gap-1.5">
                         <Button 
                           onClick={() => onSelect(photo.src.large2x)}
-                          className="flex-1 h-8 text-[9px] uppercase tracking-[0.1em] bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold"
+                          className="flex-1 h-9 text-[10px] uppercase tracking-widest bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold"
                         >
+                          <Check className="size-3.5 mr-2" />
                           Selecionar
                         </Button>
                         <Button 
