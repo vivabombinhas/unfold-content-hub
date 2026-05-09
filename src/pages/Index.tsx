@@ -42,7 +42,10 @@ const Index = () => {
   if (legacyPreview && legacyPreview !== "1") {
     return <Navigate to={`/p/${legacyPreview}?preview=1`} replace />;
   }
-  useReveal();
+   useEffect(() => {
+     window.scrollTo(0, 0);
+   }, []);
+   useReveal();
   const [manifestoOpen, setManifestoOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);

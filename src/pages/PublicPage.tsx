@@ -65,8 +65,9 @@ export default function PublicPage() {
     [data?.blocks],
   );
 
-  useEffect(() => {
-    if (!previewMode) return;
+   useEffect(() => {
+     window.scrollTo(0, 0);
+     if (!previewMode) return;
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === "SELECT_BLOCK") {
         const id = e.data.id;
@@ -99,7 +100,7 @@ export default function PublicPage() {
         <p className="text-brand-text-muted text-sm max-w-md">
           A página <code className="text-brand-gold">/{slug}</code> não existe ou ainda não foi publicada.
         </p>
-        <Link to="/" className="text-brand-gold text-sm border-b border-brand-gold/40 pb-1 hover:border-brand-gold">
+         <Link to="/#" className="text-brand-gold text-sm border-b border-brand-gold/40 pb-1 hover:border-brand-gold">
           Voltar para a home
         </Link>
       </div>
