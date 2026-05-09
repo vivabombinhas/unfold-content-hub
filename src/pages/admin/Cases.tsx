@@ -1,4 +1,4 @@
-import { useState } from "react";
+ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Pencil, Trash2, Search, Image as ImageIcon, Check, X, Globe, Loader2, Grid } from "lucide-react";
@@ -49,7 +49,8 @@ interface Case {
 export default function Cases() {
   const queryClient = useQueryClient();
   const { isAdmin, loading: authLoading } = useAuth();
-  const [search, setSearch] = useState("");
+   const [searchTerm, setSearchTerm] = useState("");
+   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCase, setEditingCase] = useState<Case | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Case | null>(null);
@@ -131,11 +132,24 @@ export default function Cases() {
     enabled: !authLoading && isAdmin,
   });
 
-  const filteredCases = cases?.filter(c => 
-    (c.area?.toLowerCase().includes(search.toLowerCase()) || 
-     c.notes?.toLowerCase().includes(search.toLowerCase()) ||
-     c.slug.toLowerCase().includes(search.toLowerCase()))
-  );
+   // Update debounced search
+   useEffect(() => {
+     const timer = setTimeout(() => {
+       setDebouncedSearch(searchTerm);
+     }, 300);
+     return () => clearTimeout(timer);
+   }, [searchTerm]);
+
+   const filteredCases = cases?.filter(c => {
+     if (!debouncedSearch) return true;
+     const s = debouncedSearch.toLowerCase();
+     return (
+       (c.area?.toLowerCase().includes(s) || 
+        c.notes?.toLowerCase().includes(s) ||
+        c.slug?.toLowerCase().includes(s) ||
+        c.toxin?.toLowerCase().includes(s))
+     );
+   });
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -234,13 +248,31 @@ export default function Cases() {
       </div>
 
       <div className="mb-6 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-text-muted" />
-        <input 
-          placeholder="Buscar casos..." 
-          className="w-full pl-10 h-10 rounded-md bg-brand-graphite/30 border border-brand-gold/15 text-brand-text-light focus:outline-none focus:ring-1 focus:ring-brand-gold/50"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+          <div className="relative group mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-text-muted z-10" />
+           <input 
+             placeholder="Buscar por área, notas, slug ou toxina..." 
+             className="w-full pl-10 pr-10 h-12 rounded-lg bg-brand-graphite/40 border border-brand-gold/20 text-brand-text-light focus:outline-none focus:ring-2 focus:ring-brand-gold/30 transition-all placeholder:text-brand-text-muted/50"
+             value={searchTerm}
+             onChange={(e) => setSearchTerm(e.target.value)}
+             onKeyDown={(e) => {
+               if (e.key === 'Enter') {
+                 setDebouncedSearch(searchTerm);
+               }
+             }}
+           />
+           {searchTerm && (
+             <button 
+               onClick={() => {
+                 setSearchTerm("");
+                 setDebouncedSearch("");
+               }}
+               className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full transition-colors"
+             >
+               <X className="size-4 text-brand-text-muted" />
+             </button>
+           )}
+         </div>
       </div>
 
       {isLoading ? (
