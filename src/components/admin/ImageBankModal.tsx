@@ -251,7 +251,7 @@ import { toast } from "@/hooks/use-toast";
             </div>
 
             {/* Main Content: 3 Columns - Ensure minimum height for children */}
-            <div className="flex-1 flex min-h-0 overflow-hidden bg-[#0a0a0a]">
+            <div className="flex-1 flex min-h-0 overflow-hidden bg-[#0a0a0a] isolate">
               {/* LEFT SIDEBAR: Categories & Visualization */}
               <aside className="w-64 shrink-0 border-r border-white/10 flex flex-col bg-brand-black/40 overflow-hidden">
                 <div className="p-6 space-y-10">
@@ -262,8 +262,8 @@ import { toast } from "@/hooks/use-toast";
                         <label className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/60 font-bold">Categorias</label>
                         <Filter className="size-3 text-brand-gold/40" />
                       </div>
-                      <ScrollArea className="flex-1">
-                        <div className="space-y-1.5 pr-4 p-1">
+                      <ScrollArea className="h-full w-full">
+                        <div className="space-y-1.5 pr-4 p-1 pb-10">
                             <Button 
                               variant="ghost" 
                               onClick={() => {
@@ -351,8 +351,8 @@ import { toast } from "@/hooks/use-toast";
               </aside>
 
               {/* MAIN CENTER: Image Grid - Use standard overflow for reliability */}
-              <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-                <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-10 custom-scrollbar-premium">
+              <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative isolate">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-10 custom-scrollbar-premium pointer-events-auto">
                   {activeTab === 'internal' ? (
                     loading ? (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-brand-black/20 backdrop-blur-sm z-10">
