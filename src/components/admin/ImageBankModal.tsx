@@ -145,22 +145,26 @@ import { toast } from "@/hooks/use-toast";
  
    return (
      <>
-       <div onClick={() => setIsOpen(true)}>
-         {trigger || (
-           <Button 
-             type="button" 
-             size="sm" 
-             variant="outline" 
-             className="h-8 text-[11px] border-brand-gold/20 hover:bg-brand-gold/10"
-           >
-             <Library className="size-3.5 mr-1.5" />
-             Banco de Imagens
-           </Button>
-         )}
-       </div>
+       {trigger ? (
+         <div onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}>{trigger}</div>
+       ) : (
+         <Button 
+           type="button" 
+           size="sm" 
+           variant="outline" 
+           onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
+           className="h-8 text-[11px] border-brand-gold/20 hover:bg-brand-gold/10"
+         >
+           <Library className="size-3.5 mr-1.5" />
+           Banco de Imagens
+         </Button>
+       )}
 
        {isOpen && createPortal(
-         <div className="fixed inset-0 z-[99999] bg-brand-black text-white flex flex-col overflow-hidden animate-in fade-in duration-300">
+         <div 
+           className="fixed inset-0 z-[99999] bg-brand-black text-white flex flex-col overflow-hidden animate-in fade-in duration-300 pointer-events-auto"
+           onClick={(e) => e.stopPropagation()}
+         >
             {/* Header / Top Bar: Search, Tabs, Actions */}
             <div className="h-20 shrink-0 border-b border-white/10 bg-brand-black/95 flex items-center justify-between px-8 backdrop-blur-md z-50">
               <div className="flex items-center gap-8 flex-1">
@@ -246,10 +250,10 @@ import { toast } from "@/hooks/use-toast";
               </div>
             </div>
 
-            {/* Main Content: 3 Columns */}
-            <div className="flex-1 flex overflow-hidden bg-[#0a0a0a]">
+            {/* Main Content: 3 Columns - Ensure minimum height for children */}
+            <div className="flex-1 flex min-h-0 overflow-hidden bg-[#0a0a0a]">
               {/* LEFT SIDEBAR: Categories & Visualization */}
-              <aside className="w-64 shrink-0 border-r border-white/10 flex flex-col bg-brand-black/40">
+              <aside className="w-64 shrink-0 border-r border-white/10 flex flex-col bg-brand-black/40 overflow-hidden">
                 <div className="p-6 space-y-10">
                   {/* Categories */}
                   {activeTab === 'internal' && (
@@ -258,8 +262,8 @@ import { toast } from "@/hooks/use-toast";
                         <label className="text-[10px] uppercase tracking-[0.2em] text-brand-gold/60 font-bold">Categorias</label>
                         <Filter className="size-3 text-brand-gold/40" />
                       </div>
-                      <ScrollArea className="h-[50vh]">
-                        <div className="space-y-1.5 pr-4">
+                      <ScrollArea className="flex-1">
+                        <div className="space-y-1.5 pr-4 p-1">
                             <Button 
                               variant="ghost" 
                               onClick={() => {
@@ -346,9 +350,9 @@ import { toast } from "@/hooks/use-toast";
                 </div>
               </aside>
 
-              {/* MAIN CENTER: Image Grid */}
-              <main className="flex-1 flex flex-col overflow-hidden relative">
-                <ScrollArea className="flex-1 px-10 py-10">
+              {/* MAIN CENTER: Image Grid - Use standard overflow for reliability */}
+              <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 py-10 custom-scrollbar-premium">
                   {activeTab === 'internal' ? (
                     loading ? (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-brand-black/20 backdrop-blur-sm z-10">
@@ -410,11 +414,11 @@ import { toast } from "@/hooks/use-toast";
                          onSelect={select} 
                        />
                   )}
-                </ScrollArea>
+                </div>
               </main>
 
               {/* RIGHT SIDEBAR: Selection Preview & Metadata */}
-              <aside className="w-80 shrink-0 border-l border-white/10 bg-brand-black flex flex-col shadow-2xl z-40">
+              <aside className="w-80 shrink-0 border-l border-white/10 bg-brand-black flex flex-col shadow-2xl z-40 overflow-hidden">
                 {focusedImage ? (
                   <div className="flex flex-col h-full animate-in slide-in-from-right duration-500">
                     <div className="p-6 border-b border-white/10 flex items-center justify-between bg-brand-black/40">
