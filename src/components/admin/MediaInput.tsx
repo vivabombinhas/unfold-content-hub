@@ -10,6 +10,7 @@ interface Props {
   value: string;
   onChange: (url: string) => void;
   label?: string;
+  isolateImageBankKeyboardEvents?: boolean;
 }
 
 /** Converte links do Google Drive `/file/d/ID/view` em URL servível. */
@@ -19,7 +20,7 @@ function normalizeUrl(url: string): string {
   return url;
 }
 
-export function MediaInput({ value, onChange, label }: Props) {
+export function MediaInput({ value, onChange, label, isolateImageBankKeyboardEvents = false }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
@@ -68,7 +69,7 @@ export function MediaInput({ value, onChange, label }: Props) {
                   <Upload className="size-3.5 mr-1.5" />
                   Trocar
                 </Button>
-                <ImageBankModal onSelect={onChange} />
+                <ImageBankModal onSelect={onChange} isolateKeyboardEvents={isolateImageBankKeyboardEvents} />
               </div>
               <Button 
                 type="button" 
@@ -92,7 +93,7 @@ export function MediaInput({ value, onChange, label }: Props) {
               <p className="text-[10px] text-brand-text-muted">Suba um arquivo ou cole um link direto</p>
             </div>
              <div className="flex flex-wrap justify-center gap-2 mt-1">
-               <ImageBankModal onSelect={onChange} />
+               <ImageBankModal onSelect={onChange} isolateKeyboardEvents={isolateImageBankKeyboardEvents} />
               <Button 
                 type="button" 
                 size="sm" 
