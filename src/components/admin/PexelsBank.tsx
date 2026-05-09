@@ -29,7 +29,7 @@ interface Props {
    const [internalFitMode, setInternalFitMode] = useState<'cover' | 'contain'>('cover');
    const fitMode = externalFitMode || internalFitMode;
    const setFitMode = setInternalFitMode;
-   const [columns, setColumns] = useState<2 | 3 | 4>(3);
+   const [columns, setColumns] = useState<2 | 3 | 4>(2);
 
   const fetchPhotos = useCallback(async (query: string, p: number) => {
     setLoading(true);
@@ -107,54 +107,59 @@ interface Props {
 
   return (
     <div className="flex flex-col h-full bg-brand-bg/50">
-       <div className="p-4 md:p-6 pb-2 space-y-4">
-         <div className="flex flex-col md:flex-row gap-4 items-center">
-           <div className="relative flex-1 w-full">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-gold/50" />
-             <Input 
-               placeholder="Buscar por estética, clínica, skincare..." 
-               value={search}
-               onChange={(e) => setSearch(e.target.value)}
-               className="pl-10 bg-white/5 border-white/10 text-xs h-10 md:h-12 focus-visible:ring-brand-gold/50 w-full"
-             />
-           </div>
-           
-           <div className="flex items-center gap-2 bg-white/5 p-1 rounded-lg border border-white/10 self-end md:self-auto">
-             <div className="flex items-center border-r border-white/10 pr-2 mr-2">
-               <Button
-                 variant="ghost"
-                 size="icon"
-                 onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
-                 className={`size-8 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                 title={fitMode === 'cover' ? "Mudar para Ajustar (Contain)" : "Mudar para Preencher (Cover)"}
-               >
-                 {fitMode === 'cover' ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />}
-               </Button>
-             </div>
-             
-             <div className="flex items-center gap-1">
-               <Button
-                 variant="ghost"
-                 size="icon"
-                 onClick={() => setColumns(2)}
-                 className={`size-8 ${columns === 2 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                 title="Grade Grande"
-               >
-                 <LayoutGrid className="size-4" />
-               </Button>
-               <Button
-                 variant="ghost"
-                 size="icon"
-                 onClick={() => setColumns(4)}
-                 className={`size-8 ${columns === 4 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
-                 title="Grade Compacta"
-               >
-                 <List className="size-4" />
-               </Button>
-             </div>
-           </div>
-         </div>
-      </div>
+        <div className="p-4 md:p-6 pb-2 sticky top-0 z-20 bg-brand-black/95 backdrop-blur-sm border-b border-white/5">
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-gold/50" />
+                <Input 
+                  placeholder="Buscar por estética, clínica, skincare..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 bg-white/5 border-white/10 text-xs h-10 md:h-12 focus-visible:ring-brand-gold/50 w-full"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-lg border border-white/10 shrink-0">
+                <div className="flex items-center border-r border-white/10 pr-2 mr-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setFitMode(fitMode === 'cover' ? 'contain' : 'cover')}
+                    className={`size-8 ${fitMode === 'contain' ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
+                    title={fitMode === 'cover' ? "Mudar para Ajustar (Contain)" : "Mudar para Preencher (Cover)"}
+                  >
+                    {fitMode === 'cover' ? <Maximize2 className="size-4" /> : <Minimize2 className="size-4" />}
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setColumns(2)}
+                    className={`size-8 ${columns === 2 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
+                    title="Visualização Ampla"
+                  >
+                    <LayoutGrid className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setColumns(4)}
+                    className={`size-8 ${columns === 4 ? 'text-brand-gold bg-brand-gold/10' : 'text-white/50'}`}
+                    title="Visualização Compacta"
+                  >
+                    <List className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <p className="text-[10px] text-brand-gold/60 uppercase tracking-widest text-center sm:text-left">
+              Dica: Clique na imagem para ver em tela cheia antes de selecionar
+            </p>
+          </div>
+        </div>
 
       <ScrollArea className="flex-1">
         <div className="p-4 md:p-6 pt-0">
@@ -165,38 +170,43 @@ interface Props {
             </div>
           ) : photos.length > 0 ? (
             <div className="space-y-6">
-               <div className={`grid gap-4 md:gap-6 ${
-                 columns === 2 ? 'grid-cols-1 sm:grid-cols-2' : 
-                 columns === 4 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6' : 
-                 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+               <div className={`grid gap-3 md:gap-4 ${
+                 columns === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+                 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'
                }`}>
                 {photos.map((photo) => (
                   <div 
                     key={photo.id}
-                    className="group relative flex flex-col rounded-xl border border-white/5 bg-white/5 overflow-hidden transition-all shadow-2xl hover:border-brand-gold/30"
+                    className="group relative flex flex-col rounded-lg border border-white/5 bg-brand-black/40 overflow-hidden transition-all shadow-xl hover:border-brand-gold/30"
                   >
-                     <div className={`relative ${columns === 4 ? 'aspect-square' : 'aspect-[3/4]'} overflow-hidden cursor-pointer bg-black/20`} onClick={() => setPreviewPhoto(photo)}>
+                    <div 
+                      className={`relative ${columns === 4 ? 'aspect-square' : 'aspect-[4/5] sm:aspect-[3/4]'} overflow-hidden cursor-pointer bg-black/20`} 
+                      onClick={() => setPreviewPhoto(photo)}
+                    >
                       <img 
-                        src={photo.src.medium} 
+                        src={columns === 4 ? photo.src.small : photo.src.medium} 
                         alt={photo.alt} 
-                         className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-110' : ''}`}
+                        className={`w-full h-full ${fitMode === 'cover' ? 'object-cover' : 'object-contain'} transition-all duration-700 ${fitMode === 'cover' ? 'group-hover:scale-105' : ''}`}
                         loading="lazy"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="size-10 rounded-full bg-brand-gold/20 backdrop-blur-md flex items-center justify-center border border-brand-gold/30">
-                          <Eye className="size-5 text-brand-gold" />
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="size-10 rounded-full bg-brand-gold/20 backdrop-blur-md flex items-center justify-center border border-brand-gold/30">
+                            <Eye className="size-5 text-brand-gold" />
+                          </div>
+                          <span className="text-[8px] text-brand-gold uppercase tracking-[0.2em] font-bold">Ver Foto</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="p-3 bg-brand-black/40 border-t border-white/5 space-y-2">
-                      <p className="text-[9px] text-white/50 truncate uppercase tracking-tighter">
+                    <div className="p-2 md:p-3 bg-brand-black/60 border-t border-white/5 space-y-2">
+                      <p className="text-[8px] text-white/40 truncate uppercase tracking-widest">
                         {photo.photographer}
                       </p>
                       <div className="flex gap-1.5">
                         <Button 
                           onClick={() => onSelect(photo.src.large2x)}
-                          className="flex-1 h-7 text-[9px] uppercase tracking-widest bg-brand-gold text-brand-bg hover:bg-brand-gold/90"
+                          className="flex-1 h-8 text-[9px] uppercase tracking-[0.1em] bg-brand-gold text-brand-bg hover:bg-brand-gold/90 font-bold"
                         >
                           Selecionar
                         </Button>
@@ -205,7 +215,7 @@ interface Props {
                           size="icon"
                           disabled={importedIds.has(photo.id) || importing === photo.id}
                           onClick={() => saveToLibrary(photo)}
-                          className="size-7 border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10"
+                          className="size-8 border-brand-gold/20 text-brand-gold hover:bg-brand-gold/10 shrink-0"
                           title="Salvar no acervo interno"
                         >
                           {importing === photo.id ? (
