@@ -29,8 +29,17 @@ export function PexelsBank({ onSelect }: Props) {
   const fetchPhotos = useCallback(async (query: string, p: number) => {
     setLoading(true);
     try {
-      // Default to aesthetic queries if empty
-      const searchQuery = query || "estética clínica estética facial corporação estética";
+      // Enforce aesthetic focus and use English terms for better Pexels results
+      let searchQuery = query.trim();
+      if (!searchQuery) {
+        searchQuery = "aesthetic medical clinic beauty treatment skincare";
+      } else {
+        // Append relevant aesthetic keywords to user query if they are not already there
+        if (!searchQuery.toLowerCase().includes("estética") && !searchQuery.toLowerCase().includes("aesthetic")) {
+          searchQuery += " aesthetic beauty";
+        }
+      }
+      
       const data = await searchPhotos(searchQuery, p);
       
       if (p === 1) {
