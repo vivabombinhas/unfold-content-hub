@@ -342,8 +342,8 @@ export default function Cases() {
         </div>
       )}
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-4xl bg-brand-graphite border-brand-gold/20 text-brand-text-light overflow-y-auto max-h-[90vh]">
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen} modal={false}>
+        <DialogContent className="max-w-4xl bg-brand-graphite border-brand-gold/20 text-brand-text-light overflow-y-auto max-h-[90vh] z-[100] pointer-events-auto">
           <DialogHeader>
             <DialogTitle>{editingCase ? "Editar Caso" : "Novo Caso"}</DialogTitle>
           </DialogHeader>
@@ -362,10 +362,10 @@ export default function Cases() {
               </div>
 
               <div className="space-y-6">
-                <MediaInput label="Foto de Capa" value={caseData.cover_url || ""} onChange={url => setCaseData(p => ({...p, cover_url: url}))} />
+                <MediaInput label="Foto de Capa" value={caseData.cover_url || ""} onChange={url => setCaseData(p => ({...p, cover_url: url}))} isolateImageBankKeyboardEvents />
                 <div className="grid grid-cols-2 gap-4">
-                  <MediaInput label="Antes" value={caseData.before_url || ""} onChange={url => setCaseData(p => ({...p, before_url: url}))} />
-                  <MediaInput label="Depois" value={caseData.after_url || ""} onChange={url => setCaseData(p => ({...p, after_url: url}))} />
+                  <MediaInput label="Antes" value={caseData.before_url || ""} onChange={url => setCaseData(p => ({...p, before_url: url}))} isolateImageBankKeyboardEvents />
+                  <MediaInput label="Depois" value={caseData.after_url || ""} onChange={url => setCaseData(p => ({...p, after_url: url}))} isolateImageBankKeyboardEvents />
                 </div>
               </div>
 
