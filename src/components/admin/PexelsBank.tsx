@@ -1,5 +1,5 @@
  import { useState, useEffect, useCallback } from "react";
-import { Search, Loader2, X, ExternalLink, Download, Check, Eye, Globe, Maximize2, Minimize2, LayoutGrid, List } from "lucide-react";
+ import { Search, Loader2, X, ExternalLink, Download, Check, Eye, Globe, Maximize2, Minimize2, LayoutGrid, List, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -66,11 +66,11 @@ import {
      fetchPhotos(searchQuery, 1);
    }, [searchQuery, fetchPhotos]);
 
-  const loadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchPhotos(search, nextPage);
-  };
+   const loadMore = () => {
+     const nextPage = page + 1;
+     setPage(nextPage);
+     fetchPhotos(searchQuery, nextPage);
+   };
 
   const saveToLibrary = async (photo: PexelsPhoto) => {
     setImporting(photo.id);
