@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
  } from "@/components/ui/dialog";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
-  import { Search, Library, Loader2, X, Globe, Maximize2, Minimize2, Upload, Eye, Check, Filter, Image as ImageIcon, Info, ChevronRight, MousePointer2, ExternalLink, Download } from "lucide-react";
+   import { Search, Library, Loader2, X, Globe, Maximize2, Minimize2, Upload, Eye, Check, Filter, Image as ImageIcon, Info, ChevronRight, MousePointer2, ExternalLink, Download, Star } from "lucide-react";
  import { cn } from "@/lib/utils";
  import { ScrollArea } from "@/components/ui/scroll-area";
  import { Badge } from "@/components/ui/badge";
@@ -33,8 +33,9 @@ import { toast } from "@/hooks/use-toast";
    const [isOpen, setIsOpen] = useState(false);
    const [images, setImages] = useState<ImageAsset[]>([]);
    const [loading, setLoading] = useState(false);
-   const [search, setSearch] = useState("");
-   const [category, setCategory] = useState<string | null>(null);
+    const [search, setSearch] = useState("");
+    const [category, setCategory] = useState<string | null>(null);
+    const [onlyHero, setOnlyHero] = useState(false);
    const [columns, setColumns] = useState<2 | 4>(4);
    const [fitMode, setFitMode] = useState<'cover' | 'contain'>('cover');
     const [uploading, setUploading] = useState(false);
@@ -49,9 +50,13 @@ import { toast } from "@/hooks/use-toast";
        query = query.or(`title.ilike.%${search}%,category.ilike.%${search}%`);
      }
      
-     if (category) {
-       query = query.eq("category", category);
-     }
+      if (category) {
+        query = query.eq("category", category);
+      }
+
+      if (onlyHero) {
+        query = query.ilike("title", "%hero%");
+      }
  
      const { data, error } = await query.order("created_at", { ascending: false });
      
@@ -65,7 +70,7 @@ import { toast } from "@/hooks/use-toast";
       if (isOpen) {
         fetchImages();
       }
-    }, [isOpen, search, category]);
+    }, [isOpen, search, category, onlyHero]);
 
     // Keyboard navigation
     useEffect(() => {
@@ -242,17 +247,35 @@ import { toast } from "@/hooks/use-toast";
                       </div>
                       <ScrollArea className="h-[40vh]">
                         <div className="space-y-1.5 pr-4">
-                          <Button 
-                            variant="ghost" 
-                            onClick={() => setCategory(null)}
-                            className={cn(
-                              "w-full justify-start h-10 text-[11px] uppercase tracking-widest rounded-xl px-4",
-                              category === null ? "bg-brand-gold/10 text-brand-gold border border-brand-gold/20" : "text-white/50 hover:text-white hover:bg-white/5"
-                            )}
-                          >
-                            <ImageIcon className="size-3.5 mr-3 opacity-60" />
-                            Todas as Fotos
-                          </Button>
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => {
+                                setCategory(null);
+                                setOnlyHero(false);
+                              }}
+                              className={cn(
+                                "w-full justify-start h-10 text-[11px] uppercase tracking-widest rounded-xl px-4",
+                                category === null && !onlyHero ? "bg-brand-gold/10 text-brand-gold border border-brand-gold/20" : "text-white/50 hover:text-white hover:bg-white/5"
+                              )}
+                            >
+                              <ImageIcon className="size-3.5 mr-3 opacity-60" />
+                              Todas as Fotos
+                            </Button>
+                            
+                            <Button 
+                              variant="ghost" 
+                              onClick={() => {
+                                setCategory(null);
+                                setOnlyHero(true);
+                              }}
+                              className={cn(
+                                "w-full justify-start h-10 text-[11px] uppercase tracking-widest rounded-xl px-4",
+                                onlyHero ? "bg-brand-gold/10 text-brand-gold border border-brand-gold/20" : "text-white/50 hover:text-white hover:bg-white/5"
+                              )}
+                            >
+                              <Star className="size-3.5 mr-3 opacity-60" />
+                              Sugestões Hero
+                            </Button>
                           {categories.map(cat => (
                             <Button 
                               key={cat}
