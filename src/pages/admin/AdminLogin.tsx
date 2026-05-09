@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+ import { useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+ import { SEO } from "@/components/site/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -28,8 +29,9 @@ export default function AdminLogin() {
     navigate("/admin");
   }
 
-  return (
-    <div className="min-h-screen bg-brand-black grid place-items-center p-6">
+   return (
+     <div className="min-h-screen bg-brand-black grid place-items-center p-6">
+       <SEO isAdmin title="Login Admin" />
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-brand-graphite/40 border border-brand-gold/20 p-8 rounded-sm space-y-5"
