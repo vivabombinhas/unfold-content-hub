@@ -68,9 +68,20 @@ export default function PublicPage() {
     [data?.blocks],
   );
 
-   useEffect(() => {
-     window.scrollTo(0, 0);
-     if (!previewMode) return;
+  const { pageImage, heroImage } = useMemo(() => {
+    const meta = data?.page?.metadata as any;
+    const heroBlock = data?.blocks?.find(b => b.type === 'hero');
+    const heroUrl = (heroBlock?.data as any)?.image_url;
+    
+    return {
+      pageImage: meta?.og_image || meta?.hero_image || heroUrl || "",
+      heroImage: heroUrl
+    };
+  }, [data?.page?.metadata, data?.blocks]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (!previewMode) return;
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === "SELECT_BLOCK") {
         const id = e.data.id;
@@ -119,16 +130,6 @@ export default function PublicPage() {
     );
   }
 
-    const { pageImage, heroImage } = useMemo(() => {
-      const meta = data?.page?.metadata as any;
-      const heroBlock = data?.blocks?.find(b => b.type === 'hero');
-      const heroUrl = (heroBlock?.data as any)?.image_url;
-      
-      return {
-        pageImage: meta?.og_image || meta?.hero_image || heroUrl || "",
-        heroImage: heroUrl
-      };
-    }, [data?.page?.metadata, data?.blocks]);
 
    return (
      <div className={cn("bg-brand-black text-brand-text-light min-h-screen", previewMode && "preview-mode")}>
