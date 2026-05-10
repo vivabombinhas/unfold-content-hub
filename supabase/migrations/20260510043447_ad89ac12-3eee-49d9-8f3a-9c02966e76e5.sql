@@ -1,0 +1,1 @@
+ALTER FUNCTION public.protect_template_page() SET search_path = public;
