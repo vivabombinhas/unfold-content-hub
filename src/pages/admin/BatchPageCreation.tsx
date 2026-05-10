@@ -34,7 +34,7 @@
    url: string;
    slug: string;
    type: "preserve_literal" | "inspiration_only" | "ai_only";
-   status: "pending" | "processing_research" | "processing_gen" | "completed" | "error";
+   status: "pending" | "processing_research" | "processing_gen" | "finalizing" | "completed" | "error";
    error?: string;
    resultSlug?: string;
  }
@@ -58,6 +58,7 @@
    const [items, setItems] = useState<BatchItem[]>([]);
    const [isAnalyzing, setIsAnalyzing] = useState(false);
    const [isBatchRunning, setIsBatchRunning] = useState(false);
+   const [processedCount, setProcessedCount] = useState(0);
  
    const handleAnalyze = () => {
      if (!input.trim()) {
@@ -100,6 +101,7 @@
    const runBatch = async () => {
      if (items.length === 0) return;
      setIsBatchRunning(true);
+     setProcessedCount(0);
  
      for (let i = 0; i < items.length; i++) {
        const item = items[i];
@@ -143,15 +145,51 @@
            },
          });
  
-         if (pageErr) throw new Error(pageErr.message);
-         if (pageData?.error) throw new Error(pageData.error);
- 
-         setItems(prev => prev.map(it => it.id === item.id ? { 
-           ...it, 
-           status: "completed", 
-           resultSlug: pageData.slug 
-         } : it));
- 
+         if (pageErr) {
+           // If it's a timeout error but we suspect it might have finished
+           if (pageErr.message?.includes("timeout") || pageErr.message?.includes("AbortError")) {
+             setItems(prev => prev.map(it => it.id === item.id ? { ...it, status: "finalizing" } : it));
+             
+             // Wait a bit and check if the page exists
+             let retryCount = 0;
+             const maxRetries = 5;
+             let found = false;
+             
+             while (retryCount < maxRetries && !found) {
+               await new Promise(resolve => setTimeout(resolve, 5000));
+               const { data: existingPage } = await supabase
+                 .from("pages")
+                 .select("slug")
+                 .eq("slug", item.slug)
+                 .single();
+               
+               if (existingPage) {
+                 found = true;
+                 setItems(prev => prev.map(it => it.id === item.id ? { 
+                   ...it, 
+                   status: "completed", 
+                   resultSlug: existingPage.slug 
+                 } : it));
+                 break;
+               }
+               retryCount++;
+             }
+             
+             if (!found) throw new Error("Tempo esgotado. Verifique se a página foi criada na lista geral.");
+           } else {
+             throw new Error(pageErr.message);
+           }
+         } else if (pageData?.error) {
+           throw new Error(pageData.error);
+         } else {
+           setItems(prev => prev.map(it => it.id === item.id ? { 
+             ...it, 
+             status: "completed", 
+             resultSlug: pageData.slug 
+           } : it));
+         }
+
+         setProcessedCount(prev => prev + 1);
        } catch (err) {
          console.error(`Error processing ${item.procedimento}:`, err);
          setItems(prev => prev.map(it => it.id === item.id ? { 
@@ -163,7 +201,33 @@
      }
  
      setIsBatchRunning(false);
-     toast({ title: "Processamento de lote finalizado" });
+     toast({ 
+       title: "Processamento de lote finalizado",
+       description: `${processedCount} páginas processadas com sucesso.`
+     });
+   };
+
+   const checkAllStatuses = async () => {
+     const pendingItems = items.filter(it => it.status !== "completed");
+     if (pendingItems.length === 0) return;
+
+     toast({ title: "Atualizando status..." });
+     
+     for (const item of pendingItems) {
+       const { data: existingPage } = await supabase
+         .from("pages")
+         .select("slug")
+         .eq("slug", item.slug)
+         .single();
+       
+       if (existingPage) {
+         setItems(prev => prev.map(it => it.id === item.id ? { 
+           ...it, 
+           status: "completed", 
+           resultSlug: existingPage.slug 
+         } : it));
+       }
+     }
    };
  
    return (
@@ -217,17 +281,28 @@
          <div className="lg:col-span-2 space-y-6">
            {items.length > 0 ? (
              <div className="space-y-4">
-               <div className="flex items-center justify-between">
-                 <h3 className="text-sm font-medium text-brand-text-light uppercase tracking-widest">Itens para Processar ({items.length})</h3>
-                 <Button 
-                   onClick={runBatch} 
-                   disabled={isBatchRunning} 
-                   className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90"
-                 >
-                   {isBatchRunning ? <Loader2 className="size-4 animate-spin mr-2" /> : <Play className="size-4 mr-2" />}
-                   Iniciar Processamento
-                 </Button>
-               </div>
+                 <div className="flex items-center justify-between">
+                   <h3 className="text-sm font-medium text-brand-text-light uppercase tracking-widest">Itens para Processar ({items.length})</h3>
+                   <div className="flex items-center gap-2">
+                     {!isBatchRunning && items.some(it => it.status !== "completed") && (
+                       <Button 
+                         onClick={checkAllStatuses}
+                         variant="outline"
+                         className="border-brand-gold/20 text-brand-text-light hover:bg-brand-white/5"
+                       >
+                         Atualizar Status
+                       </Button>
+                     )}
+                     <Button 
+                       onClick={runBatch} 
+                       disabled={isBatchRunning} 
+                       className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90"
+                     >
+                       {isBatchRunning ? <Loader2 className="size-4 animate-spin mr-2" /> : <Play className="size-4 mr-2" />}
+                       {items.some(it => it.status === "completed") ? "Retomar Lote" : "Iniciar Processamento"}
+                     </Button>
+                   </div>
+                 </div>
  
                <div className="rounded-xl border border-brand-gold/15 bg-brand-graphite/20 overflow-hidden">
                  <Table>
@@ -275,18 +350,24 @@
                                Pesquisando...
                              </div>
                            )}
-                           {item.status === "processing_gen" && (
-                             <div className="flex items-center gap-1.5 text-brand-gold text-xs animate-pulse">
-                               <Wand2 className="size-3" />
-                               Gerando Copy...
-                             </div>
-                           )}
-                           {item.status === "completed" && (
-                             <div className="flex items-center gap-1.5 text-emerald-500 text-xs">
-                               <CheckCircle2 className="size-3" />
-                               Concluído
-                             </div>
-                           )}
+                            {item.status === "processing_gen" && (
+                              <div className="flex items-center gap-1.5 text-brand-gold text-xs">
+                                <Loader2 className="size-3 animate-spin" />
+                                Criando Blocos...
+                              </div>
+                            )}
+                            {item.status === "finalizing" && (
+                              <div className="flex items-center gap-1.5 text-brand-gold text-xs">
+                                <Loader2 className="size-3 animate-spin" />
+                                Finalizando...
+                              </div>
+                            )}
+                            {item.status === "completed" && (
+                              <div className="flex items-center gap-1.5 text-emerald-500 text-xs font-medium">
+                                <CheckCircle2 className="size-3" />
+                                Concluído
+                              </div>
+                            )}
                            {item.status === "error" && (
                              <div className="flex items-center gap-1.5 text-brand-bordeaux text-xs" title={item.error}>
                                <AlertCircle className="size-3" />
