@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
- import { ExternalLink, ListChecks, Pencil, Sparkles, Trash2 } from "lucide-react";
+ import { ExternalLink, ListChecks, Pencil, Sparkles, Trash2, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import {
   AlertDialog,
@@ -26,6 +28,9 @@ export default function PagesList() {
   // refresh until it works.
   const { isAdmin, loading: authLoading } = useAuth();
   const [pendingDelete, setPendingDelete] = useState<{ id: string; title: string; slug: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pendingBulkDelete, setPendingBulkDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const { data: pages, isLoading } = useQuery({
@@ -40,6 +45,36 @@ export default function PagesList() {
     },
     enabled: !authLoading && isAdmin,
   });
+
+  const filteredPages = useMemo(() => {
+    if (!pages) return [];
+    if (!searchTerm) return pages;
+    const lowerSearch = searchTerm.toLowerCase();
+    return pages.filter(p => 
+      p.title?.toLowerCase().includes(lowerSearch) || 
+      p.slug?.toLowerCase().includes(lowerSearch)
+    );
+  }, [pages, searchTerm]);
+
+  const selectablePages = useMemo(() => {
+    return filteredPages.filter(p => p.slug !== "modelo");
+  }, [filteredPages]);
+
+  const allSelected = selectablePages.length > 0 && selectedIds.length === selectablePages.length;
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(selectablePages.map(p => p.id));
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  }
 
   async function handleDelete() {
     if (!pendingDelete) return;
@@ -60,6 +95,38 @@ export default function PagesList() {
       queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
     } catch (err: any) {
       toast({ title: "Erro ao excluir", description: err?.message ?? "Tente novamente.", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) return;
+    setDeleting(true);
+    try {
+      let totalBlocks = 0;
+      let totalOverrides = 0;
+      
+      for (const id of selectedIds) {
+        const { data, error } = await supabase.rpc("admin_delete_page" as any, {
+          _page_id: id,
+        });
+        if (error) throw error;
+        const result = (data ?? {}) as { blocks_deleted?: number; overrides_deleted?: number };
+        totalBlocks += (result.blocks_deleted ?? 0);
+        totalOverrides += (result.overrides_deleted ?? 0);
+      }
+
+      toast({
+        title: `${selectedIds.length} páginas excluídas`,
+        description: `Total de ${totalBlocks} blocos e ${totalOverrides} overrides removidos.`,
+      });
+      
+      setSelectedIds([]);
+      setPendingBulkDelete(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-pages"] });
+    } catch (err: any) {
+      toast({ title: "Erro na exclusão em lote", description: err?.message ?? "Tente novamente.", variant: "destructive" });
     } finally {
       setDeleting(false);
     }
@@ -91,13 +158,67 @@ export default function PagesList() {
          </div>
       </div>
 
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-text-muted" />
+            <Input
+              placeholder="Filtrar por título ou slug..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 bg-brand-graphite/40 border-brand-gold/20 text-brand-text-light focus:border-brand-gold/40"
+            />
+            {searchTerm && (
+              <button 
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-text-muted hover:text-brand-text-light"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+          
+          {selectedIds.length > 0 && (
+            <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
+              <span className="text-sm text-brand-text-muted">
+                {selectedIds.length} {selectedIds.length === 1 ? "selecionada" : "selecionadas"}
+              </span>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={() => setPendingBulkDelete(true)}
+                className="h-9 px-4"
+              >
+                <Trash2 className="size-4 mr-2" />
+                Excluir Selecionadas
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setSelectedIds([])}
+                className="h-9 text-brand-text-muted hover:text-brand-text-light"
+              >
+                Cancelar
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {isLoading ? (
         <p className="text-brand-text-muted">Carregando…</p>
       ) : (
-        <div className="border border-brand-gold/15 bg-brand-graphite/20">
+        <div className="border border-brand-gold/15 bg-brand-graphite/20 overflow-hidden rounded-sm">
           <table className="w-full text-sm">
-            <thead className="text-left text-[10px] uppercase tracking-[0.2em] text-brand-text-muted border-b border-brand-gold/15">
+            <thead className="text-left text-[10px] uppercase tracking-[0.2em] text-brand-text-muted border-b border-brand-gold/15 bg-brand-graphite/40">
               <tr>
+                <th className="px-5 py-3 w-10">
+                  <Checkbox 
+                    checked={allSelected} 
+                    onCheckedChange={toggleSelectAll}
+                    className="border-brand-gold/30 data-[state=checked]:bg-brand-gold data-[state=checked]:text-brand-bg"
+                  />
+                </th>
                 <th className="px-5 py-3">Título</th>
                 <th className="px-5 py-3">Slug</th>
                 <th className="px-5 py-3">Status</th>
@@ -106,9 +227,18 @@ export default function PagesList() {
               </tr>
             </thead>
             <tbody>
-              {pages?.map((p) => (
-                <tr key={p.id} className="border-t border-brand-gold/10 hover:bg-brand-graphite/30">
-                  <td className="px-5 py-3 text-brand-text-light">{p.title}</td>
+              {filteredPages?.map((p) => (
+                <tr key={p.id} className={`border-t border-brand-gold/10 transition-colors ${selectedIds.includes(p.id) ? 'bg-brand-gold/5' : 'hover:bg-brand-graphite/30'}`}>
+                  <td className="px-5 py-3">
+                    {p.slug !== "modelo" && (
+                      <Checkbox 
+                        checked={selectedIds.includes(p.id)} 
+                        onCheckedChange={() => toggleSelect(p.id)}
+                        className="border-brand-gold/30 data-[state=checked]:bg-brand-gold data-[state=checked]:text-brand-bg"
+                      />
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-brand-text-light font-medium">{p.title}</td>
                   <td className="px-5 py-3 text-brand-text-muted font-mono text-xs">/p/{p.slug}</td>
                   <td className="px-5 py-3">
                     <Badge variant={p.status === "published" ? "default" : "secondary"} className={p.status === "published" ? "bg-brand-gold/20 text-brand-gold border-brand-gold/30" : ""}>
@@ -141,15 +271,19 @@ export default function PagesList() {
                         <Pencil className="size-3.5" />
                         Editar
                       </Link>
-                      <button
-                        type="button"
-                        onClick={() => setPendingDelete({ id: p.id, title: p.title, slug: p.slug })}
-                        className="text-brand-text-muted hover:text-destructive transition-colors"
-                        title="Excluir página"
-                        aria-label={`Excluir ${p.title}`}
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
+                      {p.slug !== "modelo" ? (
+                        <button
+                          type="button"
+                          onClick={() => setPendingDelete({ id: p.id, title: p.title, slug: p.slug })}
+                          className="text-brand-text-muted hover:text-destructive transition-colors"
+                          title="Excluir página"
+                          aria-label={`Excluir ${p.title}`}
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      ) : (
+                        <div className="size-4" />
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -158,6 +292,31 @@ export default function PagesList() {
           </table>
         </div>
       )}
+
+      <AlertDialog open={pendingBulkDelete} onOpenChange={(open) => !open && !deleting && setPendingBulkDelete(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.length} páginas?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você está prestes a excluir <strong>{selectedIds.length}</strong> {selectedIds.length === 1 ? "página" : "páginas"} selecionadas.
+              Todos os blocos e overrides de casos vinculados serão removidos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleBulkDelete();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Excluindo…" : `Excluir ${selectedIds.length} ${selectedIds.length === 1 ? "página" : "páginas"}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(open) => !open && !deleting && setPendingDelete(null)}>
         <AlertDialogContent>
