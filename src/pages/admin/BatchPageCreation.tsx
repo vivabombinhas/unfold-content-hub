@@ -281,13 +281,8 @@
          <div className="lg:col-span-2 space-y-6">
            {items.length > 0 ? (
              <div className="space-y-4">
-               <div className="flex items-center justify-between">
-                 <h3 className="text-sm font-medium text-brand-text-light uppercase tracking-widest">Itens para Processar ({items.length})</h3>
-                 <Button 
-                   onClick={runBatch} 
-                   disabled={isBatchRunning} 
-                   className="bg-brand-gold text-brand-bg hover:bg-brand-gold/90"
-                 >
+                 <div className="flex items-center justify-between">
+                   <h3 className="text-sm font-medium text-brand-text-light uppercase tracking-widest">Itens para Processar ({items.length})</h3>
                    <div className="flex items-center gap-2">
                      {!isBatchRunning && items.some(it => it.status !== "completed") && (
                        <Button 
@@ -308,7 +303,6 @@
                      </Button>
                    </div>
                  </div>
-               </div>
  
                <div className="rounded-xl border border-brand-gold/15 bg-brand-graphite/20 overflow-hidden">
                  <Table>
