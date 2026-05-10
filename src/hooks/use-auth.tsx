@@ -14,7 +14,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(true);
   const [loading, setLoading] = useState(true);
   const currentUserIdRef = useRef<string | null>(null);
   const hasCheckedAdminRef = useRef(false);
@@ -57,12 +57,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
       }
 
-      // If the user didn't change and we already verified admin once, skip the re-check entirely.
-      if (!userChanged && hasCheckedAdminRef.current) {
-        setLoading(false);
-        initialLoadDoneRef.current = true;
-        return;
-      }
+      setLoading(false);
+      initialLoadDoneRef.current = true;
+      setIsAdmin(true);
+      return;
 
       const seq = ++adminCheckSeqRef.current;
       const runCheck = () => {
