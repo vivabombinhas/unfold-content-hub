@@ -265,16 +265,18 @@ function HeroBlock({ data }: { data: BlockData }) {
                  className="w-full h-full"
                  style={{ transform: `scale(${imageScale})` }}
                >
-                  <img 
-                    src={imageUrl} 
-                    alt={eyebrow} 
+                  <img
+                    src={imageUrl}
+                    alt={eyebrow}
+                    width={800}
+                    height={1000}
                     className={cn(
                       "w-full h-full transition-transform duration-[4s] group-hover:scale-110",
                       imageStyle === "cutout" ? "object-contain" : "object-cover"
-                    )} 
-                     loading="eager"
-                     fetchPriority="high"
-                   />
+                    )}
+                    loading="eager"
+                    fetchPriority="high"
+                  />
                </div>
  
                {/* Overlays */}
@@ -440,9 +442,16 @@ function ProcedimentoDetalhadoV2Block({ data }: { data: BlockData }) {
              {imageUrl && (
                <div className="mt-16 relative group">
                  <div className="absolute -inset-4 bg-brand-gold/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" aria-hidden />
-                 <div className="relative aspect-video overflow-hidden bg-brand-cream-2 border border-brand-gold/10 shadow-soft">
-                   <img src={imageUrl} alt={s(data.image_alt)} className="w-full h-full object-cover transition-transform duration-[5s] group-hover:scale-105" loading="lazy" />
-                   <div className="absolute inset-0 bg-gradient-to-t from-brand-cream/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="relative aspect-video overflow-hidden bg-brand-cream-2 border border-brand-gold/10 shadow-soft">
+                    <img
+                      src={imageUrl}
+                      alt={s(data.image_alt)}
+                      width={1280}
+                      height={720}
+                      className="w-full h-full object-cover transition-transform duration-[5s] group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-brand-cream/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                  </div>
                  <div className="absolute -bottom-6 -left-6 size-24 border-l border-b border-brand-gold/30 hidden md:block" />
                  <div className="absolute -top-6 -right-6 size-24 border-r border-t border-brand-gold/30 hidden md:block" />
@@ -742,7 +751,14 @@ function CasosBlock({ data }: { data: BlockData }) {
                 className="reveal group relative text-left overflow-hidden bg-brand-cream-2"
               >
                 <div className="aspect-[4/5] overflow-hidden">
-                  <img src={c.cover} alt={`${c.area} — ${c.age}`} loading="lazy" className="w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]" />
+                  <img
+                    src={c.cover}
+                    alt={`${c.area} — ${c.age}`}
+                    width={600}
+                    height={750}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
+                  />
                 </div>
                 <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, transparent 45%, hsl(0 0% 0% / 0.65) 100%)" }} />
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-6 flex items-end justify-between gap-4">
@@ -1017,10 +1033,17 @@ function EquipeBlock({ data }: { data: BlockData }) {
     <section id="equipe" className="bg-brand-cream text-brand-text-dark section-pad relative z-[2]">
       <div className="container-editorial grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-16 items-center">
          {imageUrl && (
-           <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none parallax-subtle">
-             <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2 border border-brand-gold/10 shadow-soft">
-               <img src={imageUrl} alt={titleHtml.replace(/<[^>]+>/g, "")} className="w-full h-full object-cover transition-transform duration-[4s] hover:scale-105" loading="lazy" />
-            </div>
+            <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none parallax-subtle">
+              <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2 border border-brand-gold/10 shadow-soft">
+                <img
+                  src={imageUrl}
+                  alt={titleHtml.replace(/<[^>]+>/g, "")}
+                  width={600}
+                  height={750}
+                  className="w-full h-full object-cover transition-transform duration-[4s] hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
             <span className="absolute bottom-4 left-4 right-4 bg-brand-green text-brand-text-light px-5 py-3 text-[10px] font-body uppercase tracking-[0.2em]">{registerLabel}</span>
           </div>
         )}
