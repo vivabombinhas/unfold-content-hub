@@ -39,11 +39,20 @@ export const BeforeAfter = ({ before, after, beforeAlt = "Antes", afterAlt = "De
       onTouchStart={(e) => move(e.touches[0].clientX)}
       onTouchMove={(e) => move(e.touches[0].clientX)}
     >
-      <img src={after} alt={afterAlt} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+      <img
+        src={after}
+        alt={afterAlt}
+        width={600}
+        height={750}
+        className="absolute inset-0 w-full h-full object-cover"
+        loading="lazy"
+      />
       <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
         <img
           src={before}
           alt={beforeAlt}
+          width={600}
+          height={750}
           className="absolute inset-0 h-full object-cover"
           style={{ width: ref.current?.getBoundingClientRect().width || "100%", maxWidth: "none" }}
           loading="lazy"
