@@ -281,7 +281,14 @@ const Index = () => {
         <div className="container-editorial grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-16 items-center">
           <div className="relative reveal mx-auto w-full max-w-sm lg:max-w-none">
             <div className="aspect-[4/5] overflow-hidden bg-brand-cream-2">
-              <img src={draRT} alt="Dra. Daniele Florencio, responsável técnica" className="w-full h-full object-cover" loading="lazy" />
+              <img
+                src={draRT}
+                alt="Dra. Daniele Florencio, responsável técnica"
+                width={600}
+                height={750}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
             <span className="absolute bottom-4 left-4 right-4 bg-brand-green text-brand-text-light px-5 py-3 text-[10px] font-body uppercase tracking-[0.2em]">CRBM 8242 PR</span>
           </div>
@@ -571,7 +578,14 @@ const Index = () => {
               className="group text-left bg-brand-black/40 border border-brand-gold/15 hover:border-brand-gold/50 transition-all overflow-hidden"
             >
               <div className="aspect-[4/3] overflow-hidden bg-brand-graphite">
-                <img src={c.cover} alt={c.area} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
+                <img
+                  src={c.cover}
+                  alt={c.area}
+                  width={600}
+                  height={450}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
               </div>
               <div className="p-4">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-brand-gold">{c.age}</p>
@@ -597,7 +611,14 @@ const Index = () => {
             documentação clínica.
           </p>
           <div className="overflow-hidden">
-            <img src={clinicInterior} alt="Interior da clínica" className="w-full aspect-[4/3] object-cover" loading="lazy" />
+            <img
+              src={clinicInterior}
+              alt="Interior da clínica"
+              width={800}
+              height={600}
+              className="w-full aspect-[4/3] object-cover"
+              loading="lazy"
+            />
           </div>
           <div className="space-y-1">
             <InlineExpand tone="cream" question="Dra. Mariana Costa · Aplicações injetáveis">
@@ -743,6 +764,8 @@ function CaseCard({ caseData, onClick }: { caseData: ClinicalCase; onClick: () =
         <img
           src={caseData.cover}
           alt={`${caseData.area} — ${caseData.age}`}
+          width={600}
+          height={750}
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
         />
