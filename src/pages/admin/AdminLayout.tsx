@@ -37,10 +37,6 @@ export default function AdminLayout() {
   if (loading) {
     return <div className="min-h-screen grid place-items-center bg-brand-black text-brand-text-soft">Carregando...</div>;
   }
-  if (!session) {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
-  }
-  if (!isAdmin) {
     return (
       <div className="min-h-screen grid place-items-center bg-brand-black text-brand-text-soft p-6 text-center">
         <div>
