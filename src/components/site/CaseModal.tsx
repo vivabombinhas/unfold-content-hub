@@ -74,6 +74,8 @@ export const CaseModal = ({ caseData, onClose }: CaseModalProps) => {
                 <img
                   src={caseData.cover}
                   alt={caseData.area}
+                  width={800}
+                  height={1000}
                   className="w-full h-full aspect-[4/5] md:aspect-auto object-cover"
                   loading="lazy"
                 />
