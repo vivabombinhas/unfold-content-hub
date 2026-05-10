@@ -115,6 +115,8 @@ export function LocalizacaoSection() {
               <iframe
                 title="Localização da Clínica de Estética Batel"
                 src={embedSrc}
+                width="100%"
+                height="100%"
                 className="w-full h-full grayscale-[60%] contrast-[1.05]"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
