@@ -271,13 +271,6 @@ export default function PagesList() {
                         <Pencil className="size-3.5" />
                         Editar
                       </Link>
-                      <button
-                        type="button"
-                        onClick={() => setPendingDelete({ id: p.id, title: p.title, slug: p.slug })}
-                        className="text-brand-text-muted hover:text-destructive transition-colors"
-                        title="Excluir página"
-                        aria-label={`Excluir ${p.title}`}
-                      >
                       {p.slug !== "modelo" ? (
                         <button
                           type="button"
