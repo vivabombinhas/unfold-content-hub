@@ -33,26 +33,38 @@ serve(async (req) => {
     let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
 
+    // Add Home page first
+    const today = new Date().toISOString().split('T')[0]
+    xml += `  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>\n`
+
     pages?.forEach((page: any) => {
-      let cleanSlug = (page.slug === 'home' || page.slug === '') ? '' : `${page.slug}/`
-      const url = `${baseUrl}/${cleanSlug}`
+      // If it's the home page, we already added it or we skip if it's same
+      if (page.slug === 'home' || page.slug === '') return
+
+      const url = `${baseUrl}/${page.slug}/`
       const lastmod = new Date(page.updated_at).toISOString().split('T')[0]
       
       xml += `  <url>
     <loc>${url}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>${cleanSlug === '' ? '1.0' : '0.8'}</priority>
+    <priority>0.8</priority>
   </url>\n`
     })
 
     xml += '</urlset>'
 
-    console.log(`Generated sitemap with ${pages?.length} pages`)
+    console.log(`Generated sitemap with ${pages?.length} dynamic pages + home`)
     return new Response(xml, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/xml; charset=UTF-8',
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600',
       },
     })
   } catch (err) {
