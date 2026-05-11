@@ -48,10 +48,11 @@ serve(async (req) => {
 
     xml += '</urlset>'
 
+    console.log(`Generated sitemap with ${pages?.length} pages`)
     return new Response(xml, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'application/xml',
+        'Content-Type': 'text/xml; charset=UTF-8',
       },
     })
   } catch (err) {
