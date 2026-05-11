@@ -22,6 +22,7 @@ serve(async (req) => {
       .from('pages')
       .select('slug, updated_at')
       .eq('status', 'published')
+      .neq('slug', 'modelo')
       .order('updated_at', { ascending: false })
 
     if (error) throw error
