@@ -14,7 +14,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const currentUserIdRef = useRef<string | null>(null);
   const hasCheckedAdminRef = useRef(false);
@@ -56,11 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userChanged || !hasCheckedAdminRef.current) {
         setLoading(true);
       }
-
-      setLoading(false);
-      initialLoadDoneRef.current = true;
-      setIsAdmin(true);
-      return;
 
       const seq = ++adminCheckSeqRef.current;
       const runCheck = () => {

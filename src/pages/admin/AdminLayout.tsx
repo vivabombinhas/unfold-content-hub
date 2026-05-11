@@ -34,7 +34,17 @@ export default function AdminLayout() {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Auth check bypassed for audit
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+        <div className="w-8 h-8 border-2 border-brand-gold border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session || !isAdmin) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
 
   // Se estiver no editor de página, não mostramos a sidebar principal para não conflitar com a sidebar do editor
   const isEditingPage = location.pathname.match(/\/admin\/paginas\/[^/]+$/);
