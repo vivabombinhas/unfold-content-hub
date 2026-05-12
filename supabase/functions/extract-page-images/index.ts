@@ -72,11 +72,15 @@
        
        if (seenUrls.has(imgUrl) || imgUrl.startsWith("data:")) continue;
  
-       // Filter noise
-       const isNoise = /logo|favicon|icon|whatsapp|social|facebook|instagram|youtube|pixel|loader|placeholder|banner-repetido/i.test(imgUrl) ||
-                       /logo|ícone|whatsapp/i.test(attrs);
-       
-       if (isNoise) continue;
+        // Filter noise and low quality
+        const isNoise = /logo|favicon|icon|whatsapp|social|facebook|instagram|youtube|pixel|loader|placeholder|banner-repetido|anatomy|anatomia|marking|marcacao|drawing|desenho|diagram|vector/i.test(imgUrl) ||
+                        /logo|ícone|whatsapp|anatomia|marcacao|desenho|tecnico/i.test(attrs);
+
+        // Ignore very small images often used for icons or tiny thumbnails
+        const isSmall = /width="[1-9][0-9]?"|height="[1-9][0-9]?"/i.test(attrs) || 
+                        /\-(150x150|50x50|100x100)\./i.test(imgUrl);
+        
+        if (isNoise || isSmall) continue;
  
        // Extract alt
        const altMatch = attrs.match(/alt="([^"]*)"/i);
