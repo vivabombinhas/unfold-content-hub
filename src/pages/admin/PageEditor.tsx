@@ -12,12 +12,15 @@ import {
   ExternalLink,
   Save,
   Send,
-  Undo2,
-  Loader2,
-  Layout,
-  Settings2,
-  Sparkles,
-} from "lucide-react";
+   Undo2,
+   Loader2,
+   Layout,
+   Settings2,
+   Sparkles,
+   AlertTriangle,
+   ShieldCheck,
+   History,
+ } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BlockForm } from "@/components/admin/BlockForm";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
@@ -318,13 +321,63 @@ export default function PageEditor() {
                 <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
                 <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
               </div>
-              <div className="pt-8 border-t border-white/5 space-y-6">
-                <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context</h3></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
-                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
-                </div>
-              </div>
+               <div className="pt-8 border-t border-white/5 space-y-8">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context & Compliance</h3></div>
+                   {pageMeta.metadata?.compliance_valid !== undefined && (
+                     <Badge variant="outline" className={cn(
+                       "text-[9px] uppercase tracking-widest",
+                       pageMeta.metadata.compliance_valid ? "text-green-400 border-green-400/20 bg-green-400/5" : "text-yellow-400 border-yellow-400/20 bg-yellow-400/5"
+                     )}>
+                       {pageMeta.metadata.compliance_valid ? "Compliance OK" : "Compliance Requer Atenção"}
+                     </Badge>
+                   )}
+                 </div>
+
+                 {pageMeta.metadata?.compliance_warnings && (pageMeta.metadata.compliance_warnings as string[]).length > 0 && (
+                   <div className="bg-yellow-400/5 border border-yellow-400/20 p-4 rounded-xl space-y-2">
+                     <div className="flex items-center gap-2 text-yellow-400">
+                       <AlertTriangle className="size-3" />
+                       <span className="text-[10px] uppercase tracking-wider font-bold">Alertas de Compliance</span>
+                     </div>
+                     <ul className="space-y-1">
+                       {(pageMeta.metadata.compliance_warnings as string[]).map((w, i) => (
+                         <li key={i} className="text-[11px] text-white/60 flex items-start gap-2">
+                           <span className="mt-1 size-1 rounded-full bg-yellow-400/40 shrink-0" />
+                           {w}
+                         </li>
+                       ))}
+                     </ul>
+                   </div>
+                 )}
+
+                 {(data.page as any).source_metadata?.origin === "batel_legacy" && (
+                   <div className="bg-brand-gold/5 border border-brand-gold/20 p-4 rounded-xl space-y-3">
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2 text-brand-gold">
+                         <ShieldCheck className="size-3" />
+                         <span className="text-[10px] uppercase tracking-wider font-bold">Origem Legada Batel</span>
+                       </div>
+                       <History className="size-3 text-brand-gold/40 cursor-help" title="Snapshot preservado para auditoria" />
+                     </div>
+                     <div className="grid grid-cols-2 gap-2 text-[10px]">
+                       <div className="p-2 bg-white/5 rounded-lg">
+                         <span className="text-white/40 block mb-1">FAQs Reais</span>
+                         <span className="text-white/90 font-mono">{(data.page as any).source_metadata.stats?.faqs_count ?? 0}</span>
+                       </div>
+                       <div className="p-2 bg-white/5 rounded-lg">
+                         <span className="text-white/40 block mb-1">Depoimentos</span>
+                         <span className="text-white/90 font-mono">{(data.page as any).source_metadata.stats?.testimonials_count ?? 0}</span>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
+                   <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
+                 </div>
+               </div>
             </div>
           )}
           {isImportModalOpen && <ImportBlockModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} onImport={handleImportBlock} pageTitle={pageMeta.title} pageCategory={(pageMeta.metadata?.category as any) || ""} />}
