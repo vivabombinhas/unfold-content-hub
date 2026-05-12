@@ -24,7 +24,9 @@ import {
   Award,
   Star,
 } from "lucide-react";
- import { useState, useEffect } from "react";
+ import { useState, useEffect, useMemo } from "react";
+
+const TECHNICAL_FIELDS = ["Duração", "Sessões", "Recuperação", "Contraindicações"];
  import draRT from "@/assets/dra-rt.webp";
 import { GoldButton } from "@/components/site/GoldButton";
 import { Medal } from "@/components/site/Medal";
