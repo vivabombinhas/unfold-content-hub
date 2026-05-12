@@ -98,11 +98,12 @@ const generatePageSchema = {
             },
             bullets: {
               type: "array",
+              description: "Itens técnicos como Duração, Sessões, Recuperação e Contraindicações. Se o dado não for explícito, use 'sob consulta'.",
               items: {
                 type: "object",
                 properties: {
-                  title: { type: "string" },
-                  text: { type: "string" }
+                  title: { type: "string", description: "Ex: 'Duração', 'Sessões', 'Recuperação', 'Contraindicações'." },
+                  text: { type: "string", description: "Se desconhecido, use 'sob consulta'." }
                 },
                 required: ["title", "text"]
               },
