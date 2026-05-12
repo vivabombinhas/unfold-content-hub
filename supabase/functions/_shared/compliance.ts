@@ -9,10 +9,10 @@
      { term: "Dra. Daniele Florencio", type: "RT_NAME" },
      { term: "Estética Batel", type: "BRAND_NAME" }
    ],
-   roles: {
-     daniele: "Fisioterapeuta Dermatofuncional",
-     clinic: "Clínica de Estética de Alta Performance"
-   }
+    roles: {
+      daniele: "Biomédica · CRBM 8242-PR",
+      clinic: "Clínica de Estética de Alta Performance"
+    }
  };
  
  export function validateCompliance(content: string): { valid: boolean; warnings: string[] } {
