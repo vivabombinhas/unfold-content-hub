@@ -1190,7 +1190,15 @@ function ProcedimentoDetalhadoBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Como é o procedimento");
   const titleHtml = firstS([data.title_html, data.title], "Como é, na prática, esse <em>procedimento</em>.");
   const paragraphs = arr<string>(data.paragraphs);
-  const bullets = arr<{ title?: string; text?: string } | string>(data.bullets);
+   const rawBullets = arr<{ title?: string; text?: string } | string>(data.bullets);
+   
+   // Filtra campos técnicos que o usuário solicitou remover da UI pública
+   const technicalFields = ["Duração", "Sessões", "Recuperação", "Contraindicações"];
+   const bullets = rawBullets.filter(b => {
+     const title = typeof b === "string" ? "" : s(b.title);
+     return !technicalFields.includes(title);
+   });
+
   const cta = readCta(data.cta, { label: "", href: "" });
   if (!paragraphs.length && !bullets.length) return null;
   return (
