@@ -94,66 +94,65 @@
      // Injeção de conteúdo por blocos
      const faqItems: any[] = []
      
-     blocks?.forEach((block: any) => {
-       const data = block.data || {}
-       
-       switch (block.type) {
-         case 'hero':
-           html += \`
-         <header id="hero">
-             <span class="eyebrow">\${data.eyebrow || 'Estética Batel'}</span>
-             <h1>\${data.title || page.title}</h1>
-             <p>\${data.paragraph || data.description || ''}</p>
-             \${data.image_url ? \`<img src="\${data.image_url}" alt="\${data.eyebrow || 'Hero image'}" style="max-width: 100%; height: auto;">\` : ''}
-         </header>\`
-           break;
- 
-         case 'faq':
-           const items = Array.isArray(data.items) ? data.items : []
-           if (items.length > 0) {
-             html += \`<section id="faq"><h2>Perguntas Frequentes</h2>\`
-             items.forEach((item: any) => {
-               faqItems.push({ question: item.question, answer: item.answer })
-               html += \`
-             <details class="faq-item">
-                 <summary>\${item.question}</summary>
-                 <div>\${item.answer}</div>
-             </details>\`
-             })
-             html += \`</section>\`
-           }
-           break;
- 
-         case 'manifesto_curto':
-           html += \`
-         <section id="manifesto">
-             <blockquote style="font-size: 1.2rem; font-style: italic; border-left: 4px solid #ccc; padding-left: 20px;">
-                 \${data.text || ''}
-             </blockquote>
-         </section>\`
-           break;
- 
-         case 'beneficios_grid':
-           const cards = Array.isArray(data.cards) ? data.cards : []
-           if (cards.length > 0) {
-             html += \`<section id="beneficios"><h2>Diferenciais</h2><ul>\`
-             cards.forEach((card: any) => {
-               html += \`<li><strong>\${card.title}</strong>: \${card.text}</li>\`
-             })
-             html += \`</ul></section>\`
-           }
-           break;
- 
-         default:
-           // Renderização genérica para outros blocos (apenas títulos se houver)
-           if (data.title || data.eyebrow) {
-              html += \`<section id="\${block.type}">
-                 \${data.eyebrow ? \`<span class="eyebrow">\${data.eyebrow}</span>\` : ''}
-                 \${data.title ? \`<h2>\${data.title}</h2>\` : ''}
-              </section>\`
-           }
-       }
-     })
+    blocks?.forEach((block: any) => {
+      const data = block.data || {}
+      
+      switch (block.type) {
+        case 'hero':
+          html += `
+        <header id="hero">
+            <span class="eyebrow">${data.eyebrow || 'Estética Batel'}</span>
+            <h1>${data.title || page.title}</h1>
+            <p>${data.paragraph || data.description || ''}</p>
+            ${data.image_url ? `<img src="${data.image_url}" alt="${data.eyebrow || 'Hero image'}" style="max-width: 100%; height: auto;">` : ''}
+        </header>`
+          break;
+
+        case 'faq':
+          const items = Array.isArray(data.items) ? data.items : []
+          if (items.length > 0) {
+            html += `<section id="faq"><h2>Perguntas Frequentes</h2>`
+            items.forEach((item: any) => {
+              faqItems.push({ question: item.question, answer: item.answer })
+              html += `
+            <details class="faq-item">
+                <summary>${item.question}</summary>
+                <div>${item.answer}</div>
+            </details>`
+            })
+            html += `</section>`
+          }
+          break;
+
+        case 'manifesto_curto':
+          html += `
+        <section id="manifesto">
+            <blockquote style="font-size: 1.2rem; font-style: italic; border-left: 4px solid #ccc; padding-left: 20px;">
+                ${data.text || ''}
+            </blockquote>
+        </section>`
+          break;
+
+        case 'beneficios_grid':
+          const cards = Array.isArray(data.cards) ? data.cards : []
+          if (cards.length > 0) {
+            html += `<section id="beneficios"><h2>Diferenciais</h2><ul>`
+            cards.forEach((card: any) => {
+              html += `<li><strong>${card.title}</strong>: ${card.text}</li>`
+            })
+            html += `</ul></section>`
+          }
+          break;
+
+        default:
+          if (data.title || data.eyebrow) {
+             html += `<section id="${block.type}">
+                ${data.eyebrow ? `<span class="eyebrow">${data.eyebrow}</span>` : ''}
+                ${data.title ? `<h2>${data.title}</h2>` : ''}
+             </section>`
+          }
+      }
+    })
  
      // Adicionar Footer básico para SEO
      html += `
