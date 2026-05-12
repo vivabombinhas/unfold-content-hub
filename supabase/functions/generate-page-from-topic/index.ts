@@ -98,11 +98,12 @@ const generatePageSchema = {
             },
             bullets: {
               type: "array",
+              description: "Itens técnicos como Duração, Sessões, Recuperação e Contraindicações. Se o dado não for explícito, use 'sob consulta'.",
               items: {
                 type: "object",
                 properties: {
-                  title: { type: "string" },
-                  text: { type: "string" }
+                  title: { type: "string", description: "Ex: 'Duração', 'Sessões', 'Recuperação', 'Contraindicações'." },
+                  text: { type: "string", description: "Se desconhecido, use 'sob consulta'." }
                 },
                 required: ["title", "text"]
               },
@@ -413,8 +414,10 @@ IMPORTANTÍSSIMO — REGRA DE CONTAMINAÇÃO:
 - Se o tema for "Bioestimulador de Colágeno", foque em estímulo dérmico, melhora gradual, qualidade da pele — NÃO em paralisação muscular.
 
  REGRAS DE TOM E CONFIABILIDADE (não negociáveis):
- - NUNCA INVENTE: Preços exatos, tempo de duração exato (ex: "dura 12 meses"), número exato de sessões (ex: "precisa de 3 sessões") ou contraindicações específicas SE NÃO ESTIVEREM NO CONTEÚDO BASE.
- - SE NÃO HOUVER DADO REAL: Use termos vagos e profissionais como "a definir em avaliação", "varia conforme o organismo", "estimado conforme protocolo clínico".
+  - NUNCA INVENTE: Preços exatos, tempo de duração exato, número exato de sessões ou contraindicações específicas SE NÃO ESTIVEREM NO CONTEÚDO BASE.
+  - CAMPOS TÉCNICOS OBRIGATÓRIOS (Duração, Sessões, Recuperação, Contraindicações):
+    Se não houver dado explícito extraído da página antiga ou das notas do editor, use OBRIGATORIAMENTE o termo "sob consulta" ou uma orientação genérica segura (ex: "definido em avaliação individual"). NUNCA invente números ou prazos.
+  - SE NÃO HOUVER DADO REAL: Use "sob consulta", "a definir em avaliação", "varia conforme o organismo", "estimado conforme protocolo clínico".
  - BLOQUEIO DE INVENÇÃO: É preferível escrever menos do que inventar um número falso. Se o usuário perguntar algo que você não sabe, responda "A ser definido em consulta".
  - Autoridade discreta, direta, sem hype
 - Autoridade discreta, direta, sem hype
@@ -439,8 +442,8 @@ REGRAS ESPECÍFICAS DE BLOCOS (estrutura aprovada — NÃO simplificar):
 
 - METODO: 3 passos. Cada passo TEM OBRIGATORIAMENTE 'title', 'summary' (frase curta) e 'detail' (2-3 frases concretas que abrem no accordion "Como funciona na prática"). O 'detail' precisa ser específico do procedimento "${tema}" — descreve o que acontece naquele passo na prática clínica deste procedimento.
 
- - EQUIPE_RT (Responsável Técnica): NÃO transformar essa seção em "Direção Técnica" ou bloco genérico. Sempre manter como apresentação da Dra. Daniele Florencio. O título deve trazer o nome dela. A bio adapta-se ao tema.
-   IMPORTANTE: A Dra. Daniele Florencio é FISIOTERAPEUTA DERMATOFUNCIONAL. NUNCA se refira a ela como médica ou dermatologista. 
+  - EQUIPE_RT (Responsável Técnica): NÃO transformar essa seção em "Direção Técnica" ou bloco genérico. Sempre manter como apresentação da Dra. Daniele Florencio. O título deve trazer o nome dela. A bio adapta-se ao tema.
+    IMPORTANTE: A Dra. Daniele Florencio é Biomédica · CRBM 8242-PR. NUNCA se refira a ela como médica ou dermatologista. 
    Os 2 accordions são:
   1) "Como a Dra. Daniele pensa o [procedimento desta página]" — ponto de vista clínico dela sobre este procedimento específico (1 parágrafo curto, em 1ª pessoa, entre aspas).
   2) "Especializações e formação" — institucional (lista de 4-5 itens em texto corrido, separados por '·' ou em frases curtas). Pode reusar a base: especialização em Harmonização Orofacial, atualizações anuais, +10.000 procedimentos documentados, mentora de profissionais em formação.

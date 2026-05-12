@@ -109,13 +109,23 @@ export default function PageEditor() {
 
   useEffect(() => {
     if (!data?.page) return;
-     setPageMeta({
-       title: data.page.title ?? "",
-       meta_title: data.page.meta_title ?? "",
-       meta_description: data.page.meta_description ?? "",
-       metadata: (data.page as any).metadata ?? {},
-       source_snapshot: (data.page as any).source_snapshot ?? null,
-     });
+    
+    const sourceOrigin = (data.page as any).source_metadata?.origin;
+    const isLegacy = sourceOrigin === "batel_legacy";
+
+    setPageMeta({
+      title: data.page.title ?? "",
+      meta_title: data.page.meta_title ?? "",
+      meta_description: data.page.meta_description ?? "",
+      metadata: (data.page as any).metadata ?? {},
+      source_snapshot: (data.page as any).source_snapshot ?? null,
+    });
+
+    // Mandatory diff for legacy pages
+    if (isLegacy) {
+      setShowAudit(true);
+    }
+
     setBlocks(
       (data.blocks as PageBlockRow[]).map((b) => ({
         id: b.id,
