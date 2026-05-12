@@ -22,7 +22,8 @@ import {
    History,
  } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { BlockForm } from "@/components/admin/BlockForm";
+ import { BlockForm } from "@/components/admin/BlockForm";
+ import { DiffViewer } from "@/components/admin/DiffViewer";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
 import { useAuth } from "@/hooks/use-auth";
@@ -93,7 +94,8 @@ export default function PageEditor() {
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
  const [siteSettings, setSiteSettings] = useState<any>(null);
-  const [showAddMenu, setShowAddMenu] = useState(false);
+   const [showAddMenu, setShowAddMenu] = useState(false);
+   const [showAudit, setShowAudit] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -326,6 +328,37 @@ export default function PageEditor() {
                <div className="pt-8 border-t border-white/5 space-y-8">
                  <div className="flex items-center justify-between">
                    <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context & Compliance</h3></div>
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => setShowAudit(!showAudit)}
+                     className={cn(
+                       "h-7 text-[9px] uppercase tracking-wider transition-all",
+                       showAudit ? "bg-brand-gold text-brand-green border-brand-gold" : "bg-white/5 border-white/10 text-white/60"
+                     )}
+                   >
+                     <History className="size-3 mr-1.5" />
+                     {showAudit ? "Fechar Auditoria" : "Ver Diff Original"}
+                   </Button>
+                 </div>
+
+                 {showAudit && pageMeta.source_snapshot && (
+                   <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                     <div className="flex items-center gap-2 text-brand-gold">
+                       <History className="size-3" />
+                       <span className="text-[10px] uppercase tracking-wider font-bold">Auditoria: Original vs Gerado</span>
+                     </div>
+                     <DiffViewer
+                       oldText={pageMeta.source_snapshot}
+                       newText={blocks.map(b => {
+                         const d = b.data as any;
+                         return `${d.title || d.title_html || ''}\n${d.paragraphs?.join('\n') || d.body || d.text || ''}`;
+                       }).join('\n\n')}
+                       className="max-h-[500px] overflow-y-auto"
+                     />
+                     <p className="text-[9px] text-white/30 italic">O diff compara o snapshot extraído (snapshot bruto) com o texto principal dos blocos gerados.</p>
+                   </div>
+                 )}
                    {pageMeta.metadata?.compliance_valid !== undefined && (
                      <Badge variant="outline" className={cn(
                        "text-[9px] uppercase tracking-widest",
