@@ -68,16 +68,55 @@ export default function PublicPage() {
     [data?.blocks],
   );
 
-  const { pageImage, heroImage } = useMemo(() => {
+   const { pageImage, heroImage, schemas } = useMemo(() => {
     const meta = data?.page?.metadata as any;
     const heroBlock = data?.blocks?.find(b => b.type === 'hero');
     const heroUrl = (heroBlock?.data as any)?.image_url;
     
-    return {
-      pageImage: meta?.og_image || meta?.hero_image || heroUrl || "",
-      heroImage: heroUrl
-    };
-  }, [data?.page?.metadata, data?.blocks]);
+     const pageSchemas: any[] = [];
+     
+     // 1. MedicalProcedure Schema
+     if (data?.page) {
+       pageSchemas.push({
+         "@context": "https://schema.org",
+         "@type": "MedicalProcedure",
+         "name": data.page.title,
+         "description": data.page.meta_description,
+         "procedureType": "SurgicalProcedure",
+         "bodyLocation": (data.page as any).metadata?.area_anatomica || "Corpo",
+         "relevantSpecialty": {
+           "@type": "MedicalSpecialty",
+           "name": "Estética Avançada"
+         }
+       });
+     }
+
+     // 2. FAQPage Schema
+     const faqBlock = data?.blocks?.find(b => b.type === 'faq');
+     if (faqBlock) {
+       const items = (faqBlock.data as any)?.items || [];
+       if (items.length > 0) {
+         pageSchemas.push({
+           "@context": "https://schema.org",
+           "@type": "FAQPage",
+           "mainEntity": items.map((f: any) => ({
+             "@type": "Question",
+             "name": f.question,
+             "acceptedAnswer": {
+               "@type": "Answer",
+               "text": f.answer
+             }
+           }))
+         });
+       }
+     }
+
+     return {
+       pageImage: meta?.og_image || meta?.hero_image || heroUrl || "",
+       heroImage: heroUrl,
+       schemas: pageSchemas
+     };
+   }, [data?.page, data?.blocks]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -139,9 +178,10 @@ export default function PublicPage() {
          slug={data.page.slug}
          status={data.page.status}
          previewMode={previewMode}
-          image={pageImage}
-          heroImage={heroImage}
-       />
+           image={pageImage}
+           heroImage={heroImage}
+           schemas={schemas}
+        />
        <Header breadcrumbCurrent={data.page.title} />
 
       {previewMode && data.page.status !== "published" && (

@@ -16,6 +16,7 @@
 //   curadoria.
 
  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+ import { validateCompliance } from "../_shared/compliance.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -411,7 +412,11 @@ IMPORTANTÍSSIMO — REGRA DE CONTAMINAÇÃO:
 - Se o tema for "Preenchimento Labial", NUNCA escreva sobre rugas, expressão facial, ou toxina. Foque em ácido hialurônico, contorno, hidratação, volume.
 - Se o tema for "Bioestimulador de Colágeno", foque em estímulo dérmico, melhora gradual, qualidade da pele — NÃO em paralisação muscular.
 
-REGRAS DE TOM (não negociáveis):
+ REGRAS DE TOM E CONFIABILIDADE (não negociáveis):
+ - NUNCA INVENTE: Preços exatos, tempo de duração exato (ex: "dura 12 meses"), número exato de sessões (ex: "precisa de 3 sessões") ou contraindicações específicas SE NÃO ESTIVEREM NO CONTEÚDO BASE.
+ - SE NÃO HOUVER DADO REAL: Use termos vagos e profissionais como "a definir em avaliação", "varia conforme o organismo", "estimado conforme protocolo clínico".
+ - BLOQUEIO DE INVENÇÃO: É preferível escrever menos do que inventar um número falso. Se o usuário perguntar algo que você não sabe, responda "A ser definido em consulta".
+ - Autoridade discreta, direta, sem hype
 - Autoridade discreta, direta, sem hype
 - Português do Brasil, sem inglês desnecessário
 - Frases curtas. Verbo no início.
@@ -434,7 +439,9 @@ REGRAS ESPECÍFICAS DE BLOCOS (estrutura aprovada — NÃO simplificar):
 
 - METODO: 3 passos. Cada passo TEM OBRIGATORIAMENTE 'title', 'summary' (frase curta) e 'detail' (2-3 frases concretas que abrem no accordion "Como funciona na prática"). O 'detail' precisa ser específico do procedimento "${tema}" — descreve o que acontece naquele passo na prática clínica deste procedimento.
 
-- EQUIPE_RT (Responsável Técnica): NÃO transformar essa seção em "Direção Técnica" ou bloco genérico. Sempre manter como apresentação da Dra. Daniele Florencio. O título deve trazer o nome dela. A bio adapta-se ao tema. Os 2 accordions são:
+ - EQUIPE_RT (Responsável Técnica): NÃO transformar essa seção em "Direção Técnica" ou bloco genérico. Sempre manter como apresentação da Dra. Daniele Florencio. O título deve trazer o nome dela. A bio adapta-se ao tema.
+   IMPORTANTE: A Dra. Daniele Florencio é FISIOTERAPEUTA DERMATOFUNCIONAL. NUNCA se refira a ela como médica ou dermatologista. 
+   Os 2 accordions são:
   1) "Como a Dra. Daniele pensa o [procedimento desta página]" — ponto de vista clínico dela sobre este procedimento específico (1 parágrafo curto, em 1ª pessoa, entre aspas).
   2) "Especializações e formação" — institucional (lista de 4-5 itens em texto corrido, separados por '·' ou em frases curtas). Pode reusar a base: especialização em Harmonização Orofacial, atualizações anuais, +10.000 procedimentos documentados, mentora de profissionais em formação.
   O cta_label é sempre "Conhecer a equipe completa".`;
@@ -797,46 +804,61 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     }
 
     // Build metadata for the new page (Fase 1).
-    const metadata = {
-      tema,
-      categoria: generated.page.categoria || null,
-      area_anatomica: research?.area_anatomica || null,
-      ai_notes: aiNotes || null,
-      links_referencia: linksReferencia,
-      sources: sourcesIn,
-      generated_at: new Date().toISOString(),
-      template_slug: TEMPLATE_SLUG,
-      // Fase 1.2 — origem do conteúdo das referências
-      reference_type: ownOldPage ? "own_old_page" : (linksReferencia.length > 0 ? "external" : "none"),
-       // URLs de imagens encontradas nas páginas antigas próprias. Salvas como candidatos para o Editor.
-       image_candidates: ownOldPage ? candidateImages : [],
-      old_page_extracted: ownOldPage ? {
-        testimonials_count: ownTestimonials.length,
-        faqs_count: ownFaqs.length,
-        sections_count: (oldPageContent?.sections || []).length,
-        used_section_for_detalhado: procedimentoDetalhadoEnabled,
-      } : null,
-      // Fase A: persiste diagnóstico bruto da extração + raw_markdown para
-      // re-geração futura sem precisar chamar Firecrawl de novo.
-      scrape_diagnostics: scrapeDiagnostics,
-      old_page_raw_markdown: ownOldPage && oldPageContent?.raw_markdown ? oldPageContent.raw_markdown : null,
-      contamination_flags: contaminationFlags,
-      allow_ai_only_fallback: ownOldPage ? allowAiOnlyFallback : null,
-    };
+     const fullTextForCompliance = JSON.stringify(generated.blocks);
+     const compliance = validateCompliance(fullTextForCompliance);
 
-    // Insert page + blocks
-    const { data: newPage, error: pageErr } = await admin
-      .from("pages")
-      .insert({
-        slug,
-        title: generated.page.title,
-        meta_title: generated.page.meta_title,
-        meta_description: generated.page.meta_description,
-        status: "draft",
-        metadata,
-      })
-      .select("id,slug")
-      .single();
+     const metadata = {
+       tema,
+       categoria: generated.page.categoria || null,
+       area_anatomica: research?.area_anatomica || null,
+       ai_notes: aiNotes || null,
+       links_referencia: linksReferencia,
+       sources: sourcesIn,
+       generated_at: new Date().toISOString(),
+       template_slug: TEMPLATE_SLUG,
+       // Fase 1.2 — origem do conteúdo das referências
+       reference_type: ownOldPage ? "own_old_page" : (linksReferencia.length > 0 ? "external" : "none"),
+        // URLs de imagens encontradas nas páginas antigas próprias. Salvas como candidatos para o Editor.
+        image_candidates: ownOldPage ? candidateImages : [],
+       old_page_extracted: ownOldPage ? {
+         testimonials_count: ownTestimonials.length,
+         faqs_count: ownFaqs.length,
+         sections_count: (oldPageContent?.sections || []).length,
+         used_section_for_detalhado: procedimentoDetalhadoEnabled,
+       } : null,
+       // Fase A: persiste diagnóstico bruto da extração + raw_markdown para
+       // re-geração futura sem precisar chamar Firecrawl de novo.
+       scrape_diagnostics: scrapeDiagnostics,
+       old_page_raw_markdown: ownOldPage && oldPageContent?.raw_markdown ? oldPageContent.raw_markdown : null,
+       contamination_flags: contaminationFlags,
+       compliance_warnings: compliance.warnings,
+       compliance_valid: compliance.valid,
+       allow_ai_only_fallback: ownOldPage ? allowAiOnlyFallback : null,
+     };
+
+     // Insert page + blocks
+     const { data: newPage, error: pageErr } = await admin
+       .from("pages")
+       .insert({
+         slug,
+         title: generated.page.title,
+         meta_title: generated.page.meta_title,
+         meta_description: generated.page.meta_description,
+         status: "draft",
+         source_snapshot: ownOldPage && oldPageContent?.raw_markdown ? oldPageContent.raw_markdown : null,
+         source_metadata: {
+           origin: ownOldPage ? "batel_legacy" : "new_topic",
+           extraction_status: (ownOldPage && oldPageContent) ? "success" : "none",
+           stats: {
+             faqs_count: ownFaqs.length,
+             testimonials_count: ownTestimonials.length,
+             sections_count: (oldPageContent?.sections || []).length
+           }
+         },
+         metadata,
+       })
+       .select("id,slug")
+       .single();
     if (pageErr) throw pageErr;
 
     const blocksToInsert = newBlocks.map((b) => ({ ...b, page_id: newPage.id }));

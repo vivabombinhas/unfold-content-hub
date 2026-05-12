@@ -12,14 +12,18 @@ import {
   ExternalLink,
   Save,
   Send,
-  Undo2,
-  Loader2,
-  Layout,
-  Settings2,
-  Sparkles,
-} from "lucide-react";
+   Undo2,
+   Loader2,
+   Layout,
+   Settings2,
+   Sparkles,
+   AlertTriangle,
+   ShieldCheck,
+   History,
+ } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { BlockForm } from "@/components/admin/BlockForm";
+ import { BlockForm } from "@/components/admin/BlockForm";
+ import { DiffViewer } from "@/components/admin/DiffViewer";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
 import { useAuth } from "@/hooks/use-auth";
@@ -77,19 +81,21 @@ export default function PageEditor() {
     },
   });
 
-  const [pageMeta, setPageMeta] = useState({
-    title: "",
-    meta_title: "",
-    meta_description: "",
-    metadata: {} as Record<string, unknown>,
-  });
+   const [pageMeta, setPageMeta] = useState({
+     title: "",
+     meta_title: "",
+     meta_description: "",
+     metadata: {} as Record<string, unknown>,
+     source_snapshot: null as string | null,
+   });
   const [blocks, setBlocks] = useState<DraftBlock[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
  const [siteSettings, setSiteSettings] = useState<any>(null);
-  const [showAddMenu, setShowAddMenu] = useState(false);
+   const [showAddMenu, setShowAddMenu] = useState(false);
+   const [showAudit, setShowAudit] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -103,12 +109,13 @@ export default function PageEditor() {
 
   useEffect(() => {
     if (!data?.page) return;
-    setPageMeta({
-      title: data.page.title ?? "",
-      meta_title: data.page.meta_title ?? "",
-      meta_description: data.page.meta_description ?? "",
-      metadata: (data.page as any).metadata ?? {},
-    });
+     setPageMeta({
+       title: data.page.title ?? "",
+       meta_title: data.page.meta_title ?? "",
+       meta_description: data.page.meta_description ?? "",
+       metadata: (data.page as any).metadata ?? {},
+       source_snapshot: (data.page as any).source_snapshot ?? null,
+     });
     setBlocks(
       (data.blocks as PageBlockRow[]).map((b) => ({
         id: b.id,
@@ -313,20 +320,103 @@ export default function PageEditor() {
                 <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><Settings2 className="size-4 text-white/60" /></div>
                 <div><h4 className="text-xs uppercase tracking-[0.2em] text-white/40 font-medium">Página</h4><p className="text-sm font-medium text-white/90">Configurações Gerais</p></div>
               </div>
-              <div className="space-y-6">
-                <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
-                <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
-                <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
+               <div className="space-y-6">
+                 <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
+                 <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
+                 <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
+               </div>
+
+               <div className="pt-8 border-t border-white/5 space-y-8">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context & Compliance</h3></div>
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => setShowAudit(!showAudit)}
+                     className={cn(
+                       "h-7 text-[9px] uppercase tracking-wider transition-all",
+                       showAudit ? "bg-brand-gold text-brand-green border-brand-gold" : "bg-white/5 border-white/10 text-white/60"
+                     )}
+                   >
+                     <History className="size-3 mr-1.5" />
+                     {showAudit ? "Fechar Auditoria" : "Ver Diff Original"}
+                   </Button>
+                 </div>
+
+                 {showAudit && pageMeta.source_snapshot && (
+                   <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                     <div className="flex items-center gap-2 text-brand-gold">
+                       <History className="size-3" />
+                       <span className="text-[10px] uppercase tracking-wider font-bold">Auditoria: Original vs Gerado</span>
+                     </div>
+                     <DiffViewer
+                       oldText={pageMeta.source_snapshot}
+                       newText={blocks.map(b => {
+                         const d = b.data as any;
+                         return `${d.title || d.title_html || ''}\n${d.paragraphs?.join('\n') || d.body || d.text || ''}`;
+                       }).join('\n\n')}
+                       className="max-h-[500px] overflow-y-auto"
+                     />
+                     <p className="text-[9px] text-white/30 italic">O diff compara o snapshot extraído (snapshot bruto) com o texto principal dos blocos gerados.</p>
+                   </div>
+                 )}
+
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-4">
+                     <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
+                     <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
+                   </div>
+                   {pageMeta.metadata?.compliance_valid !== undefined && (
+                     <Badge variant="outline" className={cn(
+                       "text-[9px] uppercase tracking-widest",
+                       pageMeta.metadata.compliance_valid ? "text-green-400 border-green-400/20 bg-green-400/5" : "text-yellow-400 border-yellow-400/20 bg-yellow-400/5"
+                     )}>
+                       {pageMeta.metadata.compliance_valid ? "Compliance OK" : "Compliance Requer Atenção"}
+                     </Badge>
+                   )}
+                 </div>
+
+                 {pageMeta.metadata?.compliance_warnings && (pageMeta.metadata.compliance_warnings as string[]).length > 0 && (
+                   <div className="bg-yellow-400/5 border border-yellow-400/20 p-4 rounded-xl space-y-2">
+                     <div className="flex items-center gap-2 text-yellow-400">
+                       <AlertTriangle className="size-3" />
+                       <span className="text-[10px] uppercase tracking-wider font-bold">Alertas de Compliance</span>
+                     </div>
+                     <ul className="space-y-1">
+                       {(pageMeta.metadata.compliance_warnings as string[]).map((w, i) => (
+                         <li key={i} className="text-[11px] text-white/60 flex items-start gap-2">
+                           <span className="mt-1 size-1 rounded-full bg-yellow-400/40 shrink-0" />
+                           {w}
+                         </li>
+                       ))}
+                     </ul>
+                   </div>
+                 )}
+
+                 {(data.page as any).source_metadata?.origin === "batel_legacy" && (
+                   <div className="bg-brand-gold/5 border border-brand-gold/20 p-4 rounded-xl space-y-3">
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2 text-brand-gold">
+                         <ShieldCheck className="size-3" />
+                         <span className="text-[10px] uppercase tracking-wider font-bold">Origem Legada Batel</span>
+                       </div>
+                       <History className="size-3 text-brand-gold/40 cursor-help" />
+                     </div>
+                     <div className="grid grid-cols-2 gap-2 text-[10px]">
+                       <div className="p-2 bg-white/5 rounded-lg">
+                         <span className="text-white/40 block mb-1">FAQs Reais</span>
+                         <span className="text-white/90 font-mono">{(data.page as any).source_metadata.stats?.faqs_count ?? 0}</span>
+                       </div>
+                       <div className="p-2 bg-white/5 rounded-lg">
+                         <span className="text-white/40 block mb-1">Depoimentos</span>
+                         <span className="text-white/90 font-mono">{(data.page as any).source_metadata.stats?.testimonials_count ?? 0}</span>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+               </div>
               </div>
-              <div className="pt-8 border-t border-white/5 space-y-6">
-                <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context</h3></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
-                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
-                </div>
-              </div>
-            </div>
-          )}
+            )}
           {isImportModalOpen && <ImportBlockModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} onImport={handleImportBlock} pageTitle={pageMeta.title} pageCategory={(pageMeta.metadata?.category as any) || ""} />}
         </div>
       }

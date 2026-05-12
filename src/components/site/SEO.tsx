@@ -8,7 +8,8 @@
   heroImage?: string;
    status?: "draft" | "published";
    previewMode?: boolean;
-   isAdmin?: boolean;
+    isAdmin?: boolean;
+    schemas?: any[];
  }
  
  export const SEO = ({
@@ -18,9 +19,10 @@
     image,
     heroImage,
    status = "published",
-   previewMode = false,
-   isAdmin = false,
- }: SEOProps) => {
+    previewMode = false,
+    isAdmin = false,
+    schemas = [],
+  }: SEOProps) => {
    const siteTitle = "Clínica de Estética Batel · Curitiba";
    const fullTitle = title ? `${title} · ${siteTitle}` : siteTitle;
    const siteUrl = "https://esteticabatel.com.br";
@@ -67,6 +69,12 @@
 
         {/* Performance: Preload hero image if available */}
          {heroImage && <link rel="preload" as="image" href={heroImage} fetchPriority="high" />}
-     </Helmet>
+
+         {schemas && schemas.length > 0 && schemas.map((schema, idx) => (
+           <script key={idx} type="application/ld+json">
+             {JSON.stringify(schema)}
+           </script>
+         ))}
+      </Helmet>
    );
  };

@@ -110,10 +110,16 @@ export default function NewPageFromTopic() {
     () => linksRaw.split(/\s+/).map((s) => s.trim()).filter((s) => /^https?:\/\//.test(s)),
     [linksRaw],
   );
-  const hasOwnDomainLink = useMemo(
-    () => links.some((u) => { try { return new URL(u).hostname.endsWith(OWN_DOMAIN); } catch { return false; } }),
-    [links],
-  );
+   const hasOwnDomainLink = useMemo(() => {
+     return links.some((u) => {
+       try {
+         const hostname = new URL(u).hostname;
+         return hostname.endsWith(OWN_DOMAIN) || hostname.includes("esteticabatel");
+       } catch {
+         return false;
+       }
+     });
+   }, [links]);
 
   // Fase A: auto-detect domínio próprio
   useEffect(() => {
@@ -314,12 +320,15 @@ export default function NewPageFromTopic() {
             rows={4}
             className="mt-1.5 font-mono text-xs"
           />
-          {hasOwnDomainLink && (
-            <div className="mt-2 flex items-center gap-2 text-[11px] text-brand-gold border border-brand-gold/30 bg-brand-gold/5 px-2.5 py-1.5">
-              <CheckCircle2 className="size-3.5" />
-              <span>Detectado: página da clínica. Vou preservar conteúdo real.</span>
-            </div>
-          )}
+           {hasOwnDomainLink && (
+             <div className="mt-2 flex items-center gap-2 text-[11px] text-brand-gold border border-brand-gold/40 bg-brand-gold/10 px-3 py-2 rounded-sm shadow-sm animate-in fade-in slide-in-from-left-2">
+               <Sparkles className="size-4 animate-pulse" />
+               <div className="flex flex-col">
+                 <span className="font-bold uppercase tracking-wider text-[10px]">Domínio Legado Detectado</span>
+                 <span className="text-brand-text-muted">Página antiga da Batel identificada. Ativando extração de alta confiabilidade.</span>
+               </div>
+             </div>
+           )}
           <label className="mt-3 flex items-start gap-2 cursor-pointer">
             <Checkbox
               checked={linksAreOwnOldPage}
