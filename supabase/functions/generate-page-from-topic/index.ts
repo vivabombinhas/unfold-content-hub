@@ -118,20 +118,19 @@ const generatePageSchema = {
               minItems: 3,
               description: "3-5 parágrafos detalhados sobre o procedimento."
             },
-            bullets: {
-              type: "array",
-              description: "Itens técnicos como Duração, Sessões, Recuperação e Contraindicações. Se o dado não for explícito, use 'sob consulta'.",
-              items: {
-                type: "object",
-                properties: {
-                  title: { type: "string", description: "Ex: 'Duração', 'Sessões', 'Recuperação', 'Contraindicações'." },
-                  text: { type: "string", description: "Se desconhecido, use 'sob consulta'." }
-                },
-                required: ["title", "text"]
+            bullets: { 
+              type: "array", 
+              description: "Itens técnicos ou diferenciais em lista. NUNCA inventar dados de duração, sessões ou recuperação se não estiverem na fonte. NUNCA usar 'sob consulta' — se não houver dado clínico real, não gere o item.",
+              items: { 
+                type: "object", 
+                properties: { 
+                  title: { type: "string" }, 
+                  text: { type: "string" } 
+                }, 
+                required: ["title", "text"] 
               },
-              minItems: 4,
-              maxItems: 8
-            }
+              maxItems: 6
+            },
           },
           required: ["eyebrow", "title_html", "paragraphs", "bullets"],
           additionalProperties: false,
