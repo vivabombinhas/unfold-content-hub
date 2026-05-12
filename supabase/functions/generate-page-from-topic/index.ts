@@ -25,6 +25,28 @@ const corsHeaders = {
 };
 
 const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+/**
+ * Sanitiza URLs de mídia: remove aspas, limpa caracteres e valida formato.
+ */
+function sanitizeUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== "string") return null;
+  let clean = url.trim()
+    .replace(/["']/g, "") // Remove aspas duplicadas ou simples
+    .replace(/&quot;/g, "")
+    .replace(/&amp;/g, "&")
+    .split(/[ \n\t]/)[0]; // Pega apenas a primeira parte se houver lixo
+
+  if (!/^https?:\/\//i.test(clean)) return null;
+  
+  // Evitar que URLs de YouTube sejam tratadas como imagem estática
+  if (/(youtube\.com|youtu\.be|vimeo\.com)/i.test(clean) && !/\.(jpe?g|png|webp|gif|svg)/i.test(clean)) {
+    return null;
+  }
+
+  return clean;
+}
+
 const TEMPLATE_SLUG = "botox-masculino";
 
 const BLOCK_ORDER = [
@@ -426,7 +448,18 @@ IMPORTANTÍSSIMO — REGRA DE CONTAMINAÇÃO:
  REGRAS DE TOM E CONFIABILIDADE (não negociáveis):
   - NUNCA INVENTE: Preços exatos, tempo de duração exato, número exato de sessões ou contraindicações específicas SE NÃO ESTIVEREM NO CONTEÚDO BASE.
   - CAMPOS TÉCNICOS OBRIGATÓRIOS (Duração, Sessões, Recuperação, Contraindicações):
-    Se não houver dado explícito extraído da página antiga ou das notas do editor, use OBRIGATORIAMENTE o termo "sob consulta" ou uma orientação genérica segura (ex: "definido em avaliação individual"). NUNCA invente números ou prazos.
+    No bloco "procedimento_detalhado", os bullets DEVEM ter as chaves fixas: "Duração", "Sessões", "Recuperação", "Contraindicações".
+    REGRAS DURAS:
+    1. Se não houver dado explícito na página antiga ou notas, use EXCLUSIVAMENTE "sob consulta".
+    2. JAMAIS invente prazos (ex: "30 min", "15 dias") se não houver fonte.
+    3. JAMAIS use frases genéricas de marketing como "recuperação rápida" ou "sessões rápidas".
+    4. Mantenha o tom 100% clínico e seguro.
+
+  - MODO CLINICAL ONLY (Fim do Fluff):
+    Nos blocos técnicos (metodo, procedimento_detalhado, faq), remova QUALQUER frase de "venda" ou hype.
+    PROIBIDO: "Descubra como é fácil", "Sua jornada começa aqui", "Transforme sua autoestima", "Sinta-se incrível".
+    USE: "Protocolo clínico", "Indicação técnica", "Processo de aplicação", "Cuidados necessários".
+
   - SE NÃO HOUVER DADO REAL: Use "sob consulta", "a definir em avaliação", "varia conforme o organismo", "estimado conforme protocolo clínico".
  - BLOQUEIO DE INVENÇÃO: É preferível escrever menos do que inventar um número falso. Se o usuário perguntar algo que você não sabe, responda "A ser definido em consulta".
  - Autoridade discreta, direta, sem hype
@@ -630,8 +663,9 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     }
 
     const candidateImages = (oldPageContent?.images || [])
-      .filter((img) => img && typeof img.url === "string")
-      .slice(0, 50);
+      .map(img => ({ ...img, url: sanitizeUrl(img.url) }))
+      .filter((img) => img && img.url)
+      .slice(0, 50) as { url: string; alt?: string; source_url?: string }[];
 
     const themeKeywords = tema
       .toLowerCase()
@@ -671,8 +705,8 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     // Outras imagens "bonitas" (procedimento, detalhes)
     const editorialImages = candidateImages.filter(img => !clinicalCaseImages.includes(img));
     
-    const procedimentoImage = editorialImages.length > 0 ? editorialImages[0].url : null;
-    const gridImages = editorialImages.slice(1, 5).map(img => img.url);
+    const procedimentoImage = editorialImages.length > 0 ? sanitizeUrl(editorialImages[0].url) : null;
+    const gridImages = editorialImages.slice(1, 5).map(img => sanitizeUrl(img.url)).filter(u => u !== null) as string[];
  
     const equipeBase =
       ((templateBlocks || []).find((b) => b.type === "equipe_rt")?.data as Record<string, unknown> | undefined) || {};
@@ -768,7 +802,7 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
                merged.cases = clinicalCaseImages.slice(0, 6).map((img, idx) => ({
                  source: "manual",
                  title: `${tema} — Caso ${idx + 1}`,
-                 image_url: img.url,
+                  image_url: sanitizeUrl(img.url),
                  description: img.alt || `Registro de resultado real do procedimento ${tema}.`,
                  highlight: true
                }));
