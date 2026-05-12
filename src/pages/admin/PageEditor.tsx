@@ -358,7 +358,7 @@ export default function PageEditor() {
                          <ShieldCheck className="size-3" />
                          <span className="text-[10px] uppercase tracking-wider font-bold">Origem Legada Batel</span>
                        </div>
-                       <History className="size-3 text-brand-gold/40 cursor-help" title="Snapshot preservado para auditoria" />
+                       <History className="size-3 text-brand-gold/40 cursor-help" />
                      </div>
                      <div className="grid grid-cols-2 gap-2 text-[10px]">
                        <div className="p-2 bg-white/5 rounded-lg">
