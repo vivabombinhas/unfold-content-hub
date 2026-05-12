@@ -305,6 +305,8 @@ export type Database = {
           published_at: string | null
           published_snapshot: Json | null
           slug: string
+          source_metadata: Json | null
+          source_snapshot: string | null
           status: Database["public"]["Enums"]["page_status"]
           title: string
           updated_at: string
@@ -318,6 +320,8 @@ export type Database = {
           published_at?: string | null
           published_snapshot?: Json | null
           slug: string
+          source_metadata?: Json | null
+          source_snapshot?: string | null
           status?: Database["public"]["Enums"]["page_status"]
           title: string
           updated_at?: string
@@ -331,6 +335,8 @@ export type Database = {
           published_at?: string | null
           published_snapshot?: Json | null
           slug?: string
+          source_metadata?: Json | null
+          source_snapshot?: string | null
           status?: Database["public"]["Enums"]["page_status"]
           title?: string
           updated_at?: string
