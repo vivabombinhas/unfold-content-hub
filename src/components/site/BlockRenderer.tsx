@@ -24,7 +24,9 @@ import {
   Award,
   Star,
 } from "lucide-react";
- import { useState, useEffect } from "react";
+ import { useState, useEffect, useMemo } from "react";
+
+const TECHNICAL_FIELDS = ["Duração", "Sessões", "Recuperação", "Contraindicações"];
  import draRT from "@/assets/dra-rt.webp";
 import { GoldButton } from "@/components/site/GoldButton";
 import { Medal } from "@/components/site/Medal";
@@ -409,7 +411,8 @@ function ProcedimentoDetalhadoV2Block({ data }: { data: BlockData }) {
        "O retorno em 14 dias é fundamental para avaliar a acomodação do produto e realizar qualquer ajuste fino necessário."
      ];
    }
-   let sideCards = arr<{ title?: string; text?: string; icon?: string }>(data.side_cards);
+    const rawSideCards = arr<{ title?: string; text?: string; icon?: string }>(data.side_cards);
+    let sideCards = rawSideCards.filter(c => !TECHNICAL_FIELDS.includes(s(c.title)));
    if (sideCards.length === 0) {
      sideCards = [
        { title: "Avaliação 360°", text: "Análise completa da face e histórico clínico." },
@@ -1190,7 +1193,12 @@ function ProcedimentoDetalhadoBlock({ data }: { data: BlockData }) {
   const eyebrow = s(data.eyebrow, "Como é o procedimento");
   const titleHtml = firstS([data.title_html, data.title], "Como é, na prática, esse <em>procedimento</em>.");
   const paragraphs = arr<string>(data.paragraphs);
-  const bullets = arr<{ title?: string; text?: string } | string>(data.bullets);
+   const rawBullets = arr<{ title?: string; text?: string } | string>(data.bullets);
+   const bullets = rawBullets.filter(b => {
+     const title = typeof b === "string" ? "" : s(b.title);
+     return !TECHNICAL_FIELDS.includes(title);
+   });
+
   const cta = readCta(data.cta, { label: "", href: "" });
   if (!paragraphs.length && !bullets.length) return null;
   return (
