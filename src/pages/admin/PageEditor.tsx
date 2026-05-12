@@ -408,13 +408,13 @@ export default function PageEditor() {
                    </div>
                  )}
 
-                 <div className="grid grid-cols-2 gap-4">
-                   <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
-                   <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
-                 </div>
-               </div>
-            </div>
-          )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
+                    <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
+                  </div>
+                </div>
+              </div>
+            )}
           {isImportModalOpen && <ImportBlockModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} onImport={handleImportBlock} pageTitle={pageMeta.title} pageCategory={(pageMeta.metadata?.category as any) || ""} />}
         </div>
       }
