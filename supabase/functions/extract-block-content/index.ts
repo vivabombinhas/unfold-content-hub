@@ -104,16 +104,30 @@ async function firecrawlScrape(apiKey: string, url: string) {
        source_type: url ? "url" : "text"
      };
 
-    if (url) {
-       const scrape = await firecrawlScrape(FIRECRAWL_API_KEY || "", url);
-       stats.url_accessed = scrape.ok;
-      if (scrape.ok) {
-         content = (scrape.markdown || scrape.html || "").trim();
-         stats.char_count = content.length;
-      } else {
-        throw new Error("Falha ao acessar a URL.");
-      }
-    }
+   let extractionStatus = "not_started";
+   let sourceOrigin = "manual_paste";
+
+   if (url) {
+     const isLegacyDomain = url.includes("esteticabatel.com.br");
+     sourceOrigin = isLegacyDomain ? "batel_legacy" : "external_reference";
+     
+     const scrape = await firecrawlScrape(FIRECRAWL_API_KEY || "", url);
+     stats.url_accessed = scrape.ok;
+     
+     if (scrape.ok) {
+       content = (scrape.markdown || scrape.html || "").trim();
+       stats.char_count = content.length;
+       extractionStatus = "success";
+     } else {
+       extractionStatus = "failed";
+       const errorMessage = isLegacyDomain 
+         ? `Erro crítico: Falha ao extrair página legada da Batel (${url}). Firecrawl ou Fetch direto falharam.`
+         : `Falha ao acessar a URL externa: ${url}`;
+       throw new Error(errorMessage);
+     }
+   } else if (userText) {
+     extractionStatus = "success";
+   }
 
      if (!content.trim()) {
        return new Response(JSON.stringify({ 
