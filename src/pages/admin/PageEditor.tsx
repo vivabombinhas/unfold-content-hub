@@ -80,12 +80,13 @@ export default function PageEditor() {
     },
   });
 
-  const [pageMeta, setPageMeta] = useState({
-    title: "",
-    meta_title: "",
-    meta_description: "",
-    metadata: {} as Record<string, unknown>,
-  });
+   const [pageMeta, setPageMeta] = useState({
+     title: "",
+     meta_title: "",
+     meta_description: "",
+     metadata: {} as Record<string, unknown>,
+     source_snapshot: null as string | null,
+   });
   const [blocks, setBlocks] = useState<DraftBlock[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
@@ -106,12 +107,13 @@ export default function PageEditor() {
 
   useEffect(() => {
     if (!data?.page) return;
-    setPageMeta({
-      title: data.page.title ?? "",
-      meta_title: data.page.meta_title ?? "",
-      meta_description: data.page.meta_description ?? "",
-      metadata: (data.page as any).metadata ?? {},
-    });
+     setPageMeta({
+       title: data.page.title ?? "",
+       meta_title: data.page.meta_title ?? "",
+       meta_description: data.page.meta_description ?? "",
+       metadata: (data.page as any).metadata ?? {},
+       source_snapshot: (data.page as any).source_snapshot ?? null,
+     });
     setBlocks(
       (data.blocks as PageBlockRow[]).map((b) => ({
         id: b.id,
