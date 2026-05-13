@@ -354,9 +354,11 @@ serve(async (req) => {
 
     return new Response(html, {
       headers: {
-        ...corsHeaders,
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=60, s-maxage=3600', // Cache for 1 hour on CDN
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate', // Disable cache for now to ensure user sees changes
       },
     })
   } catch (err) {
