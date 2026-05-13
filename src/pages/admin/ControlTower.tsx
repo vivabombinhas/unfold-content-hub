@@ -147,9 +147,32 @@
           const faqBlock = pageBlocks.find(b => b.type === 'faq');
           if (faqBlock) {
             seo += 20;
-            const questions = (faqBlock.data as any)?.questions || [];
-            if (questions.length > 20) alerts.push({ type: 'info', message: `FAQ Excessiva (${questions.length} perguntas)` });
-            if (questions.length < 5) alerts.push({ type: 'warning', message: 'FAQ Curta (< 5 perguntas)' });
+            const items = (faqBlock.data as any)?.items || [];
+            const questions = items.map((i: any) => (i.question || '').toLowerCase());
+            
+            // 1.5 FAQ Quality Audit
+            if (items.length > 15) {
+              alerts.push({ type: 'error', message: `FAQ Excessiva: ${items.length} itens (Máx sugerido: 15)` });
+              seo -= 10;
+            }
+            if (items.length < 5) {
+              alerts.push({ type: 'warning', message: 'FAQ Curta: < 5 perguntas' });
+            }
+
+            // Redundância
+            const intents = ['dor', 'recuperação', 'resultado', 'segurança', 'preço', 'sessão'];
+            intents.forEach(intent => {
+              const count = questions.filter((q: string) => q.includes(intent)).length;
+              if (count > 2) alerts.push({ type: 'warning', message: `Possível redundância na FAQ (termo "${intent}" aparece ${count}x)` });
+            });
+
+            // Valor AEO
+            const startsWithQuestion = questions.filter((q: string) => 
+              /^(como|qual|o que|quando|onde|quem|por que|quanto|é)/i.test(q)
+            ).length;
+            if (startsWithQuestion < items.length * 0.7) {
+              alerts.push({ type: 'info', message: 'FAQ com baixo valor AEO (perguntas pouco naturais)' });
+            }
           } else {
             alerts.push({ type: 'error', message: 'Faltando Bloco FAQ' });
           }
@@ -163,10 +186,11 @@
           
           // Sensitive terms check
           const forbiddenTerms = [
-            { term: 'dermatologista', message: 'Termo sensível: dermatologista' },
-            { term: 'cirurgião plástico', message: 'Termo sensível: cirurgião plástico' },
-            { term: 'risco à vida', message: 'Termo proibido: risco à vida' },
-            { term: 'nossa garantia', message: 'Termo proibido: nossa garantia' }
+            { term: 'dermatologista', message: 'Termo sensível (Profissão não presente na clínica): dermatologista' },
+            { term: 'cirurgião plástico', message: 'Termo sensível (Profissão não presente na clínica): cirurgião plástico' },
+            { term: 'médico', message: 'Equipe é exclusivamente Biomédica/Esteticista. Evitar termo: médico' },
+            { term: 'risco à vida', message: 'Termo proibido (Compliance): risco à vida' },
+            { term: 'nossa garantia', message: 'Termo proibido (Compliance): nossa garantia' }
           ];
           
           forbiddenTerms.forEach(({ term, message }) => {
@@ -342,8 +366,9 @@
                  <th className="px-6 py-4">Página</th>
                  <th className="px-6 py-4">Fidelidade</th>
                  <th className="px-6 py-4">Saúde SEO</th>
-                 <th className="px-6 py-4">Compliance</th>
-                 <th className="px-6 py-4">Mídia</th>
+                  <th className="px-6 py-4">Compliance</th>
+                  <th className="px-6 py-4">FAQ Audit</th>
+                  <th className="px-6 py-4">Mídia</th>
                  <th className="px-6 py-4">Ações</th>
                </tr>
              </thead>
@@ -372,7 +397,10 @@
                     <td className="px-6 py-4">
                       <ComplianceStatus score={page.compliance_score} alerts={page.alerts} />
                     </td>
-                   <td className="px-6 py-4">
+                    <td className="px-6 py-4">
+                      <FAQHealthStatus alerts={page.alerts || []} />
+                    </td>
+                    <td className="px-6 py-4">
                      <div className="flex items-center gap-2">
                        <ImageIcon className={cn("size-4", page.has_hero ? "text-green-500" : "text-brand-text-muted")} />
                        {page.has_hero ? <CheckCircle2 className="size-3 text-green-500" /> : <XCircle className="size-3 text-red-400" />}
@@ -404,8 +432,36 @@
          </div>
        </div>
      </div>
-   );
- }
+     );
+   }
+
+  function FAQHealthStatus({ alerts }: { alerts: PageAlert[] }) {
+    const faqAlerts = alerts.filter(a => a.message.toLowerCase().includes('faq'));
+    const critical = faqAlerts.filter(a => a.type === 'error').length;
+    const warnings = faqAlerts.filter(a => a.type === 'warning').length;
+    
+    if (faqAlerts.length === 0) return <Badge variant="outline" className="text-[10px] text-green-500/70 border-green-500/20 bg-green-500/5">Excelente</Badge>;
+    
+    return (
+      <div className="flex flex-col gap-1">
+        {critical > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-red-400 font-bold">
+            <XCircle className="size-3 text-red-400" /> {critical} Críticos
+          </div>
+        )}
+        {warnings > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-orange-400">
+            <AlertTriangle className="size-3 text-orange-400" /> {warnings} Alertas
+          </div>
+        )}
+        {critical === 0 && warnings === 0 && faqAlerts.length > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-brand-gold">
+            <Info className="size-3 text-brand-gold" /> {faqAlerts.length} Notas
+          </div>
+        )}
+      </div>
+    );
+  }
  
  function FidelityBadge({ score }: { score: 'low' | 'medium' | 'high' | null }) {
    if (!score) return <Badge variant="outline" className="border-brand-gold/10 text-brand-text-muted">N/A</Badge>;
