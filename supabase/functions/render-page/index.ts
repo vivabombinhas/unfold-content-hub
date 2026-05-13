@@ -378,17 +378,17 @@ serve(async (req) => {
 '</body>\n' +
 '</html>';
 
-    const resHeaders = new Headers();
-    resHeaders.append('Content-Type', 'text/html; charset=utf-8');
-    resHeaders.append('X-Content-Type-Options', 'nosniff');
-    resHeaders.append('X-SSR-Version', '1.1.6-APPEND-HEADERS');
-    resHeaders.append('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    resHeaders.append('Access-Control-Allow-Origin', '*');
-    resHeaders.append('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+    const headers = new Headers();
+    headers.set("Content-Type", "text/html; charset=UTF-8");
+    headers.set("X-SSR-Version", "1.1.7-SET-UTF8-UPPER");
+    headers.set("X-Content-Type-Options", "nosniff");
+    headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    headers.set("Access-Control-Allow-Origin", "*");
+    headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
 
     return new Response(html, {
       status: 200,
-      headers: resHeaders
+      headers: headers
     });
   } catch (err) {
     console.error("Critical Render Error:", err)
