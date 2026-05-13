@@ -345,8 +345,26 @@
       try {
         for (const page of filteredPages) {
           const pageBlocks = (allBlocks || []).filter(b => b.page_id === page.id && b.enabled);
-          const pageContentStr = JSON.stringify(pageBlocks).toLowerCase();
           const alerts: PageAlert[] = [];
+
+          // ===== SSR-FIRST AUDIT =====
+          // The SSR is the single source of truth. We audit what Google + users actually see.
+          let ssrHtml = '';
+          let ssrComplianceStatus = 'unknown';
+          let ssrViolations: { term: string; count: number }[] = [];
+          try {
+            const ssrResp = await fetch(
+              `https://ldsixdxmdzngagbminwh.supabase.co/functions/v1/render-page?slug=${page.slug}`
+            );
+            ssrHtml = await ssrResp.text();
+            ssrComplianceStatus = ssrResp.headers.get('x-compliance-status') || 'unknown';
+            try {
+              ssrViolations = JSON.parse(ssrResp.headers.get('x-compliance-violations') || '[]');
+            } catch { ssrViolations = []; }
+          } catch {
+            alerts.push({ type: 'error', message: 'SSR indisponível para auditoria' });
+          }
+          const pageContentStr = (ssrHtml || JSON.stringify(pageBlocks)).toLowerCase();
           
           // 1. SEO Score (0-100)
           let seo = 0;
