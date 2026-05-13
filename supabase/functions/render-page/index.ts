@@ -125,86 +125,127 @@
            }
            break
  
-         case 'faq':
-           const items = Array.isArray(data.items) ? data.items : []
-           if (items.length > 0) {
-             articleHtml += `
-               <section id="faq" class="block-section faq-section">
-                 <div class="container">
-                   <h2>Perguntas Frequentes</h2>
-                   <div class="faq-list">
-                     ${items.map((item: any) => {
-                       faqItems.push({ question: item.question, answer: item.answer })
-                       return `
-                         <details class="faq-item">
-                           <summary>${item.question}</summary>
-                           <div class="faq-content">${item.answer}</div>
-                         </details>`
-                     }).join('')}
-                   </div>
-                 </div>
-               </section>`
-           }
-           break
+          case 'faq': {
+            const rawItems = Array.isArray(data.items) ? data.items : []
+            const uniqueItems: any[] = []
+            const seenQuestions = new Set<string>()
+            
+            rawItems.forEach((item: any) => {
+              if (!item.question || !item.answer) return
+              const normalized = item.question.trim().toLowerCase()
+                .replace(/[?]/g, '')
+                .substring(0, 50)
+              if (!seenQuestions.has(normalized)) {
+                seenQuestions.add(normalized)
+                uniqueItems.push(item)
+              }
+            })
+
+            if (uniqueItems.length > 0) {
+              articleHtml += `
+                <section id="faq" class="block-section faq-section">
+                  <div class="container">
+                    <h2>Perguntas Frequentes</h2>
+                    <div class="faq-list">
+                      ${uniqueItems.map((item: any) => {
+                        // Filter compliance: remove mention of dermatologist/plastic surgeon
+                        const sanitizedAnswer = item.answer.replace(
+                          /(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 
+                          'profissionais de saúde especializados'
+                        )
+                        faqItems.push({ question: item.question, answer: sanitizedAnswer })
+                        return `
+                          <details class="faq-item">
+                            <summary>${item.question}</summary>
+                            <div class="faq-content">${sanitizedAnswer}</div>
+                          </details>`
+                      }).join('')}
+                    </div>
+                  </div>
+                </section>`
+            }
+            break
+          }
  
-         case 'procedimento_detalhado':
-         case 'procedimento_detalhado_v2':
-           articleHtml += `
-             <section id="detalhes" class="block-section details-section">
-               <div class="container">
-                 <span class="eyebrow">${data.eyebrow || 'Protocolo'}</span>
-                 <h2>${data.title || 'O procedimento detalhado'}</h2>
-                 ${data.description ? `<p>${data.description}</p>` : ''}
-               </div>
-             </section>`
-           break
+          case 'procedimento_detalhado':
+          case 'procedimento_detalhado_v2':
+            if (data.description || data.paragraphs || (Array.isArray(data.cards) && data.cards.length > 0)) {
+              articleHtml += `
+                <section id="detalhes" class="block-section details-section">
+                  <div class="container">
+                    <span class="eyebrow">${data.eyebrow || 'Protocolo'}</span>
+                    <h2>${data.title || 'O procedimento detalhado'}</h2>
+                    ${data.description ? `<p>${data.description}</p>` : ''}
+                  </div>
+                </section>`
+            }
+            break
  
-         case 'equipe_rt':
-           articleHtml += `
-             <section id="rt" class="block-section rt-section">
-               <div class="container">
-                 <span class="eyebrow">${data.eyebrow || 'Responsável Técnica'}</span>
-                 <h2>Dra. Daniele Batel</h2>
-                 <p>${data.description || 'Especialista em procedimentos de alta performance.'}</p>
-               </div>
-             </section>`
-           break
+          case 'equipe_rt': {
+            const name = "Dra. Daniele Florêncio"
+            const register = "Biomédica · CRBM 8242-PR"
+            articleHtml += `
+              <section id="rt" class="block-section rt-section">
+                <div class="container">
+                  <span class="eyebrow">${data.eyebrow || 'Responsável Técnica'}</span>
+                  <h2>${name}</h2>
+                  <p class="register">${register}</p>
+                  <div class="byline">
+                    <span>Publicado em: ${new Date().toLocaleDateString('pt-BR')}</span>
+                    <span> · Revisão Clínica: Dra. Daniele Florêncio</span>
+                  </div>
+                  <p>${data.description || 'Especialista em procedimentos de alta performance com mais de duas décadas de experiência.'}</p>
+                  <div class="disclaimer-mini">
+                    <p>* Resultados podem variar de acordo com o organismo e avaliação clínica individual.</p>
+                  </div>
+                </div>
+              </section>`
+            break
+          }
  
-         default:
-           // Generic section for unhandled blocks with titles
-           if (data.title || data.eyebrow) {
-             articleHtml += `
-               <section class="block-section generic-section">
-                 <div class="container">
-                   ${data.eyebrow ? `<span class="eyebrow">${data.eyebrow}</span>` : ''}
-                   ${data.title ? `<h2>${data.title}</h2>` : ''}
-                   ${data.description || data.text ? `<p>${data.description || data.text}</p>` : ''}
-                 </div>
-               </section>`
-           }
+          default:
+            // Generic section for unhandled blocks with titles
+            if ((data.title || data.eyebrow) && (data.description || data.text || data.cards || data.items)) {
+              articleHtml += `
+                <section class="block-section generic-section">
+                  <div class="container">
+                    ${data.eyebrow ? `<span class="eyebrow">${data.eyebrow}</span>` : ''}
+                    ${data.title ? `<h2>${data.title}</h2>` : ''}
+                    ${data.description || data.text ? `<p>${data.description || data.text}</p>` : ''}
+                  </div>
+                </section>`
+            }
        }
      })
  
      // 5. Schema.org (JSON-LD)
-     const schemas: any[] = [
-       {
-         "@context": "https://schema.org",
-         "@type": "MedicalProcedure",
-         "name": pageTitle,
-         "description": description,
-         "provider": {
-           "@type": "MedicalOrganization",
-           "name": "Clínica de Estética Batel",
-           "url": siteUrl,
-           "logo": "https://esteticabatel.com.br/logo.png", // Fallback logo
-           "address": {
-             "@type": "PostalAddress",
-             "addressLocality": "Curitiba",
-             "addressRegion": "PR",
-             "addressCountry": "BR"
-           }
-         }
-       },
+      const schemas: any[] = [
+        {
+          "@context": "https://schema.org",
+          "@type": "MedicalProcedure",
+          "name": pageTitle,
+          "description": description,
+          "procedureType": "NonInvasiveProcedure",
+          "bodyLocation": pageData.metadata?.area_anatomica || "Corpo",
+          "provider": {
+            "@type": "MedicalOrganization",
+            "name": "Clínica de Estética Batel",
+            "url": siteUrl,
+            "logo": "https://esteticabatel.com.br/logo.png",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Curitiba",
+              "addressRegion": "PR",
+              "addressCountry": "BR"
+            }
+          },
+          "performer": {
+            "@type": "Person",
+            "name": "Dra. Daniele Florêncio",
+            "jobTitle": "Biomédica",
+            "identifier": "CRBM 8242-PR"
+          }
+        },
        {
          "@context": "https://schema.org",
          "@type": "BreadcrumbList",
@@ -284,8 +325,11 @@
          .card-num { position: absolute; bottom: -10px; right: -5px; font-size: 5rem; font-style: italic; opacity: 0.05; font-weight: 900; }
          .faq-item { margin-bottom: 8px; background: var(--graphite); }
          summary { padding: 20px; cursor: pointer; font-weight: 600; color: white; outline: none; }
-         .faq-content { padding: 0 20px 20px; color: var(--text-muted); }
-         footer { padding: 40px 0; text-align: center; font-size: 14px; color: var(--text-muted); }
+          .faq-content { padding: 0 20px 20px; color: var(--text-muted); }
+          .register { color: var(--gold); font-size: 0.9rem; margin-top: -20px; margin-bottom: 20px; font-weight: 600; }
+          .byline { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 24px; border-bottom: 1px solid rgba(197,160,89,0.1); padding-bottom: 8px; }
+          .disclaimer-mini { font-size: 0.75rem; color: var(--text-muted); margin-top: 32px; font-style: italic; }
+          footer { padding: 40px 0; text-align: center; font-size: 14px; color: var(--text-muted); }
          @media (max-width: 768px) { h1 { font-size: 2.2rem; } h2 { font-size: 1.8rem; } }
      </style>
  
