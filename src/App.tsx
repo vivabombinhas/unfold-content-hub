@@ -12,6 +12,7 @@ import AdminLogin from "./pages/admin/AdminLogin.tsx";
 import AdminLayout from "./pages/admin/AdminLayout.tsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.tsx";
  import PagesList from "./pages/admin/PagesList.tsx";
+ import ControlTower from "./pages/admin/ControlTower.tsx";
  import Faqs from "./pages/admin/Faqs.tsx";
 import Reviews from "./pages/admin/Reviews.tsx";
  import Courses from "./pages/admin/Courses.tsx";
@@ -38,6 +39,7 @@ const queryClient = new QueryClient();
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
+                <Route path="torre-de-controle" element={<ControlTower />} />
                 <Route path="paginas" element={<PagesList />} />
                 <Route path="paginas/nova" element={<PageCreationWizard />} />
                 <Route path="paginas/lote" element={<BatchPageCreation />} />
