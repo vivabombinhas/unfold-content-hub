@@ -685,16 +685,23 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     candidateImages.sort((a, b) => imageScore(b.url) - imageScore(a.url));
 
     // -----------------------------------------------------------------------
-    // Distribuição de Imagens (Ajustada p/ pedido do usuário)
+    // Distribuição de Imagens (Preservação Premium Batel)
     // -----------------------------------------------------------------------
+
+    // HERO: PRIORIDADE para fotos reais extraídas (conforme nova diretriz de preservação)
+    const candidateHeroImages = candidateImages.filter(img => !(img as any).inadequate_for_hero);
     
-    // HERO: NÃO usa fotos extraídas automaticamente (pedido do usuário)
     const isBotox = /\b(botox|toxina|botulin)/i.test(tema);
     const genericAestheticImage = "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=2070&auto=format&fit=crop";
-    // Placeholder premium de clínica se não for botox
-    const finalHeroImage = isBotox 
-      ? "https://esteticabatel.com.br/wp-content/uploads/2024/09/Botox-Masculino-Curitiba.jpg" 
-      : genericAestheticImage;
+    
+    // Tenta pegar a melhor imagem para o Hero (aquela com maior score e que não seja AD)
+    const bestHeroCandidate = candidateHeroImages.find(img => !/-ad\d|antes-?e?-?depois|antes_depois/i.test(img.url.toLowerCase()));
+    
+    const finalHeroImage = bestHeroCandidate 
+      ? sanitizeUrl(bestHeroCandidate.url) 
+      : (isBotox 
+        ? "https://esteticabatel.com.br/wp-content/uploads/2024/09/Botox-Masculino-Curitiba.jpg" 
+        : genericAestheticImage);
 
     // CASOS CLÍNICOS: Identifica imagens que parecem ser Antes/Depois
     const clinicalCaseImages = candidateImages.filter(img => 
