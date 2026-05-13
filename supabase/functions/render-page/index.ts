@@ -1,3 +1,24 @@
+        case 'cta_final':
+        case 'cta_block': {
+          articleHtml += '<section class="block-section cta-section">\n' +
+            '  <div class="container" style="text-align: center;">\n' +
+            '    <h2>' + applyCompliance(data.title || 'Inicie sua transformação') + '</h2>\n' +
+            '    <p>' + applyCompliance(data.subtitle || data.text || '') + '</p>\n' +
+            '    <a href="#" class="cta-button">' + (data.ctaText || 'Agendar Avaliação') + '</a>\n' +
+            '  </div>\n' +
+            '</section>\n';
+          break
+        }
+        case 'casos': {
+          articleHtml += '<section class="block-section cases-section">\n' +
+            '  <div class="container">\n' +
+            '    <h2>' + applyCompliance(data.title || 'Resultados') + '</h2>\n' +
+            '    <p>' + applyCompliance(data.subtitle || '') + '</p>\n' +
+            '    <div class="cases-placeholder">Resultados clínicos preservados sob avaliação individual.</div>\n' +
+            '  </div>\n' +
+            '</section>\n';
+          break
+        }
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
