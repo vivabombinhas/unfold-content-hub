@@ -120,7 +120,7 @@ serve(async (req) => {
           break
 
         case 'manifesto_curto':
-          if (data.text && !isProhibited(data.text)) {
+          if (data.text) {
             articleHtml += '<section id="manifesto" class="block-section manifesto-section">\n' +
               '  <div class="container">\n' +
               '    <blockquote class="manifesto-quote">' + applyCompliance(data.text) + '</blockquote>\n' +
@@ -192,15 +192,12 @@ serve(async (req) => {
 
         case 'procedimento_detalhado':
         case 'procedimento_detalhado_v2': {
-          const paragraphs = Array.isArray(data.paragraphs) ? data.paragraphs.filter((p: string) => {
-            if (!p || !p.trim()) return false
-            return !isProhibited(p)
-          }) : []
-          const procDesc = data.description && !isProhibited(data.description) ? applyCompliance(data.description) : null
+          const paragraphs = Array.isArray(data.paragraphs) ? data.paragraphs.filter((p: string) => p && p.trim()) : []
+          const procDesc = data.description ? applyCompliance(data.description) : null
           if (procDesc || paragraphs.length > 0) {
             articleHtml += '<section id="detalhes" class="block-section details-section">\n' +
               '  <div class="container">\n' +
-              '    <span class="eyebrow">' + (data.eyebrow || 'Protocolo') + '</span>\n' +
+              '    <span class="eyebrow">' + applyCompliance(data.eyebrow || 'Protocolo') + '</span>\n' +
               '    <h2>' + applyCompliance(data.title || 'O procedimento detalhado') + '</h2>\n' +
               '    ' + (procDesc ? '<p>' + procDesc + '</p>' : '') + '\n' +
               '    ' + paragraphs.map((p: string) => '<p>' + applyCompliance(p) + '</p>').join('') + '\n' +
@@ -234,13 +231,13 @@ serve(async (req) => {
         default: {
           // Generic section for unhandled blocks with titles
           const genDesc = data.description || data.text
-          const hasContent = (genDesc && !isProhibited(genDesc)) || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0)
+          const hasContent = genDesc || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0)
           if ((data.title || data.eyebrow) && hasContent) {
             articleHtml += '<section class="block-section generic-section">\n' +
               '  <div class="container">\n' +
-              '    ' + (data.eyebrow ? '<span class="eyebrow">' + data.eyebrow + '</span>' : '') + '\n' +
+              '    ' + (data.eyebrow ? '<span class="eyebrow">' + applyCompliance(data.eyebrow) + '</span>' : '') + '\n' +
               '    ' + (data.title ? '<h2>' + applyCompliance(data.title) + '</h2>' : '') + '\n' +
-              '    ' + (genDesc && !isProhibited(genDesc) ? '<p>' + applyCompliance(genDesc) + '</p>' : '') + '\n' +
+              '    ' + (genDesc ? '<p>' + applyCompliance(genDesc) + '</p>' : '') + '\n' +
               '  </div>\n' +
               '</section>\n';
           }
