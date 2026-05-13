@@ -245,22 +245,7 @@
  }
  import { useAuth } from "@/hooks/use-auth";
  import {
-   Dialog,
-   DialogContent,
-   DialogHeader,
-   DialogTitle,
-   DialogTrigger,
- } from "@/components/ui/dialog";
- import {
-   Tabs,
-   TabsContent,
-   TabsList,
-   TabsTrigger,
- } from "@/components/ui/tabs";
- import { ScrollArea } from "@/components/ui/scroll-area";
- import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
- 
-  interface PageAlert {
+ interface PageAlert {
     type: 'error' | 'warning' | 'info';
     message: string;
   }
