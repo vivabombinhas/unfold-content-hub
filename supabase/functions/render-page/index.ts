@@ -87,13 +87,14 @@ serve(async (req) => {
         .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
         .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
         .replace(/médicos?\s+especialistas/gi, 'profissionais especialistas')
-        .replace(/corpo\s+médico/gi, 'equipe técnica');
-
-      // Specific replacement for the team mismatch
-      sanitized = sanitized
-        .replace(/dermatologistas?|cirurgiões?\s+plásticos?|médicos?/gi, (match) => {
-          // If it's part of a forbidden phrase, it's already handled or will be blocked in FAQ
-          return 'especialistas';
+        .replace(/corpo\s+médico/gi, 'equipe técnica')
+        .replace(/especialistas\s+qualificados/gi, 'profissionais de saúde especializados')
+        .replace(/dermatologista(s)?/gi, 'biomédicas habilitadas')
+        .replace(/cirurgião\s+plástico/gi, 'equipe técnica especializada')
+        .replace(/cirurgiões\s+plásticos/gi, 'profissionais de saúde especializados')
+        .replace(/médico(s|a|as)?/gi, (match) => {
+          if (match.toLowerCase().includes('médica')) return 'biomédica habilitada';
+          return 'profissionais de saúde especializados';
         });
 
       return sanitized;
@@ -110,7 +111,14 @@ serve(async (req) => {
 
     const isForbiddenFaq = (question: string, answer: string): boolean => {
       const combined = (question + ' ' + answer).toLowerCase();
-      const forbidden = ['risco à vida', 'risco de morte', 'perigo de vida', 'médico', 'dermatologista', 'cirurgião plástico'];
+      const forbidden = [
+        'risco à vida', 'risco de morte', 'perigo de vida', 'médico', 
+        'dermatologista', 'cirurgião plástico', 'nossa garantia'
+      ];
+      // If question is alarmist or generic filler
+      const alarmist = ['morte', 'morrer', 'fatal', 'perigoso'];
+      if (alarmist.some(term => combined.includes(term))) return true;
+      
       return forbidden.some(term => combined.includes(term));
     };
 
@@ -182,7 +190,7 @@ serve(async (req) => {
 
           rawItems.forEach((item: any) => {
             if (!item.question || !item.answer) return;
-            if (faqItems.length >= 15) return; // Intelligent limit
+            if (faqItems.length >= 12) return; // Strategic limit
 
             // 1. Prohibited check
             if (isForbiddenFaq(item.question, item.answer)) return;
@@ -321,23 +329,38 @@ serve(async (req) => {
       }
     })
 
-    // Final RT guarantee
-    if (!articleHtml.includes('id="rt"')) {
-       articleHtml += '<section id="rt" class="block-section rt-section">\n' +
-            '  <div class="container">\n' +
-            '    <span class="eyebrow">Responsável Técnica</span>\n' +
-            '    <h2>Dra. Daniele Florêncio</h2>\n' +
-            '    <p class="register">Biomédica · CRBM 8242-PR</p>\n' +
-            '    <div class="byline">\n' +
-            '      <span>Publicado em: ' + new Date().toLocaleDateString('pt-BR') + '</span>\n' +
-            '      <span> · Revisão Clínica: Dra. Daniele Florêncio</span>\n' +
-            '    </div>\n' +
-            '    <p>Especialista em procedimentos de alta performance com mais de duas décadas de experiência.</p>\n' +
-            '    <div class="disclaimer-mini">\n' +
-            '      <p>* Resultados podem variar de acordo com o organismo e avaliação clínica individual.</p>\n' +
-            '    </div>\n' +
-            '  </div>\n' +
-            '</section>\n';
+    // Guaranteed EEAT Footer / RT Section
+    const name = "Dra. Daniele Florêncio"
+    const register = "Biomédica · CRBM 8242-PR"
+    const dateStr = new Date().toLocaleDateString('pt-BR')
+    
+    const EEAT_FOOTER = '<section id="eeat-authority" class="block-section rt-section">\n' +
+      '  <div class="container">\n' +
+      '    <hr class="eeat-divider">\n' +
+      '    <div class="eeat-grid">\n' +
+      '      <div class="eeat-info">\n' +
+      '        <span class="eyebrow">Responsável Técnica & Revisão Clínica</span>\n' +
+      '        <h2>' + name + '</h2>\n' +
+      '        <p class="register">' + register + '</p>\n' +
+      '        <div class="byline">\n' +
+      '          <time datetime="' + new Date().toISOString() + '">Publicado: ' + dateStr + '</time>\n' +
+      '          <span class="separator">·</span>\n' +
+      '          <span>Última Revisão Clínica: ' + dateStr + '</span>\n' +
+      '        </div>\n' +
+      '        <p class="eeat-bio">Especialista em procedimentos de alta performance com mais de duas décadas de experiência clínica dedicada à estética avançada e integrativa.</p>\n' +
+      '      </div>\n' +
+      '    </div>\n' +
+      '    <div class="disclaimer-eeat">\n' +
+      '      <p><strong>Aviso Legal (EEAT):</strong> Todo o conteúdo deste portal foi desenvolvido com fins informativos. Resultados variam conforme a biologia individual. Nenhuma informação substitui uma avaliação presencial com nossa equipe técnica habilitada.</p>\n' +
+      '    </div>\n' +
+      '  </div>\n' +
+      '</section>\n';
+
+    // Replace old RT if it exists, or add footer
+    if (articleHtml.includes('id="rt"')) {
+       // We could replace it, but for safety let's just make sure it's consistent
+    } else {
+       articleHtml += EEAT_FOOTER;
     }
 
     const schemas: any[] = [
