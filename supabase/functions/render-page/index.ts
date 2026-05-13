@@ -76,46 +76,73 @@ serve(async (req) => {
     // 4. Content Rendering logic
     let articleHtml = ""
     const faqItems: any[] = []
+    const seenQuestions = new Set<string>()
+    const seenAnswers = new Set<string>()
+
+    // 4. Compliance & Filters
+    const applyCompliance = (text: string) => {
+      if (!text) return ""
+      return text
+        // Fix double replacement for "X ou Y"
+        .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)(\s+ou\s+)(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
+        .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
+        .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
+        .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
+        .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
+    }
+
+    const isProhibited = (text: string) => {
+      if (!text) return false
+      const lower = text.toLowerCase()
+      // If "nossa garantia" or "risco à vida" appears in a way that shouldn't just be replaced but the whole block skipped
+      return false // We prefer replacing now to avoid empty sections
+    }
 
     blocks.forEach((block: any) => {
       const data = block.data || {}
       const type = block.type
 
       switch (type) {
-        case 'hero':
+        case 'hero': {
+          const eyebrow = applyCompliance(data.eyebrow || 'Estética Batel')
+          const heroTitle = applyCompliance(data.title || pageData.title)
+          const heroPara = applyCompliance(data.paragraph || data.description || '')
+          
           articleHtml += '<header id="hero" class="block-section hero-section">\n' +
             '  <div class="container">\n' +
-            '    <span class="eyebrow">' + (data.eyebrow || 'Estética Batel') + '</span>\n' +
-            '    <h1>' + (data.title || pageData.title) + '</h1>\n' +
-            '    <p class="lead">' + (data.paragraph || data.description || '') + '</p>\n' +
+            '    <span class="eyebrow">' + eyebrow + '</span>\n' +
+            '    <h1>' + heroTitle + '</h1>\n' +
+            '    <p class="lead">' + heroPara + '</p>\n' +
             '    ' + (data.image_url ? '<div class="hero-image"><img src="' + data.image_url + '" alt="' + (data.eyebrow || pageData.title) + '" loading="eager" fetchpriority="high"></div>' : '') + '\n' +
             '  </div>\n' +
             '</header>\n';
+          break
+        }
           break
 
         case 'manifesto_curto':
           if (data.text) {
             articleHtml += '<section id="manifesto" class="block-section manifesto-section">\n' +
               '  <div class="container">\n' +
-              '    <blockquote class="manifesto-quote">' + data.text + '</blockquote>\n' +
+              '    <blockquote class="manifesto-quote">' + applyCompliance(data.text) + '</blockquote>\n' +
               '  </div>\n' +
               '</section>\n';
           }
           break
 
-        case 'beneficios_grid':
+        case 'beneficios_grid': {
           const cards = Array.isArray(data.cards) ? data.cards.filter((c: any) => c.title || c.text) : []
           if (cards.length > 0) {
             articleHtml += '<section id="beneficios" class="block-section beneficios-section">\n' +
               '  <div class="container">\n' +
-              '    <span class="eyebrow">' + (data.eyebrow || 'Diferenciais') + '</span>\n' +
-              '    <h2>' + (data.title || 'Por que escolher a Estética Batel') + '</h2>\n' +
+              '    <span class="eyebrow">' + applyCompliance(data.eyebrow || 'Diferenciais') + '</span>\n' +
+              '    <h2>' + applyCompliance(data.title || 'Por que escolher a Estética Batel') + '</h2>\n' +
               '    <div class="grid">\n' +
               '      ' + cards.map((card: any, idx: number) => 
                 '<div class="card">\n' +
                 '  <span class="card-num">' + (idx + 1).toString().padStart(2, '0') + '</span>\n' +
-                '  <h3>' + (card.title || '') + '</h3>\n' +
-                '  <p>' + (card.text || '') + '</p>\n' +
+                '  <h3>' + applyCompliance(card.title || '') + '</h3>\n' +
+                '  <p>' + applyCompliance(card.text || '') + '</p>\n' +
                 '</div>\n'
               ).join('') + '\n' +
               '    </div>\n' +
@@ -123,40 +150,35 @@ serve(async (req) => {
               '</section>\n';
           }
           break
+        }
 
          case 'faq': {
            const rawItems = Array.isArray(data.items) ? data.items : []
-           const uniqueItems: any[] = []
-           const seenQuestions = new Set<string>()
-           const seenAnswers = new Set<string>()
+           const currentBlockItems: any[] = []
            
            rawItems.forEach((item: any) => {
              if (!item.question || !item.answer) return
-             const q = item.question.trim()
-             const a = item.answer.trim()
-             const normalizedQ = q.toLowerCase().replace(/[?]/g, '').substring(0, 100)
-             const normalizedA = a.toLowerCase().substring(0, 100)
+             
+             const q = applyCompliance(item.question.trim())
+             const a = applyCompliance(item.answer.trim())
+             const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 100)
+             const normalizedA = a.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 100)
              
              if (!seenQuestions.has(normalizedQ) && !seenAnswers.has(normalizedA)) {
                seenQuestions.add(normalizedQ)
                seenAnswers.add(normalizedA)
                
-               // Filter compliance
-               const sanitizedAnswer = a.replace(
-                 /(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 
-                 'profissionais de saúde especializados'
-               )
-               uniqueItems.push({ question: q, answer: sanitizedAnswer })
+               currentBlockItems.push({ question: q, answer: a })
+               faqItems.push({ question: q, answer: a })
              }
            })
 
-           if (uniqueItems.length > 0) {
+           if (currentBlockItems.length > 0) {
              articleHtml += '<section id="faq" class="block-section faq-section">\n' +
                '  <div class="container">\n' +
                '    <h2>Perguntas Frequentes</h2>\n' +
                '    <div class="faq-list">\n' +
-               '      ' + uniqueItems.map((item: any) => {
-                 faqItems.push(item)
+               '      ' + currentBlockItems.map((item: any) => {
                  return '<details class="faq-item">\n' +
                    '  <summary>' + item.question + '</summary>\n' +
                    '  <div class="faq-content">' + item.answer + '</div>\n' +
@@ -170,19 +192,21 @@ serve(async (req) => {
          }
 
         case 'procedimento_detalhado':
-        case 'procedimento_detalhado_v2':
+        case 'procedimento_detalhado_v2': {
           const paragraphs = Array.isArray(data.paragraphs) ? data.paragraphs.filter((p: string) => p && p.trim()) : []
-          if (data.description || paragraphs.length > 0) {
+          const procDesc = data.description ? applyCompliance(data.description) : null
+          if (procDesc || paragraphs.length > 0) {
             articleHtml += '<section id="detalhes" class="block-section details-section">\n' +
               '  <div class="container">\n' +
-              '    <span class="eyebrow">' + (data.eyebrow || 'Protocolo') + '</span>\n' +
-              '    <h2>' + (data.title || 'O procedimento detalhado') + '</h2>\n' +
-              '    ' + (data.description ? '<p>' + data.description + '</p>' : '') + '\n' +
-              '    ' + paragraphs.map((p: string) => '<p>' + p + '</p>').join('') + '\n' +
+              '    <span class="eyebrow">' + applyCompliance(data.eyebrow || 'Protocolo') + '</span>\n' +
+              '    <h2>' + applyCompliance(data.title || 'O procedimento detalhado') + '</h2>\n' +
+              '    ' + (procDesc ? '<p>' + procDesc + '</p>' : '') + '\n' +
+              '    ' + paragraphs.map((p: string) => '<p>' + applyCompliance(p) + '</p>').join('') + '\n' +
               '  </div>\n' +
               '</section>\n';
           }
           break
+        }
 
         case 'equipe_rt': {
           const name = "Dra. Daniele Florêncio"
@@ -205,18 +229,20 @@ serve(async (req) => {
           break
         }
 
-        default:
+        default: {
           // Generic section for unhandled blocks with titles
-          const hasContent = data.description || data.text || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0)
+          const genDesc = data.description || data.text
+          const hasContent = genDesc || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0)
           if ((data.title || data.eyebrow) && hasContent) {
             articleHtml += '<section class="block-section generic-section">\n' +
               '  <div class="container">\n' +
-              '    ' + (data.eyebrow ? '<span class="eyebrow">' + data.eyebrow + '</span>' : '') + '\n' +
-              '    ' + (data.title ? '<h2>' + data.title + '</h2>' : '') + '\n' +
-              '    ' + (data.description || data.text ? '<p>' + (data.description || data.text) + '</p>' : '') + '\n' +
+              '    ' + (data.eyebrow ? '<span class="eyebrow">' + applyCompliance(data.eyebrow) + '</span>' : '') + '\n' +
+              '    ' + (data.title ? '<h2>' + applyCompliance(data.title) + '</h2>' : '') + '\n' +
+              '    ' + (genDesc ? '<p>' + applyCompliance(genDesc) + '</p>' : '') + '\n' +
               '  </div>\n' +
               '</section>\n';
           }
+        }
       }
     })
 
@@ -352,12 +378,18 @@ serve(async (req) => {
 '</body>\n' +
 '</html>';
 
+    const responseHeaders = new Headers()
+    responseHeaders.set('Access-Control-Allow-Origin', '*')
+    responseHeaders.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type')
+    responseHeaders.set('Content-Type', 'text/html; charset=utf-8')
+    responseHeaders.set('X-Content-Type-Options', 'nosniff')
+    responseHeaders.set('X-SSR-Version', '1.1.1')
+    responseHeaders.set('X-SSR-Status', 'Compliance-Active')
+    responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+
     return new Response(html, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=60, s-maxage=3600', // Cache for 1 hour on CDN
-      },
+      headers: responseHeaders,
+      status: 200,
     })
   } catch (err) {
     console.error("Critical Render Error:", err)
