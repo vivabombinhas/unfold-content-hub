@@ -91,7 +91,7 @@
         // Map data
         return pagesData.map(page => {
           const pageBlocks = (allBlocks || []).filter(b => b.page_id === page.id && b.enabled);
-          const metadata = page.metadata || {};
+          const metadata = (page.metadata || {}) as any;
           return {
             ...page,
             blocks_count: pageBlocks.length,
