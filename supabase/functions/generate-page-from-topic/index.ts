@@ -598,6 +598,30 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     }
     generated.blocks = sanitize(generated.blocks, "blocks") as typeof generated.blocks;
 
+    // Fase de Limpeza Global de Compliance (Garantir que o Banco já nasça limpo)
+    const FORBIDDEN_TERMS = [
+      { pattern: /\b(m[eé]dico|doutor|cirurgi[aã]o|dermatologista)\b/gi, replacement: "profissional de saúde especializado" },
+      { pattern: /\b(risco [àa] vida|risco de morte|perigo de vida)\b/gi, replacement: "cuidados clínicos rigorosos" },
+      { pattern: /\b(garantia de resultado|resultado garantido|satisfação garantida)\b/gi, replacement: "compromisso com a excelência" },
+      { pattern: /\b(nossa garantia)\b/gi, replacement: "nosso compromisso" }
+    ];
+
+    function deepClean(obj: any): any {
+      if (typeof obj === "string") {
+        let clean = obj;
+        FORBIDDEN_TERMS.forEach(f => { clean = clean.replace(f.pattern, f.replacement); });
+        return clean;
+      }
+      if (Array.isArray(obj)) return obj.map(deepClean);
+      if (obj !== null && typeof obj === "object") {
+        const newObj: any = {};
+        for (const key in obj) newObj[key] = deepClean(obj[key]);
+        return newObj;
+      }
+      return obj;
+    }
+    generated.blocks = deepClean(generated.blocks);
+
     // ---- Fase 1.2: conteúdo real da página antiga própria tem prioridade ----
     const ownTestimonials = (oldPageContent?.testimonials || [])
       .filter((t) => t && typeof t.text === "string" && t.text.trim().length > 0)
