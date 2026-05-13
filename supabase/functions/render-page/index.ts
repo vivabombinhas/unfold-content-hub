@@ -79,19 +79,22 @@ serve(async (req) => {
     const seenQuestions = new Set<string>()
     const seenAnswers = new Set<string>()
 
-    // Compliance replacement function
+    // 4. Compliance & Filters
     const applyCompliance = (text: string) => {
-      if (!text) return text
+      if (!text) return ""
       return text
         .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
         .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
+        .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio') // Double check
+        .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
+        .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
     }
 
-    // Prohibited content check
     const isProhibited = (text: string) => {
       if (!text) return false
       const lower = text.toLowerCase()
-      return lower.includes('risco à vida') || lower.includes('nossa garantia')
+      // If "nossa garantia" or "risco à vida" appears in a way that shouldn't just be replaced but the whole block skipped
+      return false // We prefer replacing now to avoid empty sections
     }
 
     blocks.forEach((block: any) => {
@@ -100,12 +103,13 @@ serve(async (req) => {
 
       switch (type) {
         case 'hero': {
+          const eyebrow = applyCompliance(data.eyebrow || 'Estética Batel')
           const heroTitle = applyCompliance(data.title || pageData.title)
           const heroPara = applyCompliance(data.paragraph || data.description || '')
           
           articleHtml += '<header id="hero" class="block-section hero-section">\n' +
             '  <div class="container">\n' +
-            '    <span class="eyebrow">' + (data.eyebrow || 'Estética Batel') + '</span>\n' +
+            '    <span class="eyebrow">' + eyebrow + '</span>\n' +
             '    <h1>' + heroTitle + '</h1>\n' +
             '    <p class="lead">' + heroPara + '</p>\n' +
             '    ' + (data.image_url ? '<div class="hero-image"><img src="' + data.image_url + '" alt="' + (data.eyebrow || pageData.title) + '" loading="eager" fetchpriority="high"></div>' : '') + '\n' +
@@ -126,16 +130,12 @@ serve(async (req) => {
           break
 
         case 'beneficios_grid': {
-          const cards = Array.isArray(data.cards) ? data.cards.filter((c: any) => {
-            if (!c.title && !c.text) return false
-            if (isProhibited(c.title) || isProhibited(c.text)) return false
-            return true
-          }) : []
+          const cards = Array.isArray(data.cards) ? data.cards.filter((c: any) => c.title || c.text) : []
           if (cards.length > 0) {
             articleHtml += '<section id="beneficios" class="block-section beneficios-section">\n' +
               '  <div class="container">\n' +
-              '    <span class="eyebrow">' + (data.eyebrow || 'Diferenciais') + '</span>\n' +
-              '    <h2>' + (data.title || 'Por que escolher a Estética Batel') + '</h2>\n' +
+              '    <span class="eyebrow">' + applyCompliance(data.eyebrow || 'Diferenciais') + '</span>\n' +
+              '    <h2>' + applyCompliance(data.title || 'Por que escolher a Estética Batel') + '</h2>\n' +
               '    <div class="grid">\n' +
               '      ' + cards.map((card: any, idx: number) => 
                 '<div class="card">\n' +
@@ -157,10 +157,9 @@ serve(async (req) => {
            
            rawItems.forEach((item: any) => {
              if (!item.question || !item.answer) return
-             if (isProhibited(item.question) || isProhibited(item.answer)) return
              
-             const q = item.question.trim()
-             const a = item.answer.trim()
+             const q = applyCompliance(item.question.trim())
+             const a = applyCompliance(item.answer.trim())
              const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 100)
              const normalizedA = a.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 100)
              
@@ -168,9 +167,8 @@ serve(async (req) => {
                seenQuestions.add(normalizedQ)
                seenAnswers.add(normalizedA)
                
-               const sanitizedAnswer = applyCompliance(a)
-               currentBlockItems.push({ question: q, answer: sanitizedAnswer })
-               faqItems.push({ question: q, answer: sanitizedAnswer })
+               currentBlockItems.push({ question: q, answer: a })
+               faqItems.push({ question: q, answer: a })
              }
            })
 
