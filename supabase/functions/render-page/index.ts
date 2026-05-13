@@ -125,8 +125,12 @@ serve(async (req) => {
           }
           break
 
-        case 'beneficios_grid':
-          const cards = Array.isArray(data.cards) ? data.cards.filter((c: any) => c.title || c.text) : []
+        case 'beneficios_grid': {
+          const cards = Array.isArray(data.cards) ? data.cards.filter((c: any) => {
+            if (!c.title && !c.text) return false
+            if (isProhibited(c.title) || isProhibited(c.text)) return false
+            return true
+          }) : []
           if (cards.length > 0) {
             articleHtml += '<section id="beneficios" class="block-section beneficios-section">\n' +
               '  <div class="container">\n' +
@@ -136,8 +140,8 @@ serve(async (req) => {
               '      ' + cards.map((card: any, idx: number) => 
                 '<div class="card">\n' +
                 '  <span class="card-num">' + (idx + 1).toString().padStart(2, '0') + '</span>\n' +
-                '  <h3>' + (card.title || '') + '</h3>\n' +
-                '  <p>' + (card.text || '') + '</p>\n' +
+                '  <h3>' + applyCompliance(card.title || '') + '</h3>\n' +
+                '  <p>' + applyCompliance(card.text || '') + '</p>\n' +
                 '</div>\n'
               ).join('') + '\n' +
               '    </div>\n' +
@@ -145,6 +149,7 @@ serve(async (req) => {
               '</section>\n';
           }
           break
+        }
 
          case 'faq': {
            const rawItems = Array.isArray(data.items) ? data.items : []
@@ -188,19 +193,24 @@ serve(async (req) => {
          }
 
         case 'procedimento_detalhado':
-        case 'procedimento_detalhado_v2':
-          const paragraphs = Array.isArray(data.paragraphs) ? data.paragraphs.filter((p: string) => p && p.trim()) : []
-          if (data.description || paragraphs.length > 0) {
+        case 'procedimento_detalhado_v2': {
+          const paragraphs = Array.isArray(data.paragraphs) ? data.paragraphs.filter((p: string) => {
+            if (!p || !p.trim()) return false
+            return !isProhibited(p)
+          }) : []
+          const procDesc = data.description && !isProhibited(data.description) ? applyCompliance(data.description) : null
+          if (procDesc || paragraphs.length > 0) {
             articleHtml += '<section id="detalhes" class="block-section details-section">\n' +
               '  <div class="container">\n' +
               '    <span class="eyebrow">' + (data.eyebrow || 'Protocolo') + '</span>\n' +
-              '    <h2>' + (data.title || 'O procedimento detalhado') + '</h2>\n' +
-              '    ' + (data.description ? '<p>' + data.description + '</p>' : '') + '\n' +
-              '    ' + paragraphs.map((p: string) => '<p>' + p + '</p>').join('') + '\n' +
+              '    <h2>' + applyCompliance(data.title || 'O procedimento detalhado') + '</h2>\n' +
+              '    ' + (procDesc ? '<p>' + procDesc + '</p>' : '') + '\n' +
+              '    ' + paragraphs.map((p: string) => '<p>' + applyCompliance(p) + '</p>').join('') + '\n' +
               '  </div>\n' +
               '</section>\n';
           }
           break
+        }
 
         case 'equipe_rt': {
           const name = "Dra. Daniele Florêncio"
@@ -223,18 +233,20 @@ serve(async (req) => {
           break
         }
 
-        default:
+        default: {
           // Generic section for unhandled blocks with titles
-          const hasContent = data.description || data.text || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0)
+          const genDesc = data.description || data.text
+          const hasContent = (genDesc && !isProhibited(genDesc)) || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0)
           if ((data.title || data.eyebrow) && hasContent) {
             articleHtml += '<section class="block-section generic-section">\n' +
               '  <div class="container">\n' +
               '    ' + (data.eyebrow ? '<span class="eyebrow">' + data.eyebrow + '</span>' : '') + '\n' +
-              '    ' + (data.title ? '<h2>' + data.title + '</h2>' : '') + '\n' +
-              '    ' + (data.description || data.text ? '<p>' + (data.description || data.text) + '</p>' : '') + '\n' +
+              '    ' + (data.title ? '<h2>' + applyCompliance(data.title) + '</h2>' : '') + '\n' +
+              '    ' + (genDesc && !isProhibited(genDesc) ? '<p>' + applyCompliance(genDesc) + '</p>' : '') + '\n' +
               '  </div>\n' +
               '</section>\n';
           }
+        }
       }
     })
 
