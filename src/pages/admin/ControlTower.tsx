@@ -361,9 +361,9 @@
             const questions = items.map((i: any) => (i.question || '').toLowerCase());
             
             // 1.5 FAQ Quality Audit
-            if (items.length > 15) {
-              alerts.push({ type: 'error', message: `FAQ Excessiva: ${items.length} itens (Máx sugerido: 15)` });
-              seo -= 10;
+            if (items.length > 12) {
+              alerts.push({ type: 'error', message: `FAQ Excessiva: ${items.length} itens (Máx permitido: 12)` });
+              seo -= 15;
             }
             if (items.length < 5) {
               alerts.push({ type: 'warning', message: 'FAQ Curta: < 5 perguntas' });
@@ -387,8 +387,23 @@
             alerts.push({ type: 'error', message: 'Faltando Bloco FAQ' });
           }
           
-          const hasHero = pageBlocks.some(b => b.type === 'hero');
-          if (hasHero) seo += 30; else alerts.push({ type: 'error', message: 'Faltando Hero Image' });
+          const heroBlock = pageBlocks.find(b => b.type === 'hero');
+          if (heroBlock) {
+            const heroData = heroBlock.data as any;
+            const heroImg = heroData?.image_url || heroData?.imageUrl || heroData?.image;
+            
+            if (heroImg && heroImg.length > 10) {
+               seo += 30;
+               if (heroImg.includes('anatomia') || heroImg.includes('muscle') || heroImg.includes('anatomy')) {
+                 alerts.push({ type: 'warning', message: 'Hero pode ser imagem técnica/anatômica' });
+               }
+            } else {
+               alerts.push({ type: 'error', message: 'Hero Alerta Crítico: Imagem inválida ou genérica' });
+               seo -= 20;
+            }
+          } else {
+            alerts.push({ type: 'error', message: 'Faltando Bloco Hero' });
+          }
 
           // 2. Compliance Score (0-100)
           let compliance = 0;
@@ -400,7 +415,9 @@
             { term: 'cirurgião plástico', message: 'Termo sensível (Profissão não presente na clínica): cirurgião plástico' },
             { term: 'médico', message: 'Equipe é exclusivamente Biomédica/Esteticista. Evitar termo: médico' },
             { term: 'risco à vida', message: 'Termo proibido (Compliance): risco à vida' },
-            { term: 'nossa garantia', message: 'Termo proibido (Compliance): nossa garantia' }
+            { term: 'nossa garantia', message: 'Termo proibido (Compliance): nossa garantia' },
+            { term: 'especialistas qualificados', message: 'Termo genérico perigoso: use "biomédicas habilitadas"' },
+            { term: 'surgicalprocedure', message: 'Schema proibido: SurgicalProcedure detectado' }
           ];
           
           forbiddenTerms.forEach(({ term, message }) => {
@@ -411,16 +428,19 @@
           
           // Required EEAT elements
           const hasByline = pageContentStr.includes('daniele florêncio');
-          if (hasByline) compliance += 25; else alerts.push({ type: 'error', message: 'Faltando Byline (Dra. Daniele Florêncio)' });
+          if (hasByline) compliance += 20; else alerts.push({ type: 'error', message: 'Faltando Byline (Dra. Daniele Florêncio)' });
           
           const hasCRBM = pageContentStr.includes('crbm 8242-pr');
-          if (hasCRBM) compliance += 25; else alerts.push({ type: 'error', message: 'Faltando CRBM correto' });
-
-          const hasClinicalReviewer = pageContentStr.includes('revisão clínica');
-          if (hasClinicalReviewer) compliance += 25; else alerts.push({ type: 'warning', message: 'Faltando selo de Revisão Clínica' });
+          if (hasCRBM) compliance += 20; else alerts.push({ type: 'error', message: 'Faltando CRBM correto' });
           
-          const hasDisclaimer = pageContentStr.includes('disclaimer') || pageContentStr.includes('nota:') || pageContentStr.includes('os resultados podem variar');
-          if (hasDisclaimer) compliance += 25; else alerts.push({ type: 'warning', message: 'Faltando Disclaimer EEAT' });
+          const hasClinicalReview = pageContentStr.includes('revisão clínica');
+          if (hasClinicalReview) compliance += 20; else alerts.push({ type: 'error', message: 'Faltando Revisão Clínica' });
+
+          const hasDisclaimer = pageContentStr.includes('disclaimer') || pageContentStr.includes('aviso legal') || pageContentStr.includes('nota:');
+          if (hasDisclaimer) compliance += 20; else alerts.push({ type: 'error', message: 'Faltando Disclaimer EEAT' });
+
+          const hasDates = pageContentStr.includes('publicado') && pageContentStr.includes('2026');
+          if (hasDates) compliance += 20; else alerts.push({ type: 'warning', message: 'Faltando datas de publicação/revisão' });
 
           // 3. Fidelity Score
           let fidelity: 'low' | 'medium' | 'high' = 'low';
@@ -429,15 +449,6 @@
           else if (totalBlocks >= 5) fidelity = 'medium';
           else alerts.push({ type: 'info', message: 'Página Pobre (poucos blocos)' });
 
-          // 4. Media Quality
-          const heroBlock = pageBlocks.find(b => b.type === 'hero');
-          if (heroBlock) {
-            const heroImg = (heroBlock.data as any)?.imageUrl || (heroBlock.data as any)?.image;
-            if (!heroImg) alerts.push({ type: 'error', message: 'Hero sem imagem válida' });
-            else if (heroImg.includes('anatomia') || heroImg.includes('muscle') || heroImg.includes('anatomy')) {
-              alerts.push({ type: 'warning', message: 'Hero pode ser imagem anatômica' });
-            }
-          }
 
           // Update Database
           await supabase
