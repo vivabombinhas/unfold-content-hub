@@ -56,6 +56,18 @@
    const [filterReviewed, setFilterReviewed] = useState<string>("all");
    const [isScanning, setIsScanning] = useState(false);
  
+   const { data: allBlocks, isLoading: blocksLoading } = useQuery({
+     queryKey: ["admin-all-blocks"],
+     queryFn: async () => {
+       const { data, error } = await supabase
+         .from("page_blocks")
+         .select("page_id, type, data, enabled");
+       if (error) throw error;
+       return data;
+     },
+     enabled: !authLoading && isAdmin,
+   });
+ 
    const { data: pages, isLoading } = useQuery({
      queryKey: ["admin-control-tower"],
      queryFn: async () => {
@@ -67,16 +79,9 @@
  
        if (pagesError) throw pagesError;
  
-       // Fetch blocks count and hero check
-       const { data: blocksData, error: blocksError } = await supabase
-         .from("page_blocks")
-         .select("page_id, type, enabled");
- 
-       if (blocksError) throw blocksError;
- 
        // Map data
        return pagesData.map(page => {
-         const pageBlocks = blocksData.filter(b => b.page_id === page.id && b.enabled);
+         const pageBlocks = (allBlocks || []).filter(b => b.page_id === page.id && b.enabled);
          return {
            ...page,
            blocks_count: pageBlocks.length,
@@ -116,22 +121,43 @@
    const handleScanAll = async () => {
      setIsScanning(true);
      try {
-       // For each page, we'll calculate basic scores locally and update them in bulk (or one by one for simplicity now)
-       // In a real scenario, this would be an Edge Function.
        for (const page of filteredPages) {
+         const pageBlocks = (allBlocks || []).filter(b => b.page_id === page.id && b.enabled);
+         
+         // SEO Score (0-100)
          let seo = 0;
-         if (page.meta_title) seo += 25;
-         if (page.meta_description) seo += 25;
-         if (page.slug && page.slug.length > 3) seo += 25;
-         if (page.metadata?.area_anatomica) seo += 25;
+         if (page.meta_title) seo += 20;
+         if (page.meta_description) seo += 20;
+         if (page.slug && page.slug.length > 5) seo += 20;
+         
+         const hasFAQBlock = pageBlocks.some(b => b.type === 'faq');
+         if (hasFAQBlock) seo += 20;
+         
+         const hasHero = pageBlocks.some(b => b.type === 'hero');
+         if (hasHero) seo += 20;
  
-         let compliance = 100;
-         if (page.metadata?.compliance_warnings?.length > 0) compliance -= 20 * page.metadata.compliance_warnings.length;
-         compliance = Math.max(0, compliance);
+         // Compliance Score (0-100)
+         let compliance = 0;
+         const metadata = page.metadata || {};
+         
+         // Check for EEAT elements in blocks or metadata
+         const hasByline = pageBlocks.some(b => b.type === 'hero' || b.type === 'footer'); // simplified
+         if (hasByline || metadata.area_anatomica) compliance += 25;
+         
+         const hasDisclaimer = pageBlocks.some(b => JSON.stringify(b.data).toLowerCase().includes('disclaimer') || JSON.stringify(b.data).toLowerCase().includes('garantia'));
+         if (hasDisclaimer) compliance += 25;
  
+         const hasCRBM = JSON.stringify(pageBlocks).includes('CRBM');
+         if (hasCRBM) compliance += 25;
+ 
+         const hasClinicalReviewer = JSON.stringify(pageBlocks).includes('Revisão Clínica');
+         if (hasClinicalReviewer) compliance += 25;
+         
+         // Fidelity Score
          let fidelity: 'low' | 'medium' | 'high' = 'low';
-         if (page.blocks_count > 8) fidelity = 'high';
-         else if (page.blocks_count > 4) fidelity = 'medium';
+         const totalBlocks = pageBlocks.length;
+         if (totalBlocks >= 10) fidelity = 'high';
+         else if (totalBlocks >= 5) fidelity = 'medium';
  
          await supabase
            .from("pages")
@@ -146,6 +172,7 @@
        queryClient.invalidateQueries({ queryKey: ["admin-control-tower"] });
        toast.success("Varredura completa!");
      } catch (err) {
+       console.error(err);
        toast.error("Erro durante a varredura");
      } finally {
        setIsScanning(false);
