@@ -380,7 +380,7 @@ serve(async (req) => {
 
     const headers = new Headers();
     headers.set("Content-Type", "text/html; charset=UTF-8");
-    headers.set("X-SSR-Version", "1.2.0-FINAL-VALIDATION");
+    headers.set("X-SSR-Version", "1.3.0-STRICT-COMPLIANCE");
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     headers.set("Access-Control-Allow-Origin", "*");
