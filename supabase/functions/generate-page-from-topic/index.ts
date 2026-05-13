@@ -613,10 +613,24 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       .filter((f) => f && typeof f.question === "string" && typeof f.answer === "string" && f.question.trim() && f.answer.trim())
       .map((f) => ({ question: f.question!.trim(), answer: f.answer!.trim(), source: "old_page" }));
 
-    // Fase B: se a página antiga trouxe FAQs reais, USA APENAS elas. Sem mistura.
+    // Fase B: se a página antiga trouxe FAQs reais, USA elas e COMPLEMENTA com IA apenas se necessário.
     const aiFaqs = (Array.isArray(generated.blocks?.faq_items) ? generated.blocks.faq_items : [])
       .map((f: { question: string; answer: string }) => ({ ...f, source: "ai" }));
-    const mergedFaqs = ownFaqs.length > 0 ? ownFaqs : aiFaqs;
+
+    // Deduplicação básica de FAQs (por similaridade de pergunta)
+    const mergedFaqs = [...ownFaqs];
+    if (mergedFaqs.length < 8) {
+      for (const aiFaq of aiFaqs) {
+        const isDuplicate = mergedFaqs.some(f => {
+          const q1 = f.question.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const q2 = aiFaq.question.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return q1.includes(q2) || q2.includes(q1);
+        });
+        if (!isDuplicate && mergedFaqs.length < 12) {
+          mergedFaqs.push(aiFaq);
+        }
+      }
+    }
 
     // Fase C: bloco procedimento_detalhado SEMPRE vem preenchido.
     // Prioridade 1: seção forte da página antiga (ativo por padrão).
