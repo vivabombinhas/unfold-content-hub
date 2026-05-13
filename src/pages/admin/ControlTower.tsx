@@ -147,9 +147,32 @@
           const faqBlock = pageBlocks.find(b => b.type === 'faq');
           if (faqBlock) {
             seo += 20;
-            const questions = (faqBlock.data as any)?.questions || [];
-            if (questions.length > 20) alerts.push({ type: 'info', message: `FAQ Excessiva (${questions.length} perguntas)` });
-            if (questions.length < 5) alerts.push({ type: 'warning', message: 'FAQ Curta (< 5 perguntas)' });
+            const items = (faqBlock.data as any)?.items || [];
+            const questions = items.map((i: any) => (i.question || '').toLowerCase());
+            
+            // 1.5 FAQ Quality Audit
+            if (items.length > 15) {
+              alerts.push({ type: 'error', message: `FAQ Excessiva: ${items.length} itens (Máx sugerido: 15)` });
+              seo -= 10;
+            }
+            if (items.length < 5) {
+              alerts.push({ type: 'warning', message: 'FAQ Curta: < 5 perguntas' });
+            }
+
+            // Redundância
+            const intents = ['dor', 'recuperação', 'resultado', 'segurança', 'preço', 'sessão'];
+            intents.forEach(intent => {
+              const count = questions.filter((q: string) => q.includes(intent)).length;
+              if (count > 2) alerts.push({ type: 'warning', message: `Possível redundância na FAQ (termo "${intent}" aparece ${count}x)` });
+            });
+
+            // Valor AEO
+            const startsWithQuestion = questions.filter((q: string) => 
+              /^(como|qual|o que|quando|onde|quem|por que|quanto|é)/i.test(q)
+            ).length;
+            if (startsWithQuestion < items.length * 0.7) {
+              alerts.push({ type: 'info', message: 'FAQ com baixo valor AEO (perguntas pouco naturais)' });
+            }
           } else {
             alerts.push({ type: 'error', message: 'Faltando Bloco FAQ' });
           }
@@ -163,10 +186,11 @@
           
           // Sensitive terms check
           const forbiddenTerms = [
-            { term: 'dermatologista', message: 'Termo sensível: dermatologista' },
-            { term: 'cirurgião plástico', message: 'Termo sensível: cirurgião plástico' },
-            { term: 'risco à vida', message: 'Termo proibido: risco à vida' },
-            { term: 'nossa garantia', message: 'Termo proibido: nossa garantia' }
+            { term: 'dermatologista', message: 'Termo sensível (Profissão não presente na clínica): dermatologista' },
+            { term: 'cirurgião plástico', message: 'Termo sensível (Profissão não presente na clínica): cirurgião plástico' },
+            { term: 'médico', message: 'Equipe é exclusivamente Biomédica/Esteticista. Evitar termo: médico' },
+            { term: 'risco à vida', message: 'Termo proibido (Compliance): risco à vida' },
+            { term: 'nossa garantia', message: 'Termo proibido (Compliance): nossa garantia' }
           ];
           
           forbiddenTerms.forEach(({ term, message }) => {
