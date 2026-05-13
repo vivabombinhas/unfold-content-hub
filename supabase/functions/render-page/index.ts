@@ -75,6 +75,7 @@ serve(async (req) => {
     const faqItems: any[] = []
     const seenQuestions = new Set<string>()
     const seenAnswers = new Set<string>()
+    const seenFaqIntents = new Set<string>()
 
     const applyCompliance = (text: string): string => {
       if (!text) return "";
