@@ -390,8 +390,13 @@
           const heroBlock = pageBlocks.find(b => b.type === 'hero');
           if (heroBlock) {
             const heroData = heroBlock.data as any;
-            if (heroData?.image_url && heroData.image_url.length > 10) {
+            const heroImg = heroData?.image_url || heroData?.imageUrl || heroData?.image;
+            
+            if (heroImg && heroImg.length > 10) {
                seo += 30;
+               if (heroImg.includes('anatomia') || heroImg.includes('muscle') || heroImg.includes('anatomy')) {
+                 alerts.push({ type: 'warning', message: 'Hero pode ser imagem técnica/anatômica' });
+               }
             } else {
                alerts.push({ type: 'error', message: 'Hero Alerta Crítico: Imagem inválida ou genérica' });
                seo -= 20;
@@ -444,15 +449,6 @@
           else if (totalBlocks >= 5) fidelity = 'medium';
           else alerts.push({ type: 'info', message: 'Página Pobre (poucos blocos)' });
 
-          // 4. Media Quality
-          const heroBlock = pageBlocks.find(b => b.type === 'hero');
-          if (heroBlock) {
-            const heroImg = (heroBlock.data as any)?.imageUrl || (heroBlock.data as any)?.image;
-            if (!heroImg) alerts.push({ type: 'error', message: 'Hero sem imagem válida' });
-            else if (heroImg.includes('anatomia') || heroImg.includes('muscle') || heroImg.includes('anatomy')) {
-              alerts.push({ type: 'warning', message: 'Hero pode ser imagem anatômica' });
-            }
-          }
 
           // Update Database
           await supabase
