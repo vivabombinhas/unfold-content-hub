@@ -383,7 +383,9 @@ serve(async (req) => {
         'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
         'Content-Type': 'text/html; charset=utf-8',
         'X-Content-Type-Options': 'nosniff',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate', // Disable cache for now to ensure user sees changes
+        'X-SSR-Version': '1.1.0',
+        'X-SSR-Status': 'Compliance-Active',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       },
     })
   } catch (err) {
