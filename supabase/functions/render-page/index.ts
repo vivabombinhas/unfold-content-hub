@@ -83,9 +83,10 @@ serve(async (req) => {
     const applyCompliance = (text: string) => {
       if (!text) return ""
       return text
+        // Fix double replacement for "X ou Y"
+        .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)(\s+ou\s+)(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
         .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
         .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
-        .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio') // Double check
         .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
         .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
     }
