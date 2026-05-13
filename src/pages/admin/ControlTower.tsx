@@ -36,6 +36,22 @@
    DropdownMenuTrigger,
  } from "@/components/ui/dropdown-menu";
  import { cn } from "@/lib/utils";
+ import { useAuth } from "@/hooks/use-auth";
+ import {
+   Dialog,
+   DialogContent,
+   DialogHeader,
+   DialogTitle,
+   DialogTrigger,
+ } from "@/components/ui/dialog";
+ import {
+   Tabs,
+   TabsContent,
+   TabsList,
+   TabsTrigger,
+ } from "@/components/ui/tabs";
+ import { ScrollArea } from "@/components/ui/scroll-area";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  function QAReportModal({ page }: { page: PageHealth }) {
    const [isOpen, setIsOpen] = useState(false);
    const [ssrContent, setSsrContent] = useState<{ html: string; schemas: any[] } | null>(null);
