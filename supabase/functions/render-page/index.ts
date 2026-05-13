@@ -76,28 +76,50 @@ serve(async (req) => {
     // 4. Content Rendering logic
     let articleHtml = ""
     const faqItems: any[] = []
+    const seenQuestions = new Set<string>()
+    const seenAnswers = new Set<string>()
+
+    // Compliance replacement function
+    const applyCompliance = (text: string) => {
+      if (!text) return text
+      return text
+        .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
+        .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
+    }
+
+    // Prohibited content check
+    const isProhibited = (text: string) => {
+      if (!text) return false
+      const lower = text.toLowerCase()
+      return lower.includes('risco à vida') || lower.includes('nossa garantia')
+    }
 
     blocks.forEach((block: any) => {
       const data = block.data || {}
       const type = block.type
 
       switch (type) {
-        case 'hero':
+        case 'hero': {
+          const heroTitle = applyCompliance(data.title || pageData.title)
+          const heroPara = applyCompliance(data.paragraph || data.description || '')
+          
           articleHtml += '<header id="hero" class="block-section hero-section">\n' +
             '  <div class="container">\n' +
             '    <span class="eyebrow">' + (data.eyebrow || 'Estética Batel') + '</span>\n' +
-            '    <h1>' + (data.title || pageData.title) + '</h1>\n' +
-            '    <p class="lead">' + (data.paragraph || data.description || '') + '</p>\n' +
+            '    <h1>' + heroTitle + '</h1>\n' +
+            '    <p class="lead">' + heroPara + '</p>\n' +
             '    ' + (data.image_url ? '<div class="hero-image"><img src="' + data.image_url + '" alt="' + (data.eyebrow || pageData.title) + '" loading="eager" fetchpriority="high"></div>' : '') + '\n' +
             '  </div>\n' +
             '</header>\n';
           break
+        }
+          break
 
         case 'manifesto_curto':
-          if (data.text) {
+          if (data.text && !isProhibited(data.text)) {
             articleHtml += '<section id="manifesto" class="block-section manifesto-section">\n' +
               '  <div class="container">\n' +
-              '    <blockquote class="manifesto-quote">' + data.text + '</blockquote>\n' +
+              '    <blockquote class="manifesto-quote">' + applyCompliance(data.text) + '</blockquote>\n' +
               '  </div>\n' +
               '</section>\n';
           }
@@ -126,37 +148,33 @@ serve(async (req) => {
 
          case 'faq': {
            const rawItems = Array.isArray(data.items) ? data.items : []
-           const uniqueItems: any[] = []
-           const seenQuestions = new Set<string>()
-           const seenAnswers = new Set<string>()
+           const currentBlockItems: any[] = []
            
            rawItems.forEach((item: any) => {
              if (!item.question || !item.answer) return
+             if (isProhibited(item.question) || isProhibited(item.answer)) return
+             
              const q = item.question.trim()
              const a = item.answer.trim()
-             const normalizedQ = q.toLowerCase().replace(/[?]/g, '').substring(0, 100)
-             const normalizedA = a.toLowerCase().substring(0, 100)
+             const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 100)
+             const normalizedA = a.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 100)
              
              if (!seenQuestions.has(normalizedQ) && !seenAnswers.has(normalizedA)) {
                seenQuestions.add(normalizedQ)
                seenAnswers.add(normalizedA)
                
-               // Filter compliance
-               const sanitizedAnswer = a.replace(
-                 /(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 
-                 'profissionais de saúde especializados'
-               )
-               uniqueItems.push({ question: q, answer: sanitizedAnswer })
+               const sanitizedAnswer = applyCompliance(a)
+               currentBlockItems.push({ question: q, answer: sanitizedAnswer })
+               faqItems.push({ question: q, answer: sanitizedAnswer })
              }
            })
 
-           if (uniqueItems.length > 0) {
+           if (currentBlockItems.length > 0) {
              articleHtml += '<section id="faq" class="block-section faq-section">\n' +
                '  <div class="container">\n' +
                '    <h2>Perguntas Frequentes</h2>\n' +
                '    <div class="faq-list">\n' +
-               '      ' + uniqueItems.map((item: any) => {
-                 faqItems.push(item)
+               '      ' + currentBlockItems.map((item: any) => {
                  return '<details class="faq-item">\n' +
                    '  <summary>' + item.question + '</summary>\n' +
                    '  <div class="faq-content">' + item.answer + '</div>\n' +
