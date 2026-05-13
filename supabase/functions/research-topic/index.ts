@@ -402,11 +402,6 @@ function truncate(s: string | null | undefined, n: number) {
                   inadequate_for_hero: isHeroInadequate
                 });
               }
-             if (/\.(svg|ico)(\?|$)/i.test(abs)) continue;
-
-             if (candidateImages.length < 50 && !candidateImages.some((c) => c.url === abs)) {
-               candidateImages.push({ url: abs, alt: (m[2] || "").trim(), source_url: sourceUrl });
-             }
            }
 
            // 3. Background-image inline
