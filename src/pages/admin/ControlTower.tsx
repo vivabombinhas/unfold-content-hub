@@ -1,4 +1,4 @@
- import { useState, useMemo } from "react";
+ import { useState, useMemo, useEffect } from "react";
  import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
  import { supabase } from "@/integrations/supabase/client";
  import { 
@@ -17,7 +17,11 @@
     MoreHorizontal,
     Download,
     Check,
-    Info
+    Info,
+    FileCode,
+    Shield,
+    Copy,
+    DownloadCloud
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
@@ -31,8 +35,23 @@
    DropdownMenuItem,
    DropdownMenuTrigger,
  } from "@/components/ui/dropdown-menu";
- import { cn } from "@/lib/utils";
+ import { cn, formatDate } from "@/lib/utils";
  import { useAuth } from "@/hooks/use-auth";
+ import {
+   Dialog,
+   DialogContent,
+   DialogHeader,
+   DialogTitle,
+   DialogTrigger,
+ } from "@/components/ui/dialog";
+ import {
+   Tabs,
+   TabsContent,
+   TabsList,
+   TabsTrigger,
+ } from "@/components/ui/tabs";
+ import { ScrollArea } from "@/components/ui/scroll-area";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  
   interface PageAlert {
     type: 'error' | 'warning' | 'info';
@@ -418,11 +437,7 @@
                            <Eye className="size-4" />
                          </a>
                        </Button>
-                       <Button asChild size="icon" variant="ghost" className="size-8 text-brand-text-muted hover:text-brand-gold">
-                         <a href={`/functions/v1/render-page?slug=${page.slug}`} target="_blank" rel="noreferrer" title="Ver SSR (Claude/Google view)">
-                           <FileText className="size-4" />
-                         </a>
-                       </Button>
+                        <QAReportModal page={page} />
                      </div>
                    </td>
                  </tr>
