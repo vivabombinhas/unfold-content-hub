@@ -400,6 +400,7 @@
                     <td className="px-6 py-4">
                       <FAQHealthStatus alerts={page.alerts || []} />
                     </td>
+
   function FAQHealthStatus({ alerts }: { alerts: PageAlert[] }) {
     const faqAlerts = alerts.filter(a => a.message.toLowerCase().includes('faq'));
     const critical = faqAlerts.filter(a => a.type === 'error').length;
@@ -411,17 +412,17 @@
       <div className="flex flex-col gap-1">
         {critical > 0 && (
           <div className="flex items-center gap-1 text-[10px] text-red-400 font-bold">
-            <XCircle className="size-3" /> {critical} Críticos
+            <XCircle className="size-3 text-red-400" /> {critical} Críticos
           </div>
         )}
         {warnings > 0 && (
           <div className="flex items-center gap-1 text-[10px] text-orange-400">
-            <AlertTriangle className="size-3" /> {warnings} Alertas
+            <AlertTriangle className="size-3 text-orange-400" /> {warnings} Alertas
           </div>
         )}
         {critical === 0 && warnings === 0 && faqAlerts.length > 0 && (
           <div className="flex items-center gap-1 text-[10px] text-brand-gold">
-            <Info className="size-3" /> {faqAlerts.length} Notas
+            <Info className="size-3 text-brand-gold" /> {faqAlerts.length} Notas
           </div>
         )}
       </div>
