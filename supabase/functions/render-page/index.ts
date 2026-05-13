@@ -125,27 +125,47 @@
            }
            break
  
-         case 'faq':
-           const items = Array.isArray(data.items) ? data.items : []
-           if (items.length > 0) {
-             articleHtml += `
-               <section id="faq" class="block-section faq-section">
-                 <div class="container">
-                   <h2>Perguntas Frequentes</h2>
-                   <div class="faq-list">
-                     ${items.map((item: any) => {
-                       faqItems.push({ question: item.question, answer: item.answer })
-                       return `
-                         <details class="faq-item">
-                           <summary>${item.question}</summary>
-                           <div class="faq-content">${item.answer}</div>
-                         </details>`
-                     }).join('')}
-                   </div>
-                 </div>
-               </section>`
-           }
-           break
+          case 'faq': {
+            const rawItems = Array.isArray(data.items) ? data.items : []
+            const uniqueItems: any[] = []
+            const seenQuestions = new Set<string>()
+            
+            rawItems.forEach((item: any) => {
+              if (!item.question || !item.answer) return
+              const normalized = item.question.trim().toLowerCase()
+                .replace(/[?]/g, '')
+                .substring(0, 50)
+              if (!seenQuestions.has(normalized)) {
+                seenQuestions.add(normalized)
+                uniqueItems.push(item)
+              }
+            })
+
+            if (uniqueItems.length > 0) {
+              articleHtml += `
+                <section id="faq" class="block-section faq-section">
+                  <div class="container">
+                    <h2>Perguntas Frequentes</h2>
+                    <div class="faq-list">
+                      ${uniqueItems.map((item: any) => {
+                        // Filter compliance: remove mention of dermatologist/plastic surgeon
+                        const sanitizedAnswer = item.answer.replace(
+                          /(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 
+                          'profissionais de saúde especializados'
+                        )
+                        faqItems.push({ question: item.question, answer: sanitizedAnswer })
+                        return `
+                          <details class="faq-item">
+                            <summary>${item.question}</summary>
+                            <div class="faq-content">${sanitizedAnswer}</div>
+                          </details>`
+                      }).join('')}
+                    </div>
+                  </div>
+                </section>`
+            }
+            break
+          }
  
          case 'procedimento_detalhado':
          case 'procedimento_detalhado_v2':
@@ -159,16 +179,20 @@
              </section>`
            break
  
-         case 'equipe_rt':
+          case 'equipe_rt': {
+            const name = "Dra. Daniele Florêncio"
+            const register = "Biomédica · CRBM 8242-PR"
            articleHtml += `
              <section id="rt" class="block-section rt-section">
                <div class="container">
                  <span class="eyebrow">${data.eyebrow || 'Responsável Técnica'}</span>
-                 <h2>Dra. Daniele Batel</h2>
-                 <p>${data.description || 'Especialista em procedimentos de alta performance.'}</p>
+                  <h2>${name}</h2>
+                  <p class="register">${register}</p>
+                  <p>${data.description || 'Especialista em procedimentos de alta performance com mais de duas décadas de experiência.'}</p>
                </div>
              </section>`
            break
+          }
  
          default:
            // Generic section for unhandled blocks with titles
@@ -186,25 +210,33 @@
      })
  
      // 5. Schema.org (JSON-LD)
-     const schemas: any[] = [
-       {
-         "@context": "https://schema.org",
-         "@type": "MedicalProcedure",
-         "name": pageTitle,
-         "description": description,
-         "provider": {
-           "@type": "MedicalOrganization",
-           "name": "Clínica de Estética Batel",
-           "url": siteUrl,
-           "logo": "https://esteticabatel.com.br/logo.png", // Fallback logo
-           "address": {
-             "@type": "PostalAddress",
-             "addressLocality": "Curitiba",
-             "addressRegion": "PR",
-             "addressCountry": "BR"
-           }
-         }
-       },
+      const schemas: any[] = [
+        {
+          "@context": "https://schema.org",
+          "@type": "MedicalProcedure",
+          "name": pageTitle,
+          "description": description,
+          "procedureType": "NonInvasiveProcedure",
+          "bodyLocation": pageData.metadata?.area_anatomica || "Corpo",
+          "provider": {
+            "@type": "MedicalOrganization",
+            "name": "Clínica de Estética Batel",
+            "url": siteUrl,
+            "logo": "https://esteticabatel.com.br/logo.png",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Curitiba",
+              "addressRegion": "PR",
+              "addressCountry": "BR"
+            }
+          },
+          "performer": {
+            "@type": "Person",
+            "name": "Dra. Daniele Florêncio",
+            "jobTitle": "Biomédica",
+            "identifier": "CRBM 8242-PR"
+          }
+        },
        {
          "@context": "https://schema.org",
          "@type": "BreadcrumbList",
