@@ -325,8 +325,11 @@
          .card-num { position: absolute; bottom: -10px; right: -5px; font-size: 5rem; font-style: italic; opacity: 0.05; font-weight: 900; }
          .faq-item { margin-bottom: 8px; background: var(--graphite); }
          summary { padding: 20px; cursor: pointer; font-weight: 600; color: white; outline: none; }
-         .faq-content { padding: 0 20px 20px; color: var(--text-muted); }
-         footer { padding: 40px 0; text-align: center; font-size: 14px; color: var(--text-muted); }
+          .faq-content { padding: 0 20px 20px; color: var(--text-muted); }
+          .register { color: var(--gold); font-size: 0.9rem; margin-top: -20px; margin-bottom: 20px; font-weight: 600; }
+          .byline { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 24px; border-bottom: 1px solid rgba(197,160,89,0.1); padding-bottom: 8px; }
+          .disclaimer-mini { font-size: 0.75rem; color: var(--text-muted); margin-top: 32px; font-style: italic; }
+          footer { padding: 40px 0; text-align: center; font-size: 14px; color: var(--text-muted); }
          @media (max-width: 768px) { h1 { font-size: 2.2rem; } h2 { font-size: 1.8rem; } }
      </style>
  
