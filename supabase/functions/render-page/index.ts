@@ -167,45 +167,54 @@
             break
           }
  
-         case 'procedimento_detalhado':
-         case 'procedimento_detalhado_v2':
-           articleHtml += `
-             <section id="detalhes" class="block-section details-section">
-               <div class="container">
-                 <span class="eyebrow">${data.eyebrow || 'Protocolo'}</span>
-                 <h2>${data.title || 'O procedimento detalhado'}</h2>
-                 ${data.description ? `<p>${data.description}</p>` : ''}
-               </div>
-             </section>`
-           break
+          case 'procedimento_detalhado':
+          case 'procedimento_detalhado_v2':
+            if (data.description || data.paragraphs || (Array.isArray(data.cards) && data.cards.length > 0)) {
+              articleHtml += `
+                <section id="detalhes" class="block-section details-section">
+                  <div class="container">
+                    <span class="eyebrow">${data.eyebrow || 'Protocolo'}</span>
+                    <h2>${data.title || 'O procedimento detalhado'}</h2>
+                    ${data.description ? `<p>${data.description}</p>` : ''}
+                  </div>
+                </section>`
+            }
+            break
  
           case 'equipe_rt': {
             const name = "Dra. Daniele Florêncio"
             const register = "Biomédica · CRBM 8242-PR"
-           articleHtml += `
-             <section id="rt" class="block-section rt-section">
-               <div class="container">
-                 <span class="eyebrow">${data.eyebrow || 'Responsável Técnica'}</span>
+            articleHtml += `
+              <section id="rt" class="block-section rt-section">
+                <div class="container">
+                  <span class="eyebrow">${data.eyebrow || 'Responsável Técnica'}</span>
                   <h2>${name}</h2>
                   <p class="register">${register}</p>
+                  <div class="byline">
+                    <span>Publicado em: ${new Date().toLocaleDateString('pt-BR')}</span>
+                    <span> · Revisão Clínica: Dra. Daniele Florêncio</span>
+                  </div>
                   <p>${data.description || 'Especialista em procedimentos de alta performance com mais de duas décadas de experiência.'}</p>
-               </div>
-             </section>`
-           break
+                  <div class="disclaimer-mini">
+                    <p>* Resultados podem variar de acordo com o organismo e avaliação clínica individual.</p>
+                  </div>
+                </div>
+              </section>`
+            break
           }
  
-         default:
-           // Generic section for unhandled blocks with titles
-           if (data.title || data.eyebrow) {
-             articleHtml += `
-               <section class="block-section generic-section">
-                 <div class="container">
-                   ${data.eyebrow ? `<span class="eyebrow">${data.eyebrow}</span>` : ''}
-                   ${data.title ? `<h2>${data.title}</h2>` : ''}
-                   ${data.description || data.text ? `<p>${data.description || data.text}</p>` : ''}
-                 </div>
-               </section>`
-           }
+          default:
+            // Generic section for unhandled blocks with titles
+            if ((data.title || data.eyebrow) && (data.description || data.text || data.cards || data.items)) {
+              articleHtml += `
+                <section class="block-section generic-section">
+                  <div class="container">
+                    ${data.eyebrow ? `<span class="eyebrow">${data.eyebrow}</span>` : ''}
+                    ${data.title ? `<h2>${data.title}</h2>` : ''}
+                    ${data.description || data.text ? `<p>${data.description || data.text}</p>` : ''}
+                  </div>
+                </section>`
+            }
        }
      })
  
