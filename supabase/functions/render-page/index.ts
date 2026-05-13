@@ -76,16 +76,51 @@ serve(async (req) => {
     const seenQuestions = new Set<string>()
     const seenAnswers = new Set<string>()
 
-    const applyCompliance = (text: string) => {
-      if (!text) return ""
-      return text
-        .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)(\s+ou\s+)(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
-        .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
+    const applyCompliance = (text: string): string => {
+      if (!text) return "";
+      
+      // Block list for critical terms - if they appear in certain contexts, we might want to flag, 
+      // but for SSR we rewrite or sanitize.
+      let sanitized = text
         .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
         .replace(/apresenta\s+risco\s+à\s+vida/gi, 'é um procedimento seguro')
-        .replace(/risco\s+à\s+vida/gi, 'riscos clínicos minimizados')
+        .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
         .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
-    }
+        .replace(/médicos?\s+especialistas/gi, 'profissionais especialistas')
+        .replace(/corpo\s+médico/gi, 'equipe técnica');
+
+      // Specific replacement for the team mismatch
+      sanitized = sanitized
+        .replace(/dermatologistas?|cirurgiões?\s+plásticos?|médicos?/gi, (match) => {
+          // If it's part of a forbidden phrase, it's already handled or will be blocked in FAQ
+          return 'especialistas';
+        });
+
+      return sanitized;
+    };
+
+    const faqCategories = [
+      { id: 'pain', keywords: ['dor', 'doi', 'doloroso', 'anestesia', 'desconforto', 'sensibilidade'] },
+      { id: 'safety', keywords: ['seguro', 'risco', 'complicacao', 'seguranca', 'perigo', 'contraindicacao'] },
+      { id: 'recovery', keywords: ['pos-procedimento', 'recuperacao', 'repouso', 'cuidados', 'inchaco', 'hematoma', 'tempo de cura'] },
+      { id: 'pregnancy', keywords: ['gravida', 'gestante', 'lactante', 'amamentando', 'gravidez'] },
+      { id: 'duration', keywords: ['duracao', 'quanto tempo', 'permanente', 'sessao', 'manutencao', 'resultado'] },
+      { id: 'candidates', keywords: ['indicado', 'quem pode', 'idade', 'perfil', 'homens', 'mulheres'] }
+    ];
+
+    const isForbiddenFaq = (question: string, answer: string): boolean => {
+      const combined = (question + ' ' + answer).toLowerCase();
+      const forbidden = ['risco à vida', 'risco de morte', 'perigo de vida', 'médico', 'dermatologista', 'cirurgião plástico'];
+      return forbidden.some(term => combined.includes(term));
+    };
+
+    const getFaqIntent = (question: string): string | null => {
+      const q = question.toLowerCase();
+      for (const cat of faqCategories) {
+        if (cat.keywords.some(k => q.includes(k))) return cat.id;
+      }
+      return null;
+    };
 
     blocks.forEach((block: any) => {
       const data = block.data || {}
@@ -140,44 +175,55 @@ serve(async (req) => {
           break
         }
 
-         case 'faq': {
-           const rawItems = Array.isArray(data.items) ? data.items : []
-           const currentBlockItems: any[] = []
-           
-           rawItems.forEach((item: any) => {
-             if (!item.question || !item.answer) return
-             
-             const q = applyCompliance(item.question.trim())
-             const a = applyCompliance(item.answer.trim())
-             const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 100)
-             const normalizedA = a.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 100)
-             
-             if (!seenQuestions.has(normalizedQ) && !seenAnswers.has(normalizedA)) {
-               seenQuestions.add(normalizedQ)
-               seenAnswers.add(normalizedA)
-               
-               currentBlockItems.push({ question: q, answer: a })
-               faqItems.push({ question: q, answer: a })
-             }
-           })
+        case 'faq': {
+          const rawItems = Array.isArray(data.items) ? data.items : [];
+          const currentBlockItems: any[] = [];
+          const seenIntentsInBlock = new Set<string>();
 
-           if (currentBlockItems.length > 0) {
-             articleHtml += '<section id="faq" class="block-section faq-section">\n' +
-               '  <div class="container">\n' +
-               '    <h2>Perguntas Frequentes</h2>\n' +
-               '    <div class="faq-list">\n' +
-               '      ' + currentBlockItems.map((item: any) => {
-                 return '<details class="faq-item">\n' +
-                   '  <summary>' + item.question + '</summary>\n' +
-                   '  <div class="faq-content">' + item.answer + '</div>\n' +
-                   '</details>\n'
-               }).join('') + '\n' +
-               '    </div>\n' +
-               '  </div>\n' +
-               '</section>\n';
-           }
-           break
-         }
+          rawItems.forEach((item: any) => {
+            if (!item.question || !item.answer) return;
+            if (faqItems.length >= 15) return; // Intelligent limit
+
+            // 1. Prohibited check
+            if (isForbiddenFaq(item.question, item.answer)) return;
+
+            const q = applyCompliance(item.question.trim());
+            const a = applyCompliance(item.answer.trim());
+            
+            // 2. Strong Semantic Deduplication
+            const intent = getFaqIntent(q);
+            if (intent && seenIntentsInBlock.has(intent)) return;
+
+            const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 80);
+            const normalizedA = a.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 80);
+
+            if (!seenQuestions.has(normalizedQ) && !seenAnswers.has(normalizedA)) {
+              seenQuestions.add(normalizedQ);
+              seenAnswers.add(normalizedA);
+              if (intent) seenIntentsInBlock.add(intent);
+
+              currentBlockItems.push({ question: q, answer: a });
+              faqItems.push({ question: q, answer: a });
+            }
+          });
+
+          if (currentBlockItems.length > 0) {
+            articleHtml += '<section id="faq" class="block-section faq-section">\n' +
+              '  <div class="container">\n' +
+              '    <h2>Perguntas Frequentes</h2>\n' +
+              '    <div class="faq-list">\n' +
+              '      ' + currentBlockItems.map((item: any) => {
+                return '<details class="faq-item">\n' +
+                  '  <summary>' + item.question + '</summary>\n' +
+                  '  <div class="faq-content">' + item.answer + '</div>\n' +
+                  '</details>\n'
+              }).join('') + '\n' +
+              '    </div>\n' +
+              '  </div>\n' +
+              '</section>\n';
+          }
+          break
+        }
 
         case 'procedimento_detalhado':
         case 'procedimento_detalhado_v2': {
