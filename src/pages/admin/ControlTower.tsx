@@ -1,4 +1,4 @@
- import { useState, useMemo } from "react";
+ import { useState, useMemo, useEffect } from "react";
  import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
  import { supabase } from "@/integrations/supabase/client";
  import { 
@@ -17,7 +17,11 @@
     MoreHorizontal,
     Download,
     Check,
-    Info
+    Info,
+    FileCode,
+    Shield,
+    Copy,
+    DownloadCloud
  } from "lucide-react";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
@@ -33,8 +37,214 @@
  } from "@/components/ui/dropdown-menu";
  import { cn } from "@/lib/utils";
  import { useAuth } from "@/hooks/use-auth";
+ import {
+   Dialog,
+   DialogContent,
+   DialogHeader,
+   DialogTitle,
+   DialogTrigger,
+ } from "@/components/ui/dialog";
+ import {
+   Tabs,
+   TabsContent,
+   TabsList,
+   TabsTrigger,
+ } from "@/components/ui/tabs";
+ import { ScrollArea } from "@/components/ui/scroll-area";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+ function QAReportModal({ page }: { page: PageHealth }) {
+   const [isOpen, setIsOpen] = useState(false);
+   const [ssrContent, setSsrContent] = useState<{ html: string; schemas: any[] } | null>(null);
+   const [isLoading, setIsLoading] = useState(false);
  
-  interface PageAlert {
+   const fetchSsr = async () => {
+     setIsLoading(true);
+     try {
+       const response = await fetch(`https://ldsixdxmdzngagbminwh.supabase.co/functions/v1/render-page?slug=${page.slug}`);
+       const html = await response.text();
+       
+       const schemaRegex = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g;
+       const schemas = [];
+       let match;
+       while ((match = schemaRegex.exec(html)) !== null) {
+         try {
+           schemas.push(JSON.parse(match[1]));
+         } catch (e) {
+           console.error("Error parsing schema", e);
+         }
+       }
+       
+       setSsrContent({ html, schemas });
+     } catch (error) {
+       toast.error("Erro ao carregar SSR para relatório");
+     } finally {
+       setIsLoading(false);
+     }
+   };
+ 
+   useEffect(() => {
+     if (isOpen && !ssrContent) {
+       fetchSsr();
+     }
+   }, [isOpen]);
+ 
+   const handleCopy = (text: string) => {
+     navigator.clipboard.writeText(text);
+     toast.success("Copiado para a área de transferência");
+   };
+ 
+   const handleDownload = () => {
+     if (!ssrContent) return;
+     const report = `
+ RELATÓRIO QA - ${page.title}
+ URL: https://bioesteticaflorencio.com.br/p/${page.slug}
+ Data: ${new Date().toLocaleString()}
+ 
+ RESUMO DE COMPLIANCE:
+ ${page.alerts?.map(a => `- [${a.type.toUpperCase()}] ${a.message}`).join('\n') || 'Nenhum alerta encontrado.'}
+ 
+ SCHEMAS:
+ ${JSON.stringify(ssrContent.schemas, null, 2)}
+ 
+ HTML SSR:
+ ${ssrContent.html}
+     `;
+     const blob = new Blob([report], { type: 'text/plain' });
+     const url = URL.createObjectURL(blob);
+     const a = document.createElement('a');
+     a.href = url;
+     a.download = `qa-report-${page.slug}.txt`;
+     a.click();
+     URL.revokeObjectURL(url);
+   };
+ 
+   return (
+     <Dialog open={isOpen} onOpenChange={setIsOpen}>
+       <DialogTrigger asChild>
+         <Button size="icon" variant="ghost" className="size-8 text-brand-text-muted hover:text-brand-gold">
+           <FileText className="size-4" />
+         </Button>
+       </DialogTrigger>
+       <DialogContent className="max-w-4xl max-h-[90vh] bg-brand-bg border-brand-gold/20 text-brand-text-light overflow-hidden flex flex-col">
+         <DialogHeader className="flex flex-row items-center justify-between">
+           <DialogTitle className="flex items-center gap-2 font-display text-2xl">
+             <Shield className="size-5 text-brand-gold" />
+             Relatório QA: {page.title}
+           </DialogTitle>
+           <div className="flex items-center gap-2 mr-6">
+             <Button size="sm" variant="outline" className="border-brand-gold/20 text-brand-gold" onClick={handleDownload} disabled={isLoading}>
+               <DownloadCloud className="size-4 mr-2" /> Exportar
+             </Button>
+           </div>
+         </DialogHeader>
+ 
+         {isLoading ? (
+           <div className="flex-1 flex flex-col items-center justify-center p-12 gap-4">
+             <RefreshCw className="size-8 text-brand-gold animate-spin" />
+             <p className="text-brand-text-muted">Analisando SSR e compliance...</p>
+           </div>
+         ) : (
+           <Tabs defaultValue="summary" className="flex-1 overflow-hidden flex flex-col">
+             <TabsList className="bg-brand-graphite/40 border-b border-brand-gold/10 rounded-none h-12">
+               <TabsTrigger value="summary" className="data-[state=active]:text-brand-gold">Resumo QA</TabsTrigger>
+               <TabsTrigger value="schemas" className="data-[state=active]:text-brand-gold">Schemas ({ssrContent?.schemas.length || 0})</TabsTrigger>
+               <TabsTrigger value="html" className="data-[state=active]:text-brand-gold">HTML Final</TabsTrigger>
+             </TabsList>
+ 
+             <TabsContent value="summary" className="flex-1 overflow-y-auto p-6 space-y-6">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <Card className="bg-brand-graphite/20 border-brand-gold/10">
+                   <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-medium text-brand-text-muted">Compliance</CardTitle>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="text-2xl font-bold text-brand-gold">{page.compliance_score}%</div>
+                   </CardContent>
+                 </Card>
+                 <Card className="bg-brand-graphite/20 border-brand-gold/10">
+                   <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-medium text-brand-text-muted">Saúde SEO</CardTitle>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="text-2xl font-bold text-brand-gold">{page.seo_score}%</div>
+                   </CardContent>
+                 </Card>
+                 <Card className="bg-brand-graphite/20 border-brand-gold/10">
+                   <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-medium text-brand-text-muted">Fidelidade</CardTitle>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="text-2xl font-bold uppercase text-brand-gold text-sm">{page.fidelity_score}</div>
+                   </CardContent>
+                 </Card>
+               </div>
+ 
+               <div className="space-y-4">
+                 <h3 className="font-display text-lg text-brand-gold flex items-center gap-2">
+                   <AlertTriangle className="size-4" /> Checklist de Auditoria
+                 </h3>
+                 <div className="space-y-2">
+                   {page.alerts && page.alerts.length > 0 ? (
+                     page.alerts.map((alert, i) => (
+                       <div key={i} className={cn(
+                         "p-3 rounded-lg border flex items-start gap-3",
+                         alert.type === 'error' ? "bg-red-500/10 border-red-500/20 text-red-400" :
+                         alert.type === 'warning' ? "bg-orange-500/10 border-orange-500/20 text-orange-400" :
+                         "bg-blue-500/10 border-blue-500/20 text-blue-400"
+                       )}>
+                         {alert.type === 'error' ? <XCircle className="size-4 shrink-0" /> : <AlertTriangle className="size-4 shrink-0" />}
+                         <span className="text-sm">{alert.message}</span>
+                       </div>
+                     ))
+                   ) : (
+                     <div className="p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg flex items-center gap-3">
+                       <CheckCircle2 className="size-4" />
+                       <span>Nenhum problema detectado. A página está pronta para publicação.</span>
+                     </div>
+                   )}
+                 </div>
+               </div>
+             </TabsContent>
+ 
+             <TabsContent value="schemas" className="flex-1 overflow-hidden p-0">
+                <div className="h-full flex flex-col">
+                 <div className="p-4 bg-brand-graphite/60 flex items-center justify-between border-b border-brand-gold/10">
+                   <span className="text-xs text-brand-text-muted">JSON-LD detectados no SSR</span>
+                   <Button size="sm" variant="ghost" onClick={() => handleCopy(JSON.stringify(ssrContent?.schemas, null, 2))}>
+                     <Copy className="size-4 mr-2" /> Copiar Tudo
+                   </Button>
+                 </div>
+                 <ScrollArea className="flex-1 bg-black/40 p-6">
+                   <pre className="text-[11px] font-mono text-brand-gold/80 leading-relaxed whitespace-pre-wrap">
+                     {JSON.stringify(ssrContent?.schemas, null, 2)}
+                   </pre>
+                 </ScrollArea>
+                </div>
+             </TabsContent>
+ 
+             <TabsContent value="html" className="flex-1 overflow-hidden p-0">
+               <div className="h-full flex flex-col">
+                 <div className="p-4 bg-brand-graphite/60 flex items-center justify-between border-b border-brand-gold/10">
+                   <span className="text-xs text-brand-text-muted">Raw HTML (Google/Claude View)</span>
+                   <Button size="sm" variant="ghost" onClick={() => handleCopy(ssrContent?.html || '')}>
+                     <Copy className="size-4 mr-2" /> Copiar HTML
+                   </Button>
+                 </div>
+                 <ScrollArea className="flex-1 bg-black/40 p-6">
+                   <pre className="text-[11px] font-mono text-brand-text-muted leading-relaxed whitespace-pre-wrap">
+                     {ssrContent?.html}
+                   </pre>
+                 </ScrollArea>
+               </div>
+             </TabsContent>
+           </Tabs>
+         )}
+       </DialogContent>
+     </Dialog>
+   );
+   }
+ 
+ interface PageAlert {
     type: 'error' | 'warning' | 'info';
     message: string;
   }
@@ -418,11 +628,7 @@
                            <Eye className="size-4" />
                          </a>
                        </Button>
-                       <Button asChild size="icon" variant="ghost" className="size-8 text-brand-text-muted hover:text-brand-gold">
-                         <a href={`/functions/v1/render-page?slug=${page.slug}`} target="_blank" rel="noreferrer" title="Ver SSR (Claude/Google view)">
-                           <FileText className="size-4" />
-                         </a>
-                       </Button>
+                        <QAReportModal page={page} />
                      </div>
                    </td>
                  </tr>
