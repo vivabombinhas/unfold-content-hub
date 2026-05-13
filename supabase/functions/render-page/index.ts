@@ -108,7 +108,8 @@ serve(async (req) => {
         .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)(\s+ou\s+)(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
         .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
         .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
-        .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
+        .replace(/apresenta\s+risco\s+à\s+vida/gi, 'é um procedimento seguro')
+        .replace(/risco\s+à\s+vida/gi, 'riscos clínicos minimizados')
         .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
     }
 
