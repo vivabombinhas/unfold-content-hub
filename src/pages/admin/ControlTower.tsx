@@ -366,8 +366,9 @@
                  <th className="px-6 py-4">Página</th>
                  <th className="px-6 py-4">Fidelidade</th>
                  <th className="px-6 py-4">Saúde SEO</th>
-                 <th className="px-6 py-4">Compliance</th>
-                 <th className="px-6 py-4">Mídia</th>
+                  <th className="px-6 py-4">Compliance</th>
+                  <th className="px-6 py-4">FAQ Audit</th>
+                  <th className="px-6 py-4">Mídia</th>
                  <th className="px-6 py-4">Ações</th>
                </tr>
              </thead>
@@ -396,6 +397,37 @@
                     <td className="px-6 py-4">
                       <ComplianceStatus score={page.compliance_score} alerts={page.alerts} />
                     </td>
+                    <td className="px-6 py-4">
+                      <FAQHealthStatus alerts={page.alerts || []} />
+                    </td>
+  function FAQHealthStatus({ alerts }: { alerts: PageAlert[] }) {
+    const faqAlerts = alerts.filter(a => a.message.toLowerCase().includes('faq'));
+    const critical = faqAlerts.filter(a => a.type === 'error').length;
+    const warnings = faqAlerts.filter(a => a.type === 'warning').length;
+    
+    if (faqAlerts.length === 0) return <Badge variant="outline" className="text-[10px] text-green-500/70 border-green-500/20 bg-green-500/5">Excelente</Badge>;
+    
+    return (
+      <div className="flex flex-col gap-1">
+        {critical > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-red-400 font-bold">
+            <XCircle className="size-3" /> {critical} Críticos
+          </div>
+        )}
+        {warnings > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-orange-400">
+            <AlertTriangle className="size-3" /> {warnings} Alertas
+          </div>
+        )}
+        {critical === 0 && warnings === 0 && faqAlerts.length > 0 && (
+          <div className="flex items-center gap-1 text-[10px] text-brand-gold">
+            <Info className="size-3" /> {faqAlerts.length} Notas
+          </div>
+        )}
+      </div>
+    );
+  }
+
                    <td className="px-6 py-4">
                      <div className="flex items-center gap-2">
                        <ImageIcon className={cn("size-4", page.has_hero ? "text-green-500" : "text-brand-text-muted")} />
