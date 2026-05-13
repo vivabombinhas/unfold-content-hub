@@ -434,7 +434,7 @@ serve(async (req) => {
       })
     }
 
-    const html = '<!DOCTYPE html>\n' +
+    let html = '<!DOCTYPE html>\n' +
 '<html lang="pt-BR">\n' +
 '<head>\n' +
 '    <meta charset="UTF-8">\n' +
@@ -496,11 +496,51 @@ serve(async (req) => {
 '</body>\n' +
 '</html>';
 
+    // ===== GLOBAL COMPLIANCE GUARD =====
+    // Final pass: scan entire HTML (visible + JSON-LD) for forbidden terms.
+    // Replace any leftover with safe equivalents and emit alerts in headers + meta.
+    const REPLACEMENTS: Record<string, string> = {
+      'risco à vida': 'riscos clínicos controlados',
+      'risco a vida': 'riscos clínicos controlados',
+      'risco de morte': 'riscos clínicos controlados',
+      'perigo de vida': 'riscos clínicos controlados',
+      'nossa garantia': 'compromisso de excelência',
+      'garantia de resultado': 'expectativa de resultado',
+      'dermatologista': 'biomédica habilitada',
+      'cirurgião plástico': 'equipe técnica especializada',
+      'médico': 'profissional de saúde especializado',
+      'especialistas qualificados': 'profissionais de saúde especializados',
+    };
+    const violations: { term: string; count: number }[] = [];
+    for (const { pattern, label } of FORBIDDEN_PATTERNS) {
+      const matches = html.match(pattern);
+      if (matches && matches.length > 0) {
+        violations.push({ term: label, count: matches.length });
+        const replacement = REPLACEMENTS[label] || '[removido]';
+        html = html.replace(pattern, replacement);
+      }
+    }
+    const complianceStatus = violations.length === 0 ? 'clean' : 'sanitized';
+    const violationsJson = JSON.stringify(violations);
+    // Inject status meta + HTML comment so QA can read them deterministically
+    html = html.replace(
+      '<meta property="og:site_name" content="Estética Batel">',
+      '<meta property="og:site_name" content="Estética Batel">\n' +
+      '    <meta name="x-compliance-status" content="' + complianceStatus + '">\n' +
+      '    <meta name="x-compliance-violations" content=\'' + violationsJson.replace(/'/g, '&#39;') + '\'>'
+    );
+    html = html.replace(
+      '</body>',
+      '<!-- COMPLIANCE: status=' + complianceStatus + ' violations=' + violationsJson + ' -->\n</body>'
+    );
+
     return new Response(html, {
       status: 200,
       headers: {
         "Content-Type": "text/html; charset=UTF-8",
-        "X-SSR-Version": "1.3.1-FIXED",
+        "X-SSR-Version": "1.4.0-COMPLIANCE-GUARD",
+        "X-Compliance-Status": complianceStatus,
+        "X-Compliance-Violations": violationsJson,
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
         "Access-Control-Allow-Origin": "*",
         "X-Content-Type-Options": "nosniff"
