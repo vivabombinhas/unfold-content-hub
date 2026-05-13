@@ -63,10 +63,10 @@ serve(async (req) => {
     // 3. Metadata Setup
     const siteTitle = "Clínica de Estética Batel · Curitiba"
     const pageTitle = pageData.meta_title || pageData.title || "Tratamento"
-    const fullTitle = `${pageTitle} · ${siteTitle}`
+    const fullTitle = pageTitle + " · " + siteTitle
     const description = pageData.meta_description || "Protocolos exclusivos de estética avançada na Clínica Batel, Curitiba."
     const siteUrl = "https://esteticabatel.com.br"
-    const canonical = `${siteUrl}/${slug}/`
+    const canonical = siteUrl + "/" + slug + "/"
     const shouldNoIndex = page.status !== 'published'
     
     // Extract OG Image from Hero or metadata
@@ -83,45 +83,44 @@ serve(async (req) => {
 
       switch (type) {
         case 'hero':
-          articleHtml += `
-            <header id="hero" class="block-section hero-section">
-              <div class="container">
-                <span class="eyebrow">${data.eyebrow || 'Estética Batel'}</span>
-                <h1>${data.title || pageData.title}</h1>
-                <p class="lead">${data.paragraph || data.description || ''}</p>
-                ${data.image_url ? '<div class="hero-image"><img src="' + data.image_url + '" alt="' + (data.eyebrow || pageData.title) + '" loading="eager" fetchpriority="high"></div>' : ''}
-              </div>
-            </header>`
+          articleHtml += '<header id="hero" class="block-section hero-section">\n' +
+            '  <div class="container">\n' +
+            '    <span class="eyebrow">' + (data.eyebrow || 'Estética Batel') + '</span>\n' +
+            '    <h1>' + (data.title || pageData.title) + '</h1>\n' +
+            '    <p class="lead">' + (data.paragraph || data.description || '') + '</p>\n' +
+            '    ' + (data.image_url ? '<div class="hero-image"><img src="' + data.image_url + '" alt="' + (data.eyebrow || pageData.title) + '" loading="eager" fetchpriority="high"></div>' : '') + '\n' +
+            '  </div>\n' +
+            '</header>\n';
           break
 
         case 'manifesto_curto':
-          articleHtml += `
-            <section id="manifesto" class="block-section manifesto-section">
-              <div class="container">
-                <blockquote class="manifesto-quote">${data.text || ''}</blockquote>
-              </div>
-            </section>`
+          if (data.text) {
+            articleHtml += '<section id="manifesto" class="block-section manifesto-section">\n' +
+              '  <div class="container">\n' +
+              '    <blockquote class="manifesto-quote">' + data.text + '</blockquote>\n' +
+              '  </div>\n' +
+              '</section>\n';
+          }
           break
 
         case 'beneficios_grid':
-          const cards = Array.isArray(data.cards) ? data.cards : []
+          const cards = Array.isArray(data.cards) ? data.cards.filter((c: any) => c.title || c.text) : []
           if (cards.length > 0) {
-            articleHtml += `
-              <section id="beneficios" class="block-section beneficios-section">
-                <div class="container">
-                  <span class="eyebrow">${data.eyebrow || 'Diferenciais'}</span>
-                  <h2>${data.title || 'Por que escolher a Estética Batel'}</h2>
-                  <div class="grid">
-                    ${cards.map((card: any, idx: number) => `
-                      <div class="card">
-                        <span class="card-num">${(idx + 1).toString().padStart(2, '0')}</span>
-                        <h3>${card.title || ''}</h3>
-                        <p>${card.text || ''}</p>
-                      </div>
-                    `).join('')}
-                  </div>
-                </div>
-              </section>`
+            articleHtml += '<section id="beneficios" class="block-section beneficios-section">\n' +
+              '  <div class="container">\n' +
+              '    <span class="eyebrow">' + (data.eyebrow || 'Diferenciais') + '</span>\n' +
+              '    <h2>' + (data.title || 'Por que escolher a Estética Batel') + '</h2>\n' +
+              '    <div class="grid">\n' +
+              '      ' + cards.map((card: any, idx: number) => 
+                '<div class="card">\n' +
+                '  <span class="card-num">' + (idx + 1).toString().padStart(2, '0') + '</span>\n' +
+                '  <h3>' + (card.title || '') + '</h3>\n' +
+                '  <p>' + (card.text || '') + '</p>\n' +
+                '</div>\n'
+              ).join('') + '\n' +
+              '    </div>\n' +
+              '  </div>\n' +
+              '</section>\n';
           }
           break
 
@@ -133,90 +132,90 @@ serve(async (req) => {
            
            rawItems.forEach((item: any) => {
              if (!item.question || !item.answer) return
-             const normalizedQ = item.question.trim().toLowerCase().replace(/[?]/g, '').substring(0, 100)
-             const normalizedA = item.answer.trim().toLowerCase().substring(0, 100)
+             const q = item.question.trim()
+             const a = item.answer.trim()
+             const normalizedQ = q.toLowerCase().replace(/[?]/g, '').substring(0, 100)
+             const normalizedA = a.toLowerCase().substring(0, 100)
              
              if (!seenQuestions.has(normalizedQ) && !seenAnswers.has(normalizedA)) {
                seenQuestions.add(normalizedQ)
                seenAnswers.add(normalizedA)
-               uniqueItems.push(item)
+               
+               // Filter compliance
+               const sanitizedAnswer = a.replace(
+                 /(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 
+                 'profissionais de saúde especializados'
+               )
+               uniqueItems.push({ question: q, answer: sanitizedAnswer })
              }
            })
 
            if (uniqueItems.length > 0) {
-             articleHtml += `
-               <section id="faq" class="block-section faq-section">
-                 <div class="container">
-                   <h2>Perguntas Frequentes</h2>
-                   <div class="faq-list">
-                     ${uniqueItems.map((item: any) => {
-                       // Filter compliance: remove mention of dermatologist/plastic surgeon
-                       const sanitizedAnswer = item.answer.replace(
-                         /(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 
-                         'profissionais de saúde especializados'
-                       )
-                       faqItems.push({ question: item.question, answer: sanitizedAnswer })
-                       return `
-                         <details class="faq-item">
-                           <summary>${item.question}</summary>
-                           <div class="faq-content">${sanitizedAnswer}</div>
-                         </details>`
-                     }).join('')}
-                   </div>
-                 </div>
-               </section>`
+             articleHtml += '<section id="faq" class="block-section faq-section">\n' +
+               '  <div class="container">\n' +
+               '    <h2>Perguntas Frequentes</h2>\n' +
+               '    <div class="faq-list">\n' +
+               '      ' + uniqueItems.map((item: any) => {
+                 faqItems.push(item)
+                 return '<details class="faq-item">\n' +
+                   '  <summary>' + item.question + '</summary>\n' +
+                   '  <div class="faq-content">' + item.answer + '</div>\n' +
+                   '</details>\n'
+               }).join('') + '\n' +
+               '    </div>\n' +
+               '  </div>\n' +
+               '</section>\n';
            }
            break
          }
 
         case 'procedimento_detalhado':
         case 'procedimento_detalhado_v2':
-          if (data.description || (Array.isArray(data.paragraphs) && data.paragraphs.length > 0)) {
-            articleHtml += `
-              <section id="detalhes" class="block-section details-section">
-                <div class="container">
-                  <span class="eyebrow">${data.eyebrow || 'Protocolo'}</span>
-                  <h2>${data.title || 'O procedimento detalhado'}</h2>
-                  ${data.description ? '<p>' + data.description + '</p>' : ''}
-                  ${Array.isArray(data.paragraphs) ? data.paragraphs.map((p: string) => '<p>' + p + '</p>').join('') : ''}
-                </div>
-              </section>`
+          const paragraphs = Array.isArray(data.paragraphs) ? data.paragraphs.filter((p: string) => p && p.trim()) : []
+          if (data.description || paragraphs.length > 0) {
+            articleHtml += '<section id="detalhes" class="block-section details-section">\n' +
+              '  <div class="container">\n' +
+              '    <span class="eyebrow">' + (data.eyebrow || 'Protocolo') + '</span>\n' +
+              '    <h2>' + (data.title || 'O procedimento detalhado') + '</h2>\n' +
+              '    ' + (data.description ? '<p>' + data.description + '</p>' : '') + '\n' +
+              '    ' + paragraphs.map((p: string) => '<p>' + p + '</p>').join('') + '\n' +
+              '  </div>\n' +
+              '</section>\n';
           }
           break
 
         case 'equipe_rt': {
           const name = "Dra. Daniele Florêncio"
           const register = "Biomédica · CRBM 8242-PR"
-          articleHtml += `
-            <section id="rt" class="block-section rt-section">
-              <div class="container">
-                <span class="eyebrow">${data.eyebrow || 'Responsável Técnica'}</span>
-                <h2>${name}</h2>
-                <p class="register">${register}</p>
-                <div class="byline">
-                  <span>Publicado em: ${new Date().toLocaleDateString('pt-BR')}</span>
-                  <span> · Revisão Clínica: Dra. Daniele Florêncio</span>
-                </div>
-                <p>${data.description || 'Especialista em procedimentos de alta performance com mais de duas décadas de experiência.'}</p>
-                <div class="disclaimer-mini">
-                  <p>* Resultados podem variar de acordo com o organismo e avaliação clínica individual.</p>
-                </div>
-              </div>
-            </section>`
+          articleHtml += '<section id="rt" class="block-section rt-section">\n' +
+            '  <div class="container">\n' +
+            '    <span class="eyebrow">' + (data.eyebrow || 'Responsável Técnica') + '</span>\n' +
+            '    <h2>' + name + '</h2>\n' +
+            '    <p class="register">' + register + '</p>\n' +
+            '    <div class="byline">\n' +
+            '      <span>Publicado em: ' + new Date().toLocaleDateString('pt-BR') + '</span>\n' +
+            '      <span> · Revisão Clínica: ' + name + '</span>\n' +
+            '    </div>\n' +
+            '    <p>' + (data.description || 'Especialista em procedimentos de alta performance com mais de duas décadas de experiência.') + '</p>\n' +
+            '    <div class="disclaimer-mini">\n' +
+            '      <p>* Resultados podem variar de acordo com o organismo e avaliação clínica individual.</p>\n' +
+            '    </div>\n' +
+            '  </div>\n' +
+            '</section>\n';
           break
         }
 
         default:
           // Generic section for unhandled blocks with titles
-          if ((data.title || data.eyebrow) && (data.description || data.text || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0))) {
-            articleHtml += `
-              <section class="block-section generic-section">
-                <div class="container">
-                  ${data.eyebrow ? '<span class="eyebrow">' + data.eyebrow + '</span>' : ''}
-                  ${data.title ? '<h2>' + data.title + '</h2>' : ''}
-                  ${data.description || data.text ? '<p>' + (data.description || data.text) + '</p>' : ''}
-                </div>
-              </section>`
+          const hasContent = data.description || data.text || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0)
+          if ((data.title || data.eyebrow) && hasContent) {
+            articleHtml += '<section class="block-section generic-section">\n' +
+              '  <div class="container">\n' +
+              '    ' + (data.eyebrow ? '<span class="eyebrow">' + data.eyebrow + '</span>' : '') + '\n' +
+              '    ' + (data.title ? '<h2>' + data.title + '</h2>' : '') + '\n' +
+              '    ' + (data.description || data.text ? '<p>' + (data.description || data.text) + '</p>' : '') + '\n' +
+              '  </div>\n' +
+              '</section>\n';
           }
       }
     })
