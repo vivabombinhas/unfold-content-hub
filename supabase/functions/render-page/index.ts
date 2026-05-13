@@ -381,18 +381,19 @@ serve(async (req) => {
     const responseHeaders = new Headers()
     responseHeaders.set('Access-Control-Allow-Origin', '*')
     responseHeaders.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type')
+    const resHeaders = new Headers();
+    resHeaders.set('Access-Control-Allow-Origin', '*');
+    resHeaders.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+    resHeaders.set('Content-Type', 'text/html; charset=utf-8');
+    resHeaders.set('X-Content-Type-Options', 'nosniff');
+    resHeaders.set('X-SSR-Version', '1.1.4-LITERAL-OBJ-REMOVED');
+    resHeaders.set('X-SSR-Status', 'Compliance-Active');
+    resHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
     return new Response(html, {
       status: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        'Content-Type': 'text/html; charset=utf-8',
-        'X-Content-Type-Options': 'nosniff',
-        'X-SSR-Version': '1.1.3-LITERAL-HEADERS',
-        'X-SSR-Status': 'Compliance-Active',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      },
-    })
+      headers: resHeaders
+    });
   } catch (err) {
     console.error("Critical Render Error:", err)
     return new Response(JSON.stringify({ 
