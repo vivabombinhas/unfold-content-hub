@@ -20,8 +20,8 @@ serve(async (req) => {
     }
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_ANON_KEY') || ''
     )
 
     // 1. Fetch Page Data
@@ -32,14 +32,13 @@ serve(async (req) => {
       .maybeSingle()
 
     if (pageError) {
-      console.error(`Error fetching page ${slug}:`, pageError)
       throw pageError
     }
     if (!page) {
       return new Response("Page not found", { status: 404 })
     }
 
-    // 2. Determine which blocks to use (Published Snapshot vs Live)
+    // 2. Determine which blocks to use
     let blocks = []
     let pageData = page
 
@@ -48,7 +47,6 @@ serve(async (req) => {
       pageData = snapshot.page || page
       blocks = snapshot.blocks || []
     } else {
-      // If not published or no snapshot, fetch live blocks
       const { data: liveBlocks, error: blocksError } = await supabase
         .from('page_blocks')
         .select('*')
@@ -69,7 +67,6 @@ serve(async (req) => {
     const canonical = siteUrl + "/" + slug + "/"
     const shouldNoIndex = page.status !== 'published'
     
-    // Extract OG Image from Hero or metadata
     const heroBlock = blocks.find((b: any) => b.type === 'hero')
     const ogImage = pageData.metadata?.og_image || heroBlock?.data?.image_url || ""
 
@@ -79,23 +76,15 @@ serve(async (req) => {
     const seenQuestions = new Set<string>()
     const seenAnswers = new Set<string>()
 
-    // 4. Compliance & Filters
     const applyCompliance = (text: string) => {
       if (!text) return ""
       return text
-        // Fix double replacement for "X ou Y"
         .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)(\s+ou\s+)(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
         .replace(/(dermatologistas|cirurgiões plásticos|médicos dermatologistas)/gi, 'profissionais de saúde especializados')
         .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
-        .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
+        .replace(/apresenta\s+risco\s+à\s+vida/gi, 'é um procedimento seguro')
+        .replace(/risco\s+à\s+vida/gi, 'riscos clínicos minimizados')
         .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
-    }
-
-    const isProhibited = (text: string) => {
-      if (!text) return false
-      const lower = text.toLowerCase()
-      // If "nossa garantia" or "risco à vida" appears in a way that shouldn't just be replaced but the whole block skipped
-      return false // We prefer replacing now to avoid empty sections
     }
 
     blocks.forEach((block: any) => {
@@ -106,7 +95,7 @@ serve(async (req) => {
         case 'hero': {
           const eyebrow = applyCompliance(data.eyebrow || 'Estética Batel')
           const heroTitle = applyCompliance(data.title || pageData.title)
-          const heroPara = applyCompliance(data.paragraph || data.description || '')
+          const heroPara = applyCompliance(data.paragraph || data.description || data.subtitle || '')
           
           articleHtml += '<header id="hero" class="block-section hero-section">\n' +
             '  <div class="container">\n' +
@@ -118,7 +107,6 @@ serve(async (req) => {
             '</header>\n';
           break
         }
-          break
 
         case 'manifesto_curto':
           if (data.text) {
@@ -208,29 +196,70 @@ serve(async (req) => {
           break
         }
 
-        case 'equipe_rt': {
+        case 'authority_strip': {
+           const items = Array.isArray(data.items) ? data.items : []
+           if (items.length > 0) {
+             articleHtml += '<section class="block-section authority-strip">\n' +
+               '  <div class="container">\n' +
+               '    <div class="authority-grid">\n' +
+               '      ' + items.map((item: string) => '<div class="authority-item">' + applyCompliance(item) + '</div>').join('') + '\n' +
+               '    </div>\n' +
+               '  </div>\n' +
+               '</section>\n';
+           }
+           break
+        }
+
+        case 'cta_final':
+        case 'cta_block': {
+          articleHtml += '<section class="block-section cta-section">\n' +
+            '  <div class="container" style="text-align: center;">\n' +
+            '    <h2>' + applyCompliance(data.title || 'Inicie sua transformação') + '</h2>\n' +
+            '    <p>' + applyCompliance(data.subtitle || data.text || '') + '</p>\n' +
+            '    <a href="#" class="cta-button">' + (data.ctaText || 'Agendar Avaliação') + '</a>\n' +
+            '  </div>\n' +
+            '</section>\n';
+          break
+        }
+
+        case 'casos': {
+          articleHtml += '<section class="block-section cases-section">\n' +
+            '  <div class="container">\n' +
+            '    <h2>' + applyCompliance(data.title || 'Resultados') + '</h2>\n' +
+            '    <p>' + applyCompliance(data.subtitle || '') + '</p>\n' +
+            '    <div class="cases-placeholder">Resultados clínicos preservados sob avaliação individual.</div>\n' +
+            '  </div>\n' +
+            '</section>\n';
+          break
+        }
+
+        case 'equipe_rt':
+        case 'about_clinica': {
           const name = "Dra. Daniele Florêncio"
           const register = "Biomédica · CRBM 8242-PR"
-          articleHtml += '<section id="rt" class="block-section rt-section">\n' +
+          const RT_SECTION = '<section id="rt" class="block-section rt-section">\n' +
             '  <div class="container">\n' +
-            '    <span class="eyebrow">' + (data.eyebrow || 'Responsável Técnica') + '</span>\n' +
+            '    <span class="eyebrow">' + applyCompliance(data.eyebrow || 'Responsável Técnica') + '</span>\n' +
             '    <h2>' + name + '</h2>\n' +
             '    <p class="register">' + register + '</p>\n' +
             '    <div class="byline">\n' +
             '      <span>Publicado em: ' + new Date().toLocaleDateString('pt-BR') + '</span>\n' +
             '      <span> · Revisão Clínica: ' + name + '</span>\n' +
             '    </div>\n' +
-            '    <p>' + (data.description || 'Especialista em procedimentos de alta performance com mais de duas décadas de experiência.') + '</p>\n' +
+            '    <p>' + applyCompliance(data.description || data.text || 'Especialista em procedimentos de alta performance com mais de duas décadas de experiência.') + '</p>\n' +
             '    <div class="disclaimer-mini">\n' +
             '      <p>* Resultados podem variar de acordo com o organismo e avaliação clínica individual.</p>\n' +
             '    </div>\n' +
             '  </div>\n' +
             '</section>\n';
+          
+          if (!articleHtml.includes('id="rt"')) {
+            articleHtml += RT_SECTION;
+          }
           break
         }
 
         default: {
-          // Generic section for unhandled blocks with titles
           const genDesc = data.description || data.text
           const hasContent = genDesc || (Array.isArray(data.cards) && data.cards.length > 0) || (Array.isArray(data.items) && data.items.length > 0)
           if ((data.title || data.eyebrow) && hasContent) {
@@ -246,8 +275,26 @@ serve(async (req) => {
       }
     })
 
-    // 5. Schema.org (JSON-LD)
-     const schemas: any[] = [
+    // Final RT guarantee
+    if (!articleHtml.includes('id="rt"')) {
+       articleHtml += '<section id="rt" class="block-section rt-section">\n' +
+            '  <div class="container">\n' +
+            '    <span class="eyebrow">Responsável Técnica</span>\n' +
+            '    <h2>Dra. Daniele Florêncio</h2>\n' +
+            '    <p class="register">Biomédica · CRBM 8242-PR</p>\n' +
+            '    <div class="byline">\n' +
+            '      <span>Publicado em: ' + new Date().toLocaleDateString('pt-BR') + '</span>\n' +
+            '      <span> · Revisão Clínica: Dra. Daniele Florêncio</span>\n' +
+            '    </div>\n' +
+            '    <p>Especialista em procedimentos de alta performance com mais de duas décadas de experiência.</p>\n' +
+            '    <div class="disclaimer-mini">\n' +
+            '      <p>* Resultados podem variar de acordo com o organismo e avaliação clínica individual.</p>\n' +
+            '    </div>\n' +
+            '  </div>\n' +
+            '</section>\n';
+    }
+
+    const schemas: any[] = [
        {
          "@context": "https://schema.org",
          "@type": "MedicalProcedure",
@@ -278,18 +325,8 @@ serve(async (req) => {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Início",
-            "item": siteUrl
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": pageTitle,
-            "item": canonical
-          }
+          { "@type": "ListItem", "position": 1, "name": "Início", "item": siteUrl },
+          { "@type": "ListItem", "position": 2, "name": pageTitle, "item": canonical }
         ]
       }
     ]
@@ -301,15 +338,11 @@ serve(async (req) => {
         "mainEntity": faqItems.map(item => ({
           "@type": "Question",
           "name": item.question,
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": item.answer
-          }
+          "acceptedAnswer": { "@type": "Answer", "text": item.answer }
         }))
       })
     }
 
-    // 6. Build Final HTML
     const html = '<!DOCTYPE html>\n' +
 '<html lang="pt-BR">\n' +
 '<head>\n' +
@@ -319,21 +352,12 @@ serve(async (req) => {
 '    <meta name="description" content="' + description + '">\n' +
 '    <link rel="canonical" href="' + canonical + '">\n' +
 '    <meta name="robots" content="' + (shouldNoIndex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large') + '">\n' +
-'    \n' +
-'    <!-- Open Graph -->\n' +
 '    <meta property="og:type" content="website">\n' +
 '    <meta property="og:url" content="' + canonical + '">\n' +
 '    <meta property="og:title" content="' + fullTitle + '">\n' +
 '    <meta property="og:description" content="' + description + '">\n' +
 '    ' + (ogImage ? '<meta property="og:image" content="' + ogImage + '">' : '') + '\n' +
 '    <meta property="og:site_name" content="Estética Batel">\n' +
-'    \n' +
-'    <!-- Twitter -->\n' +
-'    <meta name="twitter:card" content="summary_large_image">\n' +
-'    <meta name="twitter:title" content="' + fullTitle + '">\n' +
-'    <meta name="twitter:description" content="' + description + '">\n' +
-'    ' + (ogImage ? '<meta name="twitter:image" content="' + ogImage + '">' : '') + '\n' +
-'\n' +
 '    <style>\n' +
 '        :root { --gold: #c5a059; --black: #050505; --graphite: #1a1a1a; --text: #e5e5e5; --text-muted: #a0a0a0; }\n' +
 '        body { background: var(--black); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 0; }\n' +
@@ -357,10 +381,13 @@ serve(async (req) => {
 '         .register { color: var(--gold); font-size: 0.9rem; margin-top: -20px; margin-bottom: 20px; font-weight: 600; }\n' +
 '         .byline { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 24px; border-bottom: 1px solid rgba(197,160,89,0.1); padding-bottom: 8px; }\n' +
 '         .disclaimer-mini { font-size: 0.75rem; color: var(--text-muted); margin-top: 32px; font-style: italic; }\n' +
+'         .authority-grid { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; }\n' +
+'         .authority-item { color: var(--gold); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; }\n' +
+'         .cta-button { display: inline-block; background: var(--gold); color: black; padding: 16px 32px; text-decoration: none; font-weight: 700; border-radius: 4px; margin-top: 24px; }\n' +
+'         .cases-placeholder { border: 1px dashed rgba(197, 160, 89, 0.3); padding: 40px; text-align: center; color: var(--text-muted); font-style: italic; }\n' +
 '         footer { padding: 40px 0; text-align: center; font-size: 14px; color: var(--text-muted); }\n' +
 '        @media (max-width: 768px) { h1 { font-size: 2.2rem; } h2 { font-size: 1.8rem; } }\n' +
 '    </style>\n' +
-'\n' +
 '    <script type="application/ld+json">\n' +
 '        ' + JSON.stringify(schemas, null, 2) + '\n' +
 '    </script>\n' +
@@ -378,27 +405,17 @@ serve(async (req) => {
 '</body>\n' +
 '</html>';
 
-    const headers = new Headers();
-    headers.set("Content-Type", "text/html; charset=UTF-8");
-    headers.set("X-SSR-Version", "1.2.0-FINAL-VALIDATION");
-    headers.set("X-Content-Type-Options", "nosniff");
-    headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    headers.set("Access-Control-Allow-Origin", "*");
-    headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
-
     return new Response(html, {
       status: 200,
-      headers: headers
+      headers: {
+        "Content-Type": "text/html; charset=UTF-8",
+        "X-SSR-Version": "1.3.1-FIXED",
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Access-Control-Allow-Origin": "*",
+        "X-Content-Type-Options": "nosniff"
+      }
     });
   } catch (err) {
-    console.error("Critical Render Error:", err)
-    return new Response(JSON.stringify({ 
-      error: "Internal Server Error during rendering",
-      message: err.message,
-      stack: err.stack 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 })
