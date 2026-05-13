@@ -208,7 +208,6 @@ serve(async (req) => {
         case 'faq': {
           const rawItems = Array.isArray(data.items) ? data.items : [];
           const currentBlockItems: any[] = [];
-          const seenIntentsInBlock = new Set<string>();
 
           rawItems.forEach((item: any) => {
             if (!item.question || !item.answer) return;
@@ -217,12 +216,12 @@ serve(async (req) => {
             // 1. Prohibited check
             if (isForbiddenFaq(item.question, item.answer)) return;
 
-            const q = applyCompliance(item.question.trim());
+            const q = applyCompliance(stripFaqNumbering(item.question.trim()));
             const a = applyCompliance(item.answer.trim());
             
             // 2. Strong Semantic Deduplication
             const intent = getFaqIntent(q);
-            if (intent && seenIntentsInBlock.has(intent)) return;
+            if (intent && seenFaqIntents.has(intent)) return;
 
             const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 80);
             const normalizedA = a.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 80);
@@ -230,7 +229,7 @@ serve(async (req) => {
             if (!seenQuestions.has(normalizedQ) && !seenAnswers.has(normalizedA)) {
               seenQuestions.add(normalizedQ);
               seenAnswers.add(normalizedA);
-              if (intent) seenIntentsInBlock.add(intent);
+              if (intent) seenFaqIntents.add(intent);
 
               currentBlockItems.push({ question: q, answer: a });
               faqItems.push({ question: q, answer: a });
