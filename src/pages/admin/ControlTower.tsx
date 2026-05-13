@@ -141,7 +141,7 @@
          const metadata = page.metadata || {};
          
          // Check for EEAT elements in blocks or metadata
-         const hasByline = pageBlocks.some(b => b.type === 'hero' || b.type === 'footer'); // simplified
+          const hasByline = pageBlocks.some(b => b.type === 'hero' || b.type === 'equipe_rt'); // simplified
          if (hasByline || metadata.area_anatomica) compliance += 25;
          
          const hasDisclaimer = pageBlocks.some(b => JSON.stringify(b.data).toLowerCase().includes('disclaimer') || JSON.stringify(b.data).toLowerCase().includes('garantia'));
