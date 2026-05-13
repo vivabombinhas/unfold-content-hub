@@ -85,7 +85,12 @@ serve(async (req) => {
         .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
         .replace(/apresenta\s+risco\s+à\s+vida/gi, 'é um procedimento seguro')
         .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
+        .replace(/risco\s+a\s+vida/gi, 'riscos clínicos controlados')
+        .replace(/risco\s+de\s+morte/gi, 'riscos clínicos controlados')
+        .replace(/perigo\s+de\s+vida/gi, 'riscos clínicos controlados')
         .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
+        .replace(/garantimos\s+resultados?/gi, 'buscamos os melhores resultados')
+        .replace(/resultados?\s+garantidos?/gi, 'resultados consistentes')
         .replace(/médicos?\s+especialistas/gi, 'profissionais especialistas')
         .replace(/corpo\s+médico/gi, 'equipe técnica')
         .replace(/especialistas\s+qualificados/gi, 'profissionais de saúde especializados')
@@ -99,6 +104,23 @@ serve(async (req) => {
 
       return sanitized;
     };
+
+    // FORBIDDEN TERMS — global enforcement across HTML + JSON-LD
+    const FORBIDDEN_PATTERNS: { pattern: RegExp; label: string }[] = [
+      { pattern: /risco\s+[àa]\s+vida/gi, label: 'risco à vida' },
+      { pattern: /risco\s+de\s+morte/gi, label: 'risco de morte' },
+      { pattern: /perigo\s+de\s+vida/gi, label: 'perigo de vida' },
+      { pattern: /nossa\s+garantia/gi, label: 'nossa garantia' },
+      { pattern: /garanti(?:mos|a|do|dos|da|das)\s+resultados?/gi, label: 'garantia de resultado' },
+      { pattern: /\bdermatologistas?\b/gi, label: 'dermatologista' },
+      { pattern: /cirurgi[ãa]o\s+pl[áa]stico/gi, label: 'cirurgião plástico' },
+      { pattern: /\bm[ée]dic[oa]s?\b/gi, label: 'médico' },
+      { pattern: /especialistas\s+qualificados/gi, label: 'especialistas qualificados' },
+    ];
+
+    // Strip leading "1. ", "2.", "(3)" filler numbering from AI-generated FAQs
+    const stripFaqNumbering = (s: string): string =>
+      s.replace(/^\s*\(?\d{1,2}[\.\)\-:]\s*/, '').trim();
 
     const faqCategories = [
       { id: 'pain', keywords: ['dor', 'doi', 'doloroso', 'anestesia', 'desconforto', 'sensibilidade'] },
