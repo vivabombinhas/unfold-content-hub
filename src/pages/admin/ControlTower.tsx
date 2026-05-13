@@ -242,9 +242,8 @@
        </DialogContent>
      </Dialog>
    );
- }
- import { useAuth } from "@/hooks/use-auth";
- import {
+   }
+ 
  interface PageAlert {
     type: 'error' | 'warning' | 'info';
     message: string;
