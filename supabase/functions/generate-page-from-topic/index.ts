@@ -632,46 +632,45 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       }
     }
 
-    // Fase C: bloco procedimento_detalhado SEMPRE vem preenchido.
-    // Prioridade 1: seção forte da página antiga (ativo por padrão).
-    // Prioridade 2: seções com qualquer conteúdo (ativo).
-    // Fallback: parágrafos derivados do manifesto + método (criado disabled,
-    // mas com conteúdo editável — admin ativa quando quiser).
-    const detailedSection = (oldPageContent?.sections || []).find((sec) => {
-      const t = (sec.type_suggestion || "").toLowerCase();
-      return ["procedimento_detalhado", "beneficios", "metodo", "preparo", "pos_procedimento"].includes(t)
-        && typeof sec.body === "string"
-        && sec.body.trim().length > 80;
-    }) || (oldPageContent?.sections || []).find((sec) =>
-      typeof sec?.body === "string" && sec.body.trim().length > 120
-    );
+    // Fase C: Mapeamento Inteligente de Seções Reais (Preservação)
+    // Tentamos encontrar seções específicas para cada bloco
+    const getSection = (types: string[], minLength = 80) => 
+      (oldPageContent?.sections || []).find(sec => 
+        types.includes((sec.type_suggestion || "").toLowerCase()) && 
+        typeof sec.body === "string" && sec.body.trim().length > minLength
+      );
+
+    const realDetalhado = getSection(["procedimento_detalhado", "metodo", "preparo", "pos_procedimento"], 100);
+    const realBeneficios = getSection(["beneficios", "diferenciais"], 80);
+    const realManifesto = getSection(["manifesto", "quem_somos", "intro"], 150);
 
     let procedimentoDetalhadoData = generated.blocks.procedimento_detalhado;
-    let procedimentoDetalhadoEnabled = true; // Agora habilitado por padrão pois a IA gera conteúdo de qualidade
-
-    // Se houver conteúdo real da página antiga, ele ainda tem prioridade total
-    if (detailedSection) {
+    if (realDetalhado) {
       procedimentoDetalhadoData = {
         eyebrow: "Como é o procedimento",
-        title_html: detailedSection.title || "Como é o procedimento",
-        paragraphs: (detailedSection.body || "")
-          .split(/\n\s*\n/)
-          .map((p: string) => p.trim())
-          .filter((p: string) => p.length > 0)
-          .slice(0, 6),
-        bullets: Array.isArray((detailedSection as any).bullets)
-          ? (detailedSection as any).bullets.map((b: any) => {
-              if (typeof b === 'object' && b !== null && b.title && b.text) {
-                return { title: b.title, text: b.text };
-              }
-              const str = String(b);
-              const hasColon = str.includes(":");
-              return {
-                title: hasColon ? str.split(":")[0].trim() : "Destaque",
-                text: hasColon ? str.split(":").slice(1).join(":").trim() : str.trim()
-              };
-            }).slice(0, 8)
-          : [],
+        title_html: realDetalhado.title || "Como é o procedimento",
+        paragraphs: (realDetalhado.body || "").split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 20).slice(0, 6),
+        bullets: Array.isArray((realDetalhado as any).bullets) ? (realDetalhado as any).bullets.slice(0, 8) : []
+      };
+    }
+
+    let beneficiosGridData = generated.blocks.beneficios_grid;
+    if (realBeneficios) {
+      beneficiosGridData = {
+        eyebrow: "Diferenciais",
+        title_html: realBeneficios.title || "Benefícios",
+        cards: Array.isArray((realBeneficios as any).bullets) 
+          ? (realBeneficios as any).bullets.map((b: any) => ({ title: b.title, text: b.text })).slice(0, 4)
+          : (realBeneficios.body || "").split(/\n/).map(l => l.trim()).filter(l => l.length > 20).slice(0, 4).map(l => ({ title: "Benefício", text: l }))
+      };
+    }
+
+    let manifestoData = generated.blocks.manifesto_curto;
+    if (realManifesto) {
+      manifestoData = {
+        eyebrow: "Nossa Filosofia",
+        title: realManifesto.title || "Manifesto de Excelência",
+        body: realManifesto.body
       };
     }
 
