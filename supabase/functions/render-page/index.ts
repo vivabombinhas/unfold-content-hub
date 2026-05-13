@@ -75,6 +75,7 @@ serve(async (req) => {
     const faqItems: any[] = []
     const seenQuestions = new Set<string>()
     const seenAnswers = new Set<string>()
+    const seenFaqIntents = new Set<string>()
 
     const applyCompliance = (text: string): string => {
       if (!text) return "";
@@ -85,7 +86,12 @@ serve(async (req) => {
         .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
         .replace(/apresenta\s+risco\s+à\s+vida/gi, 'é um procedimento seguro')
         .replace(/risco\s+à\s+vida/gi, 'riscos clínicos controlados')
+        .replace(/risco\s+a\s+vida/gi, 'riscos clínicos controlados')
+        .replace(/risco\s+de\s+morte/gi, 'riscos clínicos controlados')
+        .replace(/perigo\s+de\s+vida/gi, 'riscos clínicos controlados')
         .replace(/Nossa\s+Garantia/gi, 'Compromisso de Excelência')
+        .replace(/garantimos\s+resultados?/gi, 'buscamos os melhores resultados')
+        .replace(/resultados?\s+garantidos?/gi, 'resultados consistentes')
         .replace(/médicos?\s+especialistas/gi, 'profissionais especialistas')
         .replace(/corpo\s+médico/gi, 'equipe técnica')
         .replace(/especialistas\s+qualificados/gi, 'profissionais de saúde especializados')
@@ -99,6 +105,23 @@ serve(async (req) => {
 
       return sanitized;
     };
+
+    // FORBIDDEN TERMS — global enforcement across HTML + JSON-LD
+    const FORBIDDEN_PATTERNS: { pattern: RegExp; label: string }[] = [
+      { pattern: /risco\s+[àa]\s+vida/gi, label: 'risco à vida' },
+      { pattern: /risco\s+de\s+morte/gi, label: 'risco de morte' },
+      { pattern: /perigo\s+de\s+vida/gi, label: 'perigo de vida' },
+      { pattern: /nossa\s+garantia/gi, label: 'nossa garantia' },
+      { pattern: /garanti(?:mos|a|do|dos|da|das)\s+resultados?/gi, label: 'garantia de resultado' },
+      { pattern: /\bdermatologistas?\b/gi, label: 'dermatologista' },
+      { pattern: /cirurgi[ãa]o\s+pl[áa]stico/gi, label: 'cirurgião plástico' },
+      { pattern: /\bm[ée]dic[oa]s?\b/gi, label: 'médico' },
+      { pattern: /especialistas\s+qualificados/gi, label: 'especialistas qualificados' },
+    ];
+
+    // Strip leading "1. ", "2.", "(3)" filler numbering from AI-generated FAQs
+    const stripFaqNumbering = (s: string): string =>
+      s.replace(/^\s*\(?\d{1,2}[\.\)\-:]\s*/, '').trim();
 
     const faqCategories = [
       { id: 'pain', keywords: ['dor', 'doi', 'doloroso', 'anestesia', 'desconforto', 'sensibilidade'] },
@@ -186,7 +209,6 @@ serve(async (req) => {
         case 'faq': {
           const rawItems = Array.isArray(data.items) ? data.items : [];
           const currentBlockItems: any[] = [];
-          const seenIntentsInBlock = new Set<string>();
 
           rawItems.forEach((item: any) => {
             if (!item.question || !item.answer) return;
@@ -195,12 +217,12 @@ serve(async (req) => {
             // 1. Prohibited check
             if (isForbiddenFaq(item.question, item.answer)) return;
 
-            const q = applyCompliance(item.question.trim());
+            const q = applyCompliance(stripFaqNumbering(item.question.trim()));
             const a = applyCompliance(item.answer.trim());
             
             // 2. Strong Semantic Deduplication
             const intent = getFaqIntent(q);
-            if (intent && seenIntentsInBlock.has(intent)) return;
+            if (intent && seenFaqIntents.has(intent)) return;
 
             const normalizedQ = q.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 80);
             const normalizedA = a.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 80);
@@ -208,7 +230,7 @@ serve(async (req) => {
             if (!seenQuestions.has(normalizedQ) && !seenAnswers.has(normalizedA)) {
               seenQuestions.add(normalizedQ);
               seenAnswers.add(normalizedA);
-              if (intent) seenIntentsInBlock.add(intent);
+              if (intent) seenFaqIntents.add(intent);
 
               currentBlockItems.push({ question: q, answer: a });
               faqItems.push({ question: q, answer: a });
@@ -412,7 +434,7 @@ serve(async (req) => {
       })
     }
 
-    const html = '<!DOCTYPE html>\n' +
+    let html = '<!DOCTYPE html>\n' +
 '<html lang="pt-BR">\n' +
 '<head>\n' +
 '    <meta charset="UTF-8">\n' +
@@ -474,11 +496,51 @@ serve(async (req) => {
 '</body>\n' +
 '</html>';
 
+    // ===== GLOBAL COMPLIANCE GUARD =====
+    // Final pass: scan entire HTML (visible + JSON-LD) for forbidden terms.
+    // Replace any leftover with safe equivalents and emit alerts in headers + meta.
+    const REPLACEMENTS: Record<string, string> = {
+      'risco à vida': 'riscos clínicos controlados',
+      'risco a vida': 'riscos clínicos controlados',
+      'risco de morte': 'riscos clínicos controlados',
+      'perigo de vida': 'riscos clínicos controlados',
+      'nossa garantia': 'compromisso de excelência',
+      'garantia de resultado': 'expectativa de resultado',
+      'dermatologista': 'biomédica habilitada',
+      'cirurgião plástico': 'equipe técnica especializada',
+      'médico': 'profissional de saúde especializado',
+      'especialistas qualificados': 'profissionais de saúde especializados',
+    };
+    const violations: { term: string; count: number }[] = [];
+    for (const { pattern, label } of FORBIDDEN_PATTERNS) {
+      const matches = html.match(pattern);
+      if (matches && matches.length > 0) {
+        violations.push({ term: label, count: matches.length });
+        const replacement = REPLACEMENTS[label] || '[removido]';
+        html = html.replace(pattern, replacement);
+      }
+    }
+    const complianceStatus = violations.length === 0 ? 'clean' : 'sanitized';
+    const violationsJson = JSON.stringify(violations);
+    // Inject status meta + HTML comment so QA can read them deterministically
+    html = html.replace(
+      '<meta property="og:site_name" content="Estética Batel">',
+      '<meta property="og:site_name" content="Estética Batel">\n' +
+      '    <meta name="x-compliance-status" content="' + complianceStatus + '">\n' +
+      '    <meta name="x-compliance-violations" content=\'' + violationsJson.replace(/'/g, '&#39;') + '\'>'
+    );
+    html = html.replace(
+      '</body>',
+      '<!-- COMPLIANCE: status=' + complianceStatus + ' violations=' + violationsJson + ' -->\n</body>'
+    );
+
     return new Response(html, {
       status: 200,
       headers: {
         "Content-Type": "text/html; charset=UTF-8",
-        "X-SSR-Version": "1.3.1-FIXED",
+        "X-SSR-Version": "1.4.0-COMPLIANCE-GUARD",
+        "X-Compliance-Status": complianceStatus,
+        "X-Compliance-Violations": violationsJson,
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
         "Access-Control-Allow-Origin": "*",
         "X-Content-Type-Options": "nosniff"

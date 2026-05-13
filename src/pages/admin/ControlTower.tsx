@@ -345,8 +345,26 @@
       try {
         for (const page of filteredPages) {
           const pageBlocks = (allBlocks || []).filter(b => b.page_id === page.id && b.enabled);
-          const pageContentStr = JSON.stringify(pageBlocks).toLowerCase();
           const alerts: PageAlert[] = [];
+
+          // ===== SSR-FIRST AUDIT =====
+          // The SSR is the single source of truth. We audit what Google + users actually see.
+          let ssrHtml = '';
+          let ssrComplianceStatus = 'unknown';
+          let ssrViolations: { term: string; count: number }[] = [];
+          try {
+            const ssrResp = await fetch(
+              `https://ldsixdxmdzngagbminwh.supabase.co/functions/v1/render-page?slug=${page.slug}`
+            );
+            ssrHtml = await ssrResp.text();
+            ssrComplianceStatus = ssrResp.headers.get('x-compliance-status') || 'unknown';
+            try {
+              ssrViolations = JSON.parse(ssrResp.headers.get('x-compliance-violations') || '[]');
+            } catch { ssrViolations = []; }
+          } catch {
+            alerts.push({ type: 'error', message: 'SSR indisponível para auditoria' });
+          }
+          const pageContentStr = (ssrHtml || JSON.stringify(pageBlocks)).toLowerCase();
           
           // 1. SEO Score (0-100)
           let seo = 0;
@@ -409,22 +427,31 @@
           let compliance = 0;
           const metadata = page.metadata || {};
           
-          // Sensitive terms check
-          const forbiddenTerms = [
-            { term: 'dermatologista', message: 'Termo sensível (Profissão não presente na clínica): dermatologista' },
-            { term: 'cirurgião plástico', message: 'Termo sensível (Profissão não presente na clínica): cirurgião plástico' },
-            { term: 'médico', message: 'Equipe é exclusivamente Biomédica/Esteticista. Evitar termo: médico' },
-            { term: 'risco à vida', message: 'Termo proibido (Compliance): risco à vida' },
-            { term: 'nossa garantia', message: 'Termo proibido (Compliance): nossa garantia' },
-            { term: 'especialistas qualificados', message: 'Termo genérico perigoso: use "biomédicas habilitadas"' },
-            { term: 'surgicalprocedure', message: 'Schema proibido: SurgicalProcedure detectado' }
-          ];
-          
-          forbiddenTerms.forEach(({ term, message }) => {
-            if (pageContentStr.includes(term)) {
-              alerts.push({ type: 'error', message });
+          // Sensitive terms check — based on what the SSR ACTUALLY ships
+          if (ssrViolations.length > 0) {
+            ssrViolations.forEach(v => {
+              alerts.push({
+                type: 'error',
+                message: `VAZAMENTO no SSR: "${v.term}" (${v.count}x) — guard sanitizou, mas curadoria do banco precisa de revisão`,
+              });
+            });
+          } else if (ssrComplianceStatus === 'clean') {
+            alerts.push({ type: 'info', message: 'SSR limpo: zero termos proibidos no HTML/JSON-LD' });
+          }
+          // Auxiliar: detectar conteúdo sujo no banco (mesmo que SSR limpe)
+          const dbContentStr = JSON.stringify(pageBlocks).toLowerCase();
+          const dbOnlyTerms = ['risco à vida', 'risco a vida', 'nossa garantia', 'dermatologista', 'cirurgião plástico'];
+          dbOnlyTerms.forEach(term => {
+            if (dbContentStr.includes(term) && !pageContentStr.includes(term)) {
+              alerts.push({
+                type: 'warning',
+                message: `Banco contém "${term}" — SSR sanitizou, mas recomenda-se reescrever o bloco original`,
+              });
             }
           });
+          if (dbContentStr.includes('surgicalprocedure')) {
+            alerts.push({ type: 'error', message: 'Schema proibido no banco: SurgicalProcedure detectado' });
+          }
           
           // Required EEAT elements
           const hasByline = pageContentStr.includes('daniele florêncio');
