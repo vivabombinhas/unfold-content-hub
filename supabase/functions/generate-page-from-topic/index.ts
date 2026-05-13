@@ -598,6 +598,30 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     }
     generated.blocks = sanitize(generated.blocks, "blocks") as typeof generated.blocks;
 
+    // Fase de Limpeza Global de Compliance (Garantir que o Banco já nasça limpo)
+    const FORBIDDEN_TERMS = [
+      { pattern: /\b(m[eé]dico|doutor|cirurgi[aã]o|dermatologista)\b/gi, replacement: "profissional de saúde especializado" },
+      { pattern: /\b(risco [àa] vida|risco de morte|perigo de vida)\b/gi, replacement: "cuidados clínicos rigorosos" },
+      { pattern: /\b(garantia de resultado|resultado garantido|satisfação garantida)\b/gi, replacement: "compromisso com a excelência" },
+      { pattern: /\b(nossa garantia)\b/gi, replacement: "nosso compromisso" }
+    ];
+
+    function deepClean(obj: any): any {
+      if (typeof obj === "string") {
+        let clean = obj;
+        FORBIDDEN_TERMS.forEach(f => { clean = clean.replace(f.pattern, f.replacement); });
+        return clean;
+      }
+      if (Array.isArray(obj)) return obj.map(deepClean);
+      if (obj !== null && typeof obj === "object") {
+        const newObj: any = {};
+        for (const key in obj) newObj[key] = deepClean(obj[key]);
+        return newObj;
+      }
+      return obj;
+    }
+    generated.blocks = deepClean(generated.blocks);
+
     // ---- Fase 1.2: conteúdo real da página antiga própria tem prioridade ----
     const ownTestimonials = (oldPageContent?.testimonials || [])
       .filter((t) => t && typeof t.text === "string" && t.text.trim().length > 0)
@@ -613,51 +637,64 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       .filter((f) => f && typeof f.question === "string" && typeof f.answer === "string" && f.question.trim() && f.answer.trim())
       .map((f) => ({ question: f.question!.trim(), answer: f.answer!.trim(), source: "old_page" }));
 
-    // Fase B: se a página antiga trouxe FAQs reais, USA APENAS elas. Sem mistura.
+    // Fase B: se a página antiga trouxe FAQs reais, USA elas e COMPLEMENTA com IA apenas se necessário.
     const aiFaqs = (Array.isArray(generated.blocks?.faq_items) ? generated.blocks.faq_items : [])
       .map((f: { question: string; answer: string }) => ({ ...f, source: "ai" }));
-    const mergedFaqs = ownFaqs.length > 0 ? ownFaqs : aiFaqs;
 
-    // Fase C: bloco procedimento_detalhado SEMPRE vem preenchido.
-    // Prioridade 1: seção forte da página antiga (ativo por padrão).
-    // Prioridade 2: seções com qualquer conteúdo (ativo).
-    // Fallback: parágrafos derivados do manifesto + método (criado disabled,
-    // mas com conteúdo editável — admin ativa quando quiser).
-    const detailedSection = (oldPageContent?.sections || []).find((sec) => {
-      const t = (sec.type_suggestion || "").toLowerCase();
-      return ["procedimento_detalhado", "beneficios", "metodo", "preparo", "pos_procedimento"].includes(t)
-        && typeof sec.body === "string"
-        && sec.body.trim().length > 80;
-    }) || (oldPageContent?.sections || []).find((sec) =>
-      typeof sec?.body === "string" && sec.body.trim().length > 120
-    );
+    // Deduplicação básica de FAQs (por similaridade de pergunta)
+    const mergedFaqs = [...ownFaqs];
+    if (mergedFaqs.length < 8) {
+      for (const aiFaq of aiFaqs) {
+        const isDuplicate = mergedFaqs.some(f => {
+          const q1 = f.question.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const q2 = aiFaq.question.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return q1.includes(q2) || q2.includes(q1);
+        });
+        if (!isDuplicate && mergedFaqs.length < 12) {
+          mergedFaqs.push(aiFaq);
+        }
+      }
+    }
+
+    // Fase C: Mapeamento Inteligente de Seções Reais (Preservação)
+    // Tentamos encontrar seções específicas para cada bloco
+    const getSection = (types: string[], minLength = 80) => 
+      (oldPageContent?.sections || []).find(sec => 
+        types.includes((sec.type_suggestion || "").toLowerCase()) && 
+        typeof sec.body === "string" && sec.body.trim().length > minLength
+      );
+
+    const realDetalhado = getSection(["procedimento_detalhado", "metodo", "preparo", "pos_procedimento"], 100);
+    const realBeneficios = getSection(["beneficios", "diferenciais"], 80);
+    const realManifesto = getSection(["manifesto", "quem_somos", "intro"], 150);
 
     let procedimentoDetalhadoData = generated.blocks.procedimento_detalhado;
-    let procedimentoDetalhadoEnabled = true; // Agora habilitado por padrão pois a IA gera conteúdo de qualidade
-
-    // Se houver conteúdo real da página antiga, ele ainda tem prioridade total
-    if (detailedSection) {
+    if (realDetalhado) {
       procedimentoDetalhadoData = {
         eyebrow: "Como é o procedimento",
-        title_html: detailedSection.title || "Como é o procedimento",
-        paragraphs: (detailedSection.body || "")
-          .split(/\n\s*\n/)
-          .map((p: string) => p.trim())
-          .filter((p: string) => p.length > 0)
-          .slice(0, 6),
-        bullets: Array.isArray((detailedSection as any).bullets)
-          ? (detailedSection as any).bullets.map((b: any) => {
-              if (typeof b === 'object' && b !== null && b.title && b.text) {
-                return { title: b.title, text: b.text };
-              }
-              const str = String(b);
-              const hasColon = str.includes(":");
-              return {
-                title: hasColon ? str.split(":")[0].trim() : "Destaque",
-                text: hasColon ? str.split(":").slice(1).join(":").trim() : str.trim()
-              };
-            }).slice(0, 8)
-          : [],
+        title_html: realDetalhado.title || "Como é o procedimento",
+        paragraphs: (realDetalhado.body || "").split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 20).slice(0, 6),
+        bullets: Array.isArray((realDetalhado as any).bullets) ? (realDetalhado as any).bullets.slice(0, 8) : []
+      };
+    }
+
+    let beneficiosGridData = generated.blocks.beneficios_grid;
+    if (realBeneficios) {
+      beneficiosGridData = {
+        eyebrow: "Diferenciais",
+        title_html: realBeneficios.title || "Benefícios",
+        cards: Array.isArray((realBeneficios as any).bullets) 
+          ? (realBeneficios as any).bullets.map((b: any) => ({ title: b.title, text: b.text })).slice(0, 4)
+          : (realBeneficios.body || "").split(/\n/).map(l => l.trim()).filter(l => l.length > 20).slice(0, 4).map(l => ({ title: "Benefício", text: l }))
+      };
+    }
+
+    let manifestoData = generated.blocks.manifesto_curto;
+    if (realManifesto) {
+      manifestoData = {
+        eyebrow: "Nossa Filosofia",
+        title: realManifesto.title || "Manifesto de Excelência",
+        body: realManifesto.body
       };
     }
 
@@ -685,16 +722,23 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     candidateImages.sort((a, b) => imageScore(b.url) - imageScore(a.url));
 
     // -----------------------------------------------------------------------
-    // Distribuição de Imagens (Ajustada p/ pedido do usuário)
+    // Distribuição de Imagens (Preservação Premium Batel)
     // -----------------------------------------------------------------------
+
+    // HERO: PRIORIDADE para fotos reais extraídas (conforme nova diretriz de preservação)
+    const candidateHeroImages = candidateImages.filter(img => !(img as any).inadequate_for_hero);
     
-    // HERO: NÃO usa fotos extraídas automaticamente (pedido do usuário)
     const isBotox = /\b(botox|toxina|botulin)/i.test(tema);
     const genericAestheticImage = "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=2070&auto=format&fit=crop";
-    // Placeholder premium de clínica se não for botox
-    const finalHeroImage = isBotox 
-      ? "https://esteticabatel.com.br/wp-content/uploads/2024/09/Botox-Masculino-Curitiba.jpg" 
-      : genericAestheticImage;
+    
+    // Tenta pegar a melhor imagem para o Hero (aquela com maior score e que não seja AD)
+    const bestHeroCandidate = candidateHeroImages.find(img => !/-ad\d|antes-?e?-?depois|antes_depois/i.test(img.url.toLowerCase()));
+    
+    const finalHeroImage = bestHeroCandidate 
+      ? sanitizeUrl(bestHeroCandidate.url) 
+      : (isBotox 
+        ? "https://esteticabatel.com.br/wp-content/uploads/2024/09/Botox-Masculino-Curitiba.jpg" 
+        : genericAestheticImage);
 
     // CASOS CLÍNICOS: Identifica imagens que parecem ser Antes/Depois
     const clinicalCaseImages = candidateImages.filter(img => 
