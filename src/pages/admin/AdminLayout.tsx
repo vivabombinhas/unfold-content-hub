@@ -1,25 +1,27 @@
  import { Navigate, NavLink, Outlet, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
  import { SEO } from "@/components/site/SEO";
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Images, 
-  MessageCircle, 
-  Quote, 
-  Bot, 
-  GraduationCap, 
-  Settings, 
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Home
-} from "lucide-react";
+ import { 
+   LayoutDashboard, 
+   FileText, 
+   Images, 
+   MessageCircle, 
+   Quote, 
+   Bot, 
+   GraduationCap, 
+   Settings, 
+   LogOut,
+   ChevronLeft,
+   ChevronRight,
+   Home,
+   ShieldCheck
+ } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/torre-de-controle", label: "Torre de Controle", icon: ShieldCheck },
   { to: "/admin/paginas", label: "Páginas", icon: FileText },
   { to: "/admin/casos", label: "Casos clínicos", icon: Images },
   { to: "/admin/faqs", label: "FAQ", icon: MessageCircle },

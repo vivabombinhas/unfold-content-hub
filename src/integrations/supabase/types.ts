@@ -297,13 +297,18 @@ export type Database = {
       }
       pages: {
         Row: {
+          compliance_score: number | null
           created_at: string
+          fidelity_score: string | null
           id: string
+          is_reviewed: boolean | null
+          last_scanned_at: string | null
           meta_description: string | null
           meta_title: string | null
           metadata: Json
           published_at: string | null
           published_snapshot: Json | null
+          seo_score: number | null
           slug: string
           source_metadata: Json | null
           source_snapshot: string | null
@@ -312,13 +317,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          compliance_score?: number | null
           created_at?: string
+          fidelity_score?: string | null
           id?: string
+          is_reviewed?: boolean | null
+          last_scanned_at?: string | null
           meta_description?: string | null
           meta_title?: string | null
           metadata?: Json
           published_at?: string | null
           published_snapshot?: Json | null
+          seo_score?: number | null
           slug: string
           source_metadata?: Json | null
           source_snapshot?: string | null
@@ -327,13 +337,18 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          compliance_score?: number | null
           created_at?: string
+          fidelity_score?: string | null
           id?: string
+          is_reviewed?: boolean | null
+          last_scanned_at?: string | null
           meta_description?: string | null
           meta_title?: string | null
           metadata?: Json
           published_at?: string | null
           published_snapshot?: Json | null
+          seo_score?: number | null
           slug?: string
           source_metadata?: Json | null
           source_snapshot?: string | null
