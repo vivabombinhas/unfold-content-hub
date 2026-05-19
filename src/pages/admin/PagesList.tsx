@@ -220,7 +220,7 @@ export default function PagesList() {
                   />
                 </th>
                 <th className="px-5 py-3">Título</th>
-                <th className="px-5 py-3">Slug</th>
+                <th className="px-5 py-3">URL</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Atualizada</th>
                 <th className="px-5 py-3 w-40"></th>
@@ -239,7 +239,9 @@ export default function PagesList() {
                     )}
                   </td>
                   <td className="px-5 py-3 text-brand-text-light font-medium">{p.title}</td>
-                  <td className="px-5 py-3 text-brand-text-muted font-mono text-xs">/p/{p.slug}</td>
+                  <td className="px-5 py-3 text-brand-text-muted font-mono text-xs">
+                    {(p as any).url_path ? `/${(p as any).url_path}/` : `/p/${p.slug}`}
+                  </td>
                   <td className="px-5 py-3">
                     <Badge variant={p.status === "published" ? "default" : "secondary"} className={p.status === "published" ? "bg-brand-gold/20 text-brand-gold border-brand-gold/30" : ""}>
                       {p.status === "published" ? "Publicada" : "Rascunho"}
@@ -252,11 +254,16 @@ export default function PagesList() {
                     <div className="flex items-center justify-end gap-3">
                       <CopyLinkButton
                         slug={p.slug}
+                        urlPath={(p as any).url_path}
                         status={p.status as "draft" | "published"}
                         variant="icon"
                       />
                       <a
-                        href={p.status === "published" ? `/p/${p.slug}` : `/p/${p.slug}?preview=1`}
+                        href={
+                          p.status === "published" && (p as any).url_path
+                            ? `/${(p as any).url_path}/`
+                            : `/p/${p.slug}?preview=1`
+                        }
                         target="_blank"
                         rel="noreferrer"
                         className="text-brand-text-muted hover:text-brand-gold"
