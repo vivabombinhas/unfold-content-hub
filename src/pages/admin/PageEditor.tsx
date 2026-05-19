@@ -412,6 +412,115 @@ export default function PageEditor() {
                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
                </div>
 
+               <div className="pt-8 border-t border-white/5 space-y-4">
+                 <div className="flex items-center justify-between">
+                   <h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">URL da página</h3>
+                   <div className="flex items-center gap-2">
+                     <Label className="text-[10px] uppercase text-white/40">Editar manualmente</Label>
+                     <Switch
+                       checked={urlFields.slug_override}
+                       onCheckedChange={(v) =>
+                         setUrlFields((f) => ({
+                           ...f,
+                           slug_override: v,
+                           url_path: v ? (f.url_path || buildUrlPath(f)) : f.url_path,
+                         }))
+                       }
+                     />
+                   </div>
+                 </div>
+
+                 {!urlFields.slug_override ? (
+                   <div className="grid grid-cols-2 gap-3">
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] uppercase text-white/40">Procedimento</Label>
+                       <Input
+                         className="bg-white/5 border-white/10 rounded-xl text-sm"
+                         placeholder="bioestimuladores"
+                         value={urlFields.procedimento}
+                         onChange={(e) =>
+                           setUrlFields((f) => ({ ...f, procedimento: slugifySegment(e.target.value) }))
+                         }
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] uppercase text-white/40">Cidade</Label>
+                       <Input
+                         className="bg-white/5 border-white/10 rounded-xl text-sm"
+                         placeholder="curitiba"
+                         value={urlFields.cidade}
+                         onChange={(e) =>
+                           setUrlFields((f) => ({ ...f, cidade: slugifySegment(e.target.value) }))
+                         }
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] uppercase text-white/40">Modificador (opcional)</Label>
+                       <Input
+                         className="bg-white/5 border-white/10 rounded-xl text-sm"
+                         placeholder="flacidez · para-mulheres-ate-35-anos"
+                         value={urlFields.modificador}
+                         onChange={(e) =>
+                           setUrlFields((f) => ({ ...f, modificador: slugifySegment(e.target.value) }))
+                         }
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] uppercase text-white/40">Tipo do modificador</Label>
+                       <Select
+                         value={urlFields.modificador_tipo || "none"}
+                         onValueChange={(v) =>
+                           setUrlFields((f) => ({
+                             ...f,
+                             modificador_tipo: v === "none" ? "" : (v as any),
+                           }))
+                         }
+                       >
+                         <SelectTrigger className="bg-white/5 border-white/10 rounded-xl text-sm">
+                           <SelectValue placeholder="—" />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="none">—</SelectItem>
+                           <SelectItem value="publico">Público (ex: mulheres 35+)</SelectItem>
+                           <SelectItem value="indicacao">Indicação (ex: flacidez)</SelectItem>
+                           <SelectItem value="objetivo">Objetivo (ex: rejuvenescimento)</SelectItem>
+                           <SelectItem value="area_corporal">Área corporal (ex: rosto)</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
+                   </div>
+                 ) : (
+                   <div className="space-y-1.5">
+                     <Label className="text-[10px] uppercase text-white/40">URL Path completo</Label>
+                     <Input
+                       className="bg-white/5 border-white/10 rounded-xl text-sm font-mono"
+                       placeholder="protocolo-batel/bioestimuladores/em-curitiba/flacidez"
+                       value={urlFields.url_path}
+                       onChange={(e) =>
+                         setUrlFields((f) => ({
+                           ...f,
+                           url_path: e.target.value.replace(/^\/+|\/+$/g, ""),
+                         }))
+                       }
+                     />
+                     <p className="text-[10px] text-white/30">
+                       Use apenas a-z, 0-9, hífen e barras. Sem acentos.
+                     </p>
+                   </div>
+                 )}
+
+                 <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 space-y-2">
+                   <div className="text-[9px] uppercase tracking-widest text-white/30">URL final</div>
+                   <div className="text-xs font-mono text-brand-gold break-all">/{previewUrlPath}/</div>
+                   {urlChanged && (
+                     <div className="text-[10px] text-yellow-400/80 flex items-start gap-1.5">
+                       <AlertTriangle className="size-3 mt-0.5 shrink-0" />
+                       <span>A URL antiga será redirecionada automaticamente (301).</span>
+                     </div>
+                   )}
+                 </div>
+               </div>
+
                <div className="pt-8 border-t border-white/5 space-y-8">
                  <div className="flex items-center justify-between">
                    <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context & Compliance</h3></div>
