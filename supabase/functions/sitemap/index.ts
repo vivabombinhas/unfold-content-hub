@@ -20,7 +20,7 @@ serve(async (req) => {
     // Fetch published pages
     const { data: pages, error } = await supabase
       .from('pages')
-      .select('slug, updated_at')
+      .select('slug, url_path, updated_at')
       .eq('status', 'published')
       .neq('slug', 'modelo')
       .order('updated_at', { ascending: false })
@@ -46,7 +46,8 @@ serve(async (req) => {
       // If it's the home page, we already added it or we skip if it's same
       if (page.slug === 'home' || page.slug === '') return
 
-      const url = `${baseUrl}/${page.slug}/`
+      const path = page.url_path || page.slug
+      const url = `${baseUrl}/${path}/`
       const lastmod = new Date(page.updated_at).toISOString().split('T')[0]
       
       xml += `  <url>
