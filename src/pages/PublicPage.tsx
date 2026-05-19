@@ -36,10 +36,10 @@ interface PublicPageProps {
 }
 
 export default function PublicPage({ slugOverride }: PublicPageProps = {}) {
-  const params = useParams();
-  const slug = slugOverride ?? params.slug ?? "";
-  const [params] = useSearchParams();
-  const previewMode = params.get("preview") === "1";
+  const routeParams = useParams();
+  const slug = slugOverride ?? routeParams.slug ?? "";
+  const [search] = useSearchParams();
+  const previewMode = search.get("preview") === "1";
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-page", slug, previewMode],
