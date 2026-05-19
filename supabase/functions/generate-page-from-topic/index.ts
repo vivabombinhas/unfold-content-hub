@@ -678,6 +678,14 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       };
     }
 
+    const procedimentoDetalhadoEnabled = !!(
+      procedimentoDetalhadoData &&
+      (
+        (Array.isArray((procedimentoDetalhadoData as any).paragraphs) && (procedimentoDetalhadoData as any).paragraphs.length > 0) ||
+        (Array.isArray((procedimentoDetalhadoData as any).bullets) && (procedimentoDetalhadoData as any).bullets.length > 0)
+      )
+    );
+
     let beneficiosGridData = generated.blocks.beneficios_grid;
     if (realBeneficios) {
       beneficiosGridData = {
