@@ -15,18 +15,21 @@ import { cn } from "@/lib/utils";
  */
 interface Props {
   slug: string;
+  /** Caminho hierárquico novo (ex: protocolo-batel/bioestimuladores/em-curitiba/flacidez). Se ausente, cai em /p/{slug}. */
+  urlPath?: string;
   status: "draft" | "published";
   /** "icon" = só ícone (para tabelas). "default" = ícone + texto. */
   variant?: "icon" | "default";
   className?: string;
 }
 
-export function CopyLinkButton({ slug, status, variant = "default", className }: Props) {
+export function CopyLinkButton({ slug, urlPath, status, variant = "default", className }: Props) {
   const [copied, setCopied] = useState(false);
 
   const buildUrl = () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const path = status === "published" ? `/p/${slug}` : `/p/${slug}?preview=1`;
+    const publishedPath = urlPath ? `/${urlPath}/` : `/p/${slug}`;
+    const path = status === "published" ? publishedPath : `/p/${slug}?preview=1`;
     return `${origin}${path}`;
   };
 
