@@ -31,8 +31,13 @@ interface BlockRow {
    metadata?: any;
  }
 
-export default function PublicPage() {
-  const { slug = "" } = useParams();
+interface PublicPageProps {
+  slugOverride?: string;
+}
+
+export default function PublicPage({ slugOverride }: PublicPageProps = {}) {
+  const params = useParams();
+  const slug = slugOverride ?? params.slug ?? "";
   const [params] = useSearchParams();
   const previewMode = params.get("preview") === "1";
 
