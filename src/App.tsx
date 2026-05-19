@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import PublicPage from "./pages/PublicPage.tsx";
+import SlugRedirectHandler from "./pages/SlugRedirectHandler.tsx";
 import { AuthProvider } from "@/hooks/use-auth";
 import AdminLogin from "./pages/admin/AdminLogin.tsx";
 import AdminLayout from "./pages/admin/AdminLayout.tsx";
@@ -53,7 +54,8 @@ const queryClient = new QueryClient();
                 <Route path="configuracoes" element={<Settings />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
+              {/* Catch-all: resolve via url_path ou slug_redirects */}
+              <Route path="*" element={<SlugRedirectHandler />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
