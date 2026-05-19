@@ -181,6 +181,7 @@ export default function PublicPage({ slugOverride }: PublicPageProps = {}) {
          title={data.page.meta_title || data.page.title}
          description={data.page.meta_description || ""}
          slug={data.page.slug}
+         urlPath={(data.page as any).url_path}
          status={data.page.status}
          previewMode={previewMode}
            image={pageImage}
