@@ -297,6 +297,8 @@ export type Database = {
       }
       pages: {
         Row: {
+          categoria: string
+          cidade: string
           compliance_score: number | null
           created_at: string
           fidelity_score: string | null
@@ -306,17 +308,26 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           metadata: Json
+          modificador: string | null
+          modificador_tipo:
+            | Database["public"]["Enums"]["modificador_tipo"]
+            | null
+          procedimento: string
           published_at: string | null
           published_snapshot: Json | null
           seo_score: number | null
           slug: string
+          slug_override: boolean
           source_metadata: Json | null
           source_snapshot: string | null
           status: Database["public"]["Enums"]["page_status"]
           title: string
           updated_at: string
+          url_path: string
         }
         Insert: {
+          categoria?: string
+          cidade?: string
           compliance_score?: number | null
           created_at?: string
           fidelity_score?: string | null
@@ -326,17 +337,26 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           metadata?: Json
+          modificador?: string | null
+          modificador_tipo?:
+            | Database["public"]["Enums"]["modificador_tipo"]
+            | null
+          procedimento: string
           published_at?: string | null
           published_snapshot?: Json | null
           seo_score?: number | null
           slug: string
+          slug_override?: boolean
           source_metadata?: Json | null
           source_snapshot?: string | null
           status?: Database["public"]["Enums"]["page_status"]
           title: string
           updated_at?: string
+          url_path: string
         }
         Update: {
+          categoria?: string
+          cidade?: string
           compliance_score?: number | null
           created_at?: string
           fidelity_score?: string | null
@@ -346,15 +366,22 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           metadata?: Json
+          modificador?: string | null
+          modificador_tipo?:
+            | Database["public"]["Enums"]["modificador_tipo"]
+            | null
+          procedimento?: string
           published_at?: string | null
           published_snapshot?: Json | null
           seo_score?: number | null
           slug?: string
+          slug_override?: boolean
           source_metadata?: Json | null
           source_snapshot?: string | null
           status?: Database["public"]["Enums"]["page_status"]
           title?: string
           updated_at?: string
+          url_path?: string
         }
         Relationships: []
       }
@@ -478,6 +505,35 @@ export type Database = {
         }
         Relationships: []
       }
+      slug_redirects: {
+        Row: {
+          created_at: string
+          id: string
+          old_path: string
+          page_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          old_path: string
+          page_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          old_path?: string
+          page_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slug_redirects_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -525,6 +581,7 @@ export type Database = {
         | "procedimento_detalhado"
         | "beneficios_grid"
         | "procedimento_detalhado_v2"
+      modificador_tipo: "publico" | "indicacao" | "objetivo" | "area_corporal"
       page_status: "draft" | "published"
     }
     CompositeTypes: {
@@ -672,6 +729,7 @@ export const Constants = {
         "beneficios_grid",
         "procedimento_detalhado_v2",
       ],
+      modificador_tipo: ["publico", "indicacao", "objetivo", "area_corporal"],
       page_status: ["draft", "published"],
     },
   },
