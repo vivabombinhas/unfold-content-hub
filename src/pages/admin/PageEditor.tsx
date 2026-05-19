@@ -337,10 +337,18 @@ export default function PageEditor() {
       topbar={
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 mr-4">
-            <CopyLinkButton slug={data?.page?.slug || ""} status={data?.page?.status as any} />
+            <CopyLinkButton
+              slug={data?.page?.slug || ""}
+              urlPath={(data?.page as any)?.url_path}
+              status={data?.page?.status as any}
+            />
             <Button variant="ghost" size="sm" asChild className="h-8 text-white/60 hover:text-white hover:bg-white/5 rounded-lg px-3 transition-colors">
               <a 
-                href={data?.page?.status === "published" ? `/p/${data?.page?.slug}` : `/p/${data?.page?.slug}?preview=1`} 
+                href={
+                  data?.page?.status === "published" && (data?.page as any)?.url_path
+                    ? `/${(data?.page as any).url_path}/`
+                    : `/p/${data?.page?.slug}?preview=1`
+                }
                 target="_blank" 
                 rel="noreferrer"
                 className="flex items-center"
