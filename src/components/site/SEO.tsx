@@ -4,6 +4,7 @@
    title?: string;
    description?: string;
    slug?: string;
+  urlPath?: string;
    image?: string;
   heroImage?: string;
    status?: "draft" | "published";
@@ -16,6 +17,7 @@
    title,
    description,
    slug,
+   urlPath,
     image,
     heroImage,
    status = "published",
@@ -30,9 +32,9 @@
    // Rules for noindex: draft status, preview mode, or admin routes
    const shouldNoIndex = status !== "published" || previewMode || isAdmin;
    
-   // Canonical URL: only for published pages, and should not include /p/
-   // If no slug is provided and it's not noindex, it's the home page.
-   const canonicalUrl = !shouldNoIndex ? (slug ? `${siteUrl}/${slug}/` : `${siteUrl}/`) : undefined;
+  // Canonical URL: usa o url_path hierárquico quando disponível.
+  const canonicalPath = urlPath ? `/${urlPath}/` : slug ? `/${slug}/` : "/";
+  const canonicalUrl = !shouldNoIndex ? `${siteUrl}${canonicalPath}` : undefined;
  
    const defaultDescription = "Protocolos exclusivos de estética avançada na Clínica Batel, Curitiba — excelência desde 1995.";
    const metaDescription = description || defaultDescription;

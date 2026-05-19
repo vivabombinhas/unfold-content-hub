@@ -1,228 +1,96 @@
-# Plano: Arquitetura SSR Híbrida Definitiva
 
-## 1. Recomendação final
+# Plano: URLs estruturadas + slug editável
 
-**Seguir com SSR híbrido baseado em Edge Function + hidratação seletiva.**
-
-Justificativa: o stack atual (Vite + React Router + Supabase) não suporta SSR nativo sem migração para Next/Remix (alto risco). A abordagem híbrida preserva 100% do CRM/editor atual e adiciona uma camada de renderização server-side **somente** para rotas públicas. O MVP já provou viabilidade técnica.
+## Objetivo
+Migrar de `/p/{slug-único}` para `/protocolo-batel/{procedimento}/em-{cidade}/{modificador?}/`, com campos editáveis no painel, validação, geração automática e **redirect 301** das URLs antigas para não perder SEO.
 
 ---
 
-## 2. Arquitetura proposta
+## 1. Mudanças no banco
 
-```text
-                    ┌─────────────────────────────────┐
-   Request          │  Cloudflare (Edge / CDN)        │
-   /slug ─────────► │  - Cache HTML por slug          │
-                    │  - Roteamento por path          │
-                    └──────────────┬──────────────────┘
-                                   │
-                ┌──────────────────┼─────────────────────┐
-                │                  │                     │
-                ▼                  ▼                     ▼
-        /admin/* /login/*    /:slug (público)     /assets, /api
-        Pass-through         Edge Function        Pass-through
-        para SPA             render-page          (SPA bundle)
-        (index.html)         (HTML completo)
-                                   │
-                                   ▼
-                    ┌─────────────────────────────────┐
-                    │  Browser recebe HTML pronto     │
-                    │  + bundle React carrega depois  │
-                    │  + hidratação seletiva (islands)│
-                    └─────────────────────────────────┘
-```
+Adicionar à tabela `pages`:
+- `categoria` (text, default `'protocolo-batel'`)
+- `procedimento` (text, obrigatório, ex: `bioestimuladores`)
+- `cidade` (text, obrigatório, ex: `curitiba`)
+- `modificador` (text, opcional, ex: `flacidez` ou `para-mulheres-ate-35-anos`)
+- `modificador_tipo` (enum opcional: `publico` | `indicacao` | `objetivo` | `area-corporal`)
+- `url_path` (text, único, gerado/persistido) — caminho completo final, ex: `protocolo-batel/bioestimuladores/em-curitiba/flacidez`
+- `slug_override` (boolean) — quando `true`, o admin editou manualmente e a regra automática não sobrescreve
 
-### Separação de responsabilidades
+Nova tabela `slug_redirects`:
+- `old_path` (text, único)
+- `page_id` (uuid → pages)
+- `created_at`
+- RLS: leitura pública, escrita admin
 
-| Rota | Servidor | Renderização |
-|------|----------|--------------|
-| `/admin/*` | SPA atual | CSR (sem mudança) |
-| `/login`, `/auth` | SPA atual | CSR (sem mudança) |
-| `/p/:slug?preview=1` | SPA atual | CSR (preview do editor) |
-| `/:slug` (público) | Edge Function | SSR + hidratação parcial |
-| `/sitemap.xml` | Edge Function (já existe) | Server |
-| Assets | CDN | Static |
+Trigger: ao salvar `pages`, se o `url_path` mudou, insere o antigo em `slug_redirects` automaticamente (nunca perde URL indexada).
 
----
+Migração de dados: para cada página existente, deduzir `procedimento` do `slug` atual, preencher `cidade='curitiba'` como default, `modificador=null`, e popular `url_path`. O `slug` antigo vai pra `slug_redirects`.
 
-## 3. Fluxo request → response
+## 2. Roteamento
 
-1. **Request chega no Cloudflare** com path `/diamantacao-labial`
-2. **Cloudflare verifica cache** (chave: `slug + versão`). Se HIT → retorna em ~20ms.
-3. **Cache MISS** → encaminha para Edge Function `render-page`.
-4. **Edge Function**:
-   - Busca `pages` + `page_blocks` (Supabase, com índice por slug)
-   - Renderiza HTML completo (head, semântica, JSON-LD, conteúdo)
-   - Inclui `<link rel="modulepreload">` para o bundle React
-   - Inclui `<script>window.__PAGE_DATA__ = {...}</script>` para hidratação
-   - Retorna com `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400`
-5. **Browser renderiza HTML imediatamente** (LCP < 1s).
-6. **Bundle React carrega em background** e hidrata componentes interativos sem re-fetch.
-7. **Cloudflare salva no cache** para próximos visitantes.
+`src/App.tsx`:
+- Manter `/p/:slug` como rota **legada** que faz lookup em `slug_redirects` → 301 client-side (`<Navigate replace>`) para o novo `url_path`.
+- Adicionar rota catch-all `/:categoria/:procedimento/:cidadeSegment/:modificador?` que carrega `PublicPage`.
+- `PublicPage` busca por `url_path` em vez de `slug`.
+- Página não encontrada também consulta `slug_redirects` antes de mostrar 404.
 
----
+## 3. Painel admin (PageEditor)
 
-## 4. Hidratação parcial (Islands)
+Nova seção "URL da página" com:
+- Campo **Procedimento** (input + sugestão a partir do título)
+- Campo **Cidade** (input, default "curitiba")
+- Campo **Modificador** (input opcional)
+- Select **Tipo de modificador** (público / indicação / objetivo / área corporal) — só aparece se modificador preenchido; controla qual schema.org é emitido
+- Preview da URL final em tempo real: `meusite.com.br/protocolo-batel/bioestimuladores/em-curitiba/flacidez/`
+- Toggle **"Editar manualmente"** → libera input livre do `url_path` completo (ativa `slug_override=true`)
+- Validação Zod: cada segmento `^[a-z0-9-]+$`, sem acento, sem espaço, sem reservados (`admin`, `api`, `p`, `auth`)
+- Aviso visual quando salvar muda o `url_path`: "A URL antiga será redirecionada automaticamente (301)"
 
-Componentes classificados em duas categorias:
+No wizard de criação nova: mesma UI, mesma validação.
 
-### Static (renderizados no servidor, sem JS)
-- Hero (texto, imagem, CTA como `<a>`)
-- Manifesto, Método, FAQ (`<details>/<summary>` nativos)
-- Cursos, Equipe RT, Preço, CTA final
-- Conteúdo textual, headings, listas
+## 4. SSR e SEO
 
-### Interactive (hidratam no client)
-- Modais (CaseModal, SideSheet, manifesto completo)
-- Carrosséis/sliders
-- Before/after sliders
-- Vídeos lazy-load
-- FloatingCTA, Header com menu mobile
-- Filtros de casos clínicos
+`render-page` edge function:
+- Aceita `?path=protocolo-batel/...` além do `?slug=` legado
+- Canonical usa `url_path` completo
+- Schema dinâmico por `modificador_tipo`:
+  - `publico` → adiciona `Audience` no MedicalProcedure
+  - `indicacao` → adiciona `MedicalCondition`
+  - `area-corporal` → adiciona `bodyLocation`
+  - `objetivo` → adiciona `purpose`
+- Breadcrumb schema automático com os 3-4 segmentos
 
-**Estratégia:** o HTML do SSR já contém o conteúdo "fechado" (FAQ aberto via CSS, modal como link âncora). Quando o React hidratar, substitui o comportamento por interativo (progressive enhancement). Se o JS falhar, o site continua navegável e indexável.
+`sitemap` edge function:
+- Trocar `${baseUrl}/${page.slug}/` por `${baseUrl}/${page.url_path}/`
+- Não inclui redirects antigos (eles ficam fora do sitemap, só servem 301)
 
-**Editor/Media Picker:** vivem em `/admin/*`, não são tocados.
+`SEO.tsx`: passar `url_path` em vez de `slug` no canonical.
 
----
+## 5. ControlTower
 
-## 5. Estratégia de cache
+Atualizar coluna URL para mostrar o `url_path` novo. Listagem de páginas (`PagesList`) idem. `CopyLinkButton` recebe `url_path` em vez de `slug`.
 
-| Camada | TTL | Invalidação |
-|--------|-----|-------------|
-| Cloudflare Edge | 1h (s-maxage), 24h SWR | Purge por tag `page:{slug}` no publish |
-| Supabase Edge Function | sem cache próprio | n/a |
-| Browser | 5min (max-age) | Naturalmente expira |
+## 6. Ordem de execução
 
-**Invalidação no publish:**
-- Adicionar trigger no botão "Publicar" do editor que chama a Cloudflare Cache API:
-  `POST /zones/{id}/purge_cache` com tag `page:{slug}` + `sitemap`.
-- Sem Cloudflare: confiar no TTL curto + revalidação SWR.
+1. Migration: novas colunas, tabela `slug_redirects`, trigger, backfill das páginas existentes (categoria=`protocolo-batel`, cidade=`curitiba`, procedimento=slug atual, url_path montado, slug antigo no redirects).
+2. Roteamento novo + lookup de redirects.
+3. UI do PageEditor com validação Zod.
+4. Wizard de criação (gera os campos automaticamente do título do tópico).
+5. SSR/sitemap/canonical atualizados.
+6. Listagens e ControlTower atualizados.
+7. QA: testar uma página migrada acessando o link antigo (`/p/diamantacao-labial`) e confirmando 301 → novo path.
 
----
+## Detalhes técnicos
 
-## 6. Tratamento de blocos por tipo
+- `url_path` é **persistido** (não calculado on-the-fly) para permitir índice único e busca rápida.
+- Reservar segmentos top-level: `admin`, `api`, `p`, `auth`, `assets` — bloquear como `categoria` ou `procedimento`.
+- O slug "modelo" continua intocável (protegido pelo trigger existente).
+- Trigger de redirect só insere se `OLD.url_path IS DISTINCT FROM NEW.url_path` e ignora conflito de chave única (página recriada com path antigo simplesmente remove o redirect).
+- 301 client-side via React Router é suficiente para SEO porque o canonical correto está no HTML; bots seguem o canonical. Não precisamos de redirect no nível de hosting.
+- Não tocar em `extract-page-images`, `generate-page-from-topic` (lógica de conteúdo) nem `render-page` compliance guard — só os pontos de URL.
 
-| Bloco | SSR? | Notas |
-|-------|------|-------|
-| hero | ✅ Total | imagem com `fetchpriority=high` |
-| authority_strip | ✅ Total | estático |
-| manifesto_curto | ✅ + island | "ler mais" abre modal no client |
-| metodo | ✅ Total | grid estático |
-| casos | ✅ HTML + island | grid renderizado, modal hidrata |
-| preco_ancora | ✅ + island | sheet hidrata |
-| depoimentos | ✅ Total | carrossel via CSS scroll-snap |
-| ai_opinions | ✅ Total | grid estático |
-| equipe_rt | ✅ + island | expand hidrata |
-| cursos | ✅ Total | cards estáticos |
-| faq | ✅ Total | `<details>` nativo |
-| cta_final | ✅ Total | links como `<a>` |
-| beneficios_grid | ✅ Total | estático |
-| procedimento_detalhado_v2 | ✅ Total | timeline estática |
-| marquee_cards | ✅ + CSS animation | sem JS |
-
----
-
-## 7. Impactos
-
-| Área | Impacto |
-|------|---------|
-| **Performance** | LCP −60%, FCP −70%, TTI igual ou melhor |
-| **SEO** | Conteúdo 100% indexável, rich results elegíveis |
-| **AEO/LLMs** | Conteúdo lido por GPT/Gemini/Perplexity sem JS |
-| **Schema.org** | Injetado server-side, sempre presente |
-| **Sitemap** | Já dinâmico, sem mudança |
-| **Analytics** | GTM/GA continuam no client (sem impacto) |
-| **Custo Edge Function** | ~0,5ms CPU/request, dominado pela query Supabase |
-| **Custo Cloudflare** | Free tier suporta o volume atual |
-| **Tempo de resposta** | Cache HIT ~20ms, MISS ~150-300ms |
-
----
-
-## 8. URLs futuras
-
-Estrutura recomendada:
-```text
-/procedimento-batel/{slug}-em-curitiba/
-```
-
-Implementação:
-1. Adicionar coluna `url_pattern` em `pages` (opcional, default `/{slug}/`)
-2. Edge Function lê o pattern e gera canonical correto
-3. Sitemap usa o mesmo pattern
-4. Redirect 301 das URLs antigas (`/p/{slug}` → nova)
-5. Cloudflare Worker handle o roteamento por path
-
-Compatível com WordPress: o reverse proxy do Cloudflare pode rotear `/blog/*` → WordPress, `/procedimento-batel/*` → Edge Function, `/admin/*` → SPA. Sem conflito.
-
----
-
-## 9. Garantias de não-quebra
-
-O que **NÃO muda**:
-- `src/pages/admin/*` — intocado
-- `src/pages/PublicPage.tsx` — continua existindo para `?preview=1`
-- `AdminLayout`, `use-auth`, RLS — intocados
-- Editor, media picker, geração de páginas — intocados
-- Bundle React, Vite config — intocados (apenas adiciona script de hidratação)
-- Botão publicar — ganha 1 chamada extra (purge cache), reversível
-
-Mecanismo de fallback:
-- Se Edge Function falhar → Cloudflare serve `index.html` (SPA) como hoje
-- Se Cloudflare cair → DNS aponta direto para SPA
-- Feature flag `?ssr=0` força bypass do SSR para debug
-
----
-
-## 10. Rollout em 4 fases
-
-**Fase 1 — Função definitiva (1 página)**
-- Renomear `render-page-test` → `render-page`
-- Mapear 100% dos blocos com paridade visual (CSS inline crítico)
-- Testar com `botox-para-homens`
-- Validar: View Source, Lighthouse, Rich Results Test, GSC URL Inspection
-
-**Fase 2 — Roteamento Cloudflare (1 página em produção)**
-- Configurar Cloudflare Worker para rotear `/botox-para-homens` → função
-- Manter resto do site no SPA
-- Monitorar 7 dias: erros, performance, indexação
-
-**Fase 3 — Expansão controlada (5 páginas)**
-- Adicionar mais 4 slugs ao Worker
-- Validar publish → purge cache funcional
-- Comparar métricas antes/depois (GSC, GA)
-
-**Fase 4 — Migração total**
-- Worker captura todas as rotas que correspondem a slugs publicados em `pages`
-- Slugs não-encontrados continuam para SPA (404 do React Router)
-- Remover `/p/` legado após 30 dias e redirects 301
-
----
-
-## 11. Riscos reais e mitigação
-
-| Risco | Probabilidade | Mitigação |
-|-------|---------------|-----------|
-| Divergência visual SSR vs CSR | Alta | Testes visuais lado-a-lado por bloco antes do rollout |
-| Cache servir conteúdo desatualizado | Média | Purge automático no publish + TTL curto |
-| Edge Function timeout (Supabase 150s) | Baixa | Query única com join, índice em `slug` |
-| Custo Supabase Egress | Baixa | Cache do Cloudflare absorve 95% |
-| Hidratação quebrar interatividade | Média | Estratégia island por bloco, testes E2E |
-| Lock-in Cloudflare | Baixa | Worker é portável (Vercel Edge, Deno Deploy) |
-| Regressão no admin | Baixíssima | Admin não é tocado em nenhuma fase |
-
----
-
-## 12. Pré-requisitos antes de implementar
-
-1. Decidir host do roteamento: Cloudflare Workers (recomendado) ou Vercel Edge Middleware
-2. Confirmar acesso à conta Cloudflare do domínio `esteticabatel.com.br`
-3. Definir se URL final será `/{slug}/` ou `/procedimento-batel/{slug}-em-curitiba/` (afeta canonical/sitemap)
-4. Lista de blocos com prioridade de paridade visual
-
----
-
-## 13. Próximo passo recomendado
-
-Após aprovação deste plano: começar pela **Fase 1** isoladamente (renomear função + paridade visual completa de 1 página), sem tocar em produção. Reavaliar antes de avançar para Fase 2.
+## Fora de escopo (não fazer agora)
+- Páginas-índice automáticas (`/protocolo-batel/bioestimuladores/em-curitiba/` listando modificadores). Pode vir depois.
+- Mudar `categoria` para algo diferente de `protocolo-batel` (fica como enum de 1 valor por enquanto).
+- Internacionalização ou outras cidades além de Curitiba (estrutura já suporta, mas migration assume Curitiba como default).

@@ -31,10 +31,15 @@ interface BlockRow {
    metadata?: any;
  }
 
-export default function PublicPage() {
-  const { slug = "" } = useParams();
-  const [params] = useSearchParams();
-  const previewMode = params.get("preview") === "1";
+interface PublicPageProps {
+  slugOverride?: string;
+}
+
+export default function PublicPage({ slugOverride }: PublicPageProps = {}) {
+  const routeParams = useParams();
+  const slug = slugOverride ?? routeParams.slug ?? "";
+  const [search] = useSearchParams();
+  const previewMode = search.get("preview") === "1";
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["public-page", slug, previewMode],
@@ -176,6 +181,7 @@ export default function PublicPage() {
          title={data.page.meta_title || data.page.title}
          description={data.page.meta_description || ""}
          slug={data.page.slug}
+         urlPath={(data.page as any).url_path}
          status={data.page.status}
          previewMode={previewMode}
            image={pageImage}

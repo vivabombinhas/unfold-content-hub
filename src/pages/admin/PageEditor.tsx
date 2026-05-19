@@ -31,6 +31,15 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
 import { EditorLayout } from "@/components/admin/editor/EditorLayout";
 import { SidebarBlockList } from "@/components/admin/editor/SidebarBlockList";
+import { buildUrlPath, validateUrlParts, slugifySegment } from "@/lib/url-path";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
 const asJson = (v: unknown) => v as Json;
@@ -88,6 +97,15 @@ export default function PageEditor() {
      metadata: {} as Record<string, unknown>,
      source_snapshot: null as string | null,
    });
+  const [urlFields, setUrlFields] = useState({
+    categoria: "protocolo-batel",
+    procedimento: "",
+    cidade: "curitiba",
+    modificador: "",
+    modificador_tipo: "" as "" | "publico" | "indicacao" | "objetivo" | "area_corporal",
+    slug_override: false,
+    url_path: "",
+  });
   const [blocks, setBlocks] = useState<DraftBlock[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
@@ -119,6 +137,17 @@ export default function PageEditor() {
       meta_description: data.page.meta_description ?? "",
       metadata: (data.page as any).metadata ?? {},
       source_snapshot: (data.page as any).source_snapshot ?? null,
+    });
+
+    const p = data.page as any;
+    setUrlFields({
+      categoria: p.categoria ?? "protocolo-batel",
+      procedimento: p.procedimento ?? p.slug ?? "",
+      cidade: p.cidade ?? "curitiba",
+      modificador: p.modificador ?? "",
+      modificador_tipo: p.modificador_tipo ?? "",
+      slug_override: !!p.slug_override,
+      url_path: p.url_path ?? "",
     });
 
     // Mandatory diff for legacy pages
@@ -209,9 +238,44 @@ export default function PageEditor() {
 
   async function handleSave() {
     if (!data?.page) return;
+    // Validar URL fields
+    const urlErrors = validateUrlParts({
+      categoria: urlFields.categoria,
+      procedimento: urlFields.procedimento,
+      cidade: urlFields.cidade,
+      modificador: urlFields.modificador || null,
+    });
+    if (urlErrors.length > 0) {
+      toast({
+        title: "URL inválida",
+        description: urlErrors.map((e) => e.message).join(" · "),
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     try {
-      await supabase.from("pages").update({ title: pageMeta.title, meta_title: pageMeta.meta_title || null, meta_description: pageMeta.meta_description || null, metadata: asJson(pageMeta.metadata ?? {}) }).eq("id", data.page.id);
+      const urlUpdate: Record<string, unknown> = {
+        categoria: urlFields.categoria,
+        procedimento: urlFields.procedimento,
+        cidade: urlFields.cidade,
+        modificador: urlFields.modificador || null,
+        modificador_tipo: urlFields.modificador_tipo || null,
+        slug_override: urlFields.slug_override,
+      };
+      if (urlFields.slug_override && urlFields.url_path) {
+        urlUpdate.url_path = urlFields.url_path;
+      }
+      await supabase
+        .from("pages")
+        .update({
+          title: pageMeta.title,
+          meta_title: pageMeta.meta_title || null,
+          meta_description: pageMeta.meta_description || null,
+          metadata: asJson(pageMeta.metadata ?? {}),
+          ...urlUpdate,
+        } as any)
+        .eq("id", data.page.id);
       if (deletedIds.length) await supabase.from("page_blocks").delete().in("id", deletedIds);
       const inserts = blocks.filter((b) => b._new).map((b) => ({ page_id: data.page.id, type: b.type, position: b.position, enabled: b.enabled, mode: b.mode, data: asJson(b.data), html_content: b.html_content }));
       if (inserts.length) await supabase.from("page_blocks").insert(inserts as any);
@@ -251,6 +315,18 @@ export default function PageEditor() {
   const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
   const selected = blocks.find((b) => b.id === selectedId) || null;
 
+  // URL preview em tempo real
+  const previewUrlPath = urlFields.slug_override
+    ? urlFields.url_path
+    : buildUrlPath({
+        categoria: urlFields.categoria,
+        procedimento: urlFields.procedimento,
+        cidade: urlFields.cidade,
+        modificador: urlFields.modificador || null,
+      });
+  const urlChanged =
+    !!(data.page as any).url_path && (data.page as any).url_path !== previewUrlPath;
+
   return (
     <EditorLayout
       title={pageMeta.title || (data?.page ? data.page.slug : "")}
@@ -261,10 +337,18 @@ export default function PageEditor() {
       topbar={
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 p-1 bg-white/5 rounded-xl border border-white/5 mr-4">
-            <CopyLinkButton slug={data?.page?.slug || ""} status={data?.page?.status as any} />
+            <CopyLinkButton
+              slug={data?.page?.slug || ""}
+              urlPath={(data?.page as any)?.url_path}
+              status={data?.page?.status as any}
+            />
             <Button variant="ghost" size="sm" asChild className="h-8 text-white/60 hover:text-white hover:bg-white/5 rounded-lg px-3 transition-colors">
               <a 
-                href={data?.page?.status === "published" ? `/p/${data?.page?.slug}` : `/p/${data?.page?.slug}?preview=1`} 
+                href={
+                  data?.page?.status === "published" && (data?.page as any)?.url_path
+                    ? `/${(data?.page as any).url_path}/`
+                    : `/p/${data?.page?.slug}?preview=1`
+                }
                 target="_blank" 
                 rel="noreferrer"
                 className="flex items-center"
@@ -334,6 +418,115 @@ export default function PageEditor() {
                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
+               </div>
+
+               <div className="pt-8 border-t border-white/5 space-y-4">
+                 <div className="flex items-center justify-between">
+                   <h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">URL da página</h3>
+                   <div className="flex items-center gap-2">
+                     <Label className="text-[10px] uppercase text-white/40">Editar manualmente</Label>
+                     <Switch
+                       checked={urlFields.slug_override}
+                       onCheckedChange={(v) =>
+                         setUrlFields((f) => ({
+                           ...f,
+                           slug_override: v,
+                           url_path: v ? (f.url_path || buildUrlPath(f)) : f.url_path,
+                         }))
+                       }
+                     />
+                   </div>
+                 </div>
+
+                 {!urlFields.slug_override ? (
+                   <div className="grid grid-cols-2 gap-3">
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] uppercase text-white/40">Procedimento</Label>
+                       <Input
+                         className="bg-white/5 border-white/10 rounded-xl text-sm"
+                         placeholder="bioestimuladores"
+                         value={urlFields.procedimento}
+                         onChange={(e) =>
+                           setUrlFields((f) => ({ ...f, procedimento: slugifySegment(e.target.value) }))
+                         }
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] uppercase text-white/40">Cidade</Label>
+                       <Input
+                         className="bg-white/5 border-white/10 rounded-xl text-sm"
+                         placeholder="curitiba"
+                         value={urlFields.cidade}
+                         onChange={(e) =>
+                           setUrlFields((f) => ({ ...f, cidade: slugifySegment(e.target.value) }))
+                         }
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] uppercase text-white/40">Modificador (opcional)</Label>
+                       <Input
+                         className="bg-white/5 border-white/10 rounded-xl text-sm"
+                         placeholder="flacidez · para-mulheres-ate-35-anos"
+                         value={urlFields.modificador}
+                         onChange={(e) =>
+                           setUrlFields((f) => ({ ...f, modificador: slugifySegment(e.target.value) }))
+                         }
+                       />
+                     </div>
+                     <div className="space-y-1.5">
+                       <Label className="text-[10px] uppercase text-white/40">Tipo do modificador</Label>
+                       <Select
+                         value={urlFields.modificador_tipo || "none"}
+                         onValueChange={(v) =>
+                           setUrlFields((f) => ({
+                             ...f,
+                             modificador_tipo: v === "none" ? "" : (v as any),
+                           }))
+                         }
+                       >
+                         <SelectTrigger className="bg-white/5 border-white/10 rounded-xl text-sm">
+                           <SelectValue placeholder="—" />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="none">—</SelectItem>
+                           <SelectItem value="publico">Público (ex: mulheres 35+)</SelectItem>
+                           <SelectItem value="indicacao">Indicação (ex: flacidez)</SelectItem>
+                           <SelectItem value="objetivo">Objetivo (ex: rejuvenescimento)</SelectItem>
+                           <SelectItem value="area_corporal">Área corporal (ex: rosto)</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
+                   </div>
+                 ) : (
+                   <div className="space-y-1.5">
+                     <Label className="text-[10px] uppercase text-white/40">URL Path completo</Label>
+                     <Input
+                       className="bg-white/5 border-white/10 rounded-xl text-sm font-mono"
+                       placeholder="protocolo-batel/bioestimuladores/em-curitiba/flacidez"
+                       value={urlFields.url_path}
+                       onChange={(e) =>
+                         setUrlFields((f) => ({
+                           ...f,
+                           url_path: e.target.value.replace(/^\/+|\/+$/g, ""),
+                         }))
+                       }
+                     />
+                     <p className="text-[10px] text-white/30">
+                       Use apenas a-z, 0-9, hífen e barras. Sem acentos.
+                     </p>
+                   </div>
+                 )}
+
+                 <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 space-y-2">
+                   <div className="text-[9px] uppercase tracking-widest text-white/30">URL final</div>
+                   <div className="text-xs font-mono text-brand-gold break-all">/{previewUrlPath}/</div>
+                   {urlChanged && (
+                     <div className="text-[10px] text-yellow-400/80 flex items-start gap-1.5">
+                       <AlertTriangle className="size-3 mt-0.5 shrink-0" />
+                       <span>A URL antiga será redirecionada automaticamente (301).</span>
+                     </div>
+                   )}
+                 </div>
                </div>
 
                <div className="pt-8 border-t border-white/5 space-y-8">
