@@ -31,6 +31,15 @@ import { arrayMove } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
 import { EditorLayout } from "@/components/admin/editor/EditorLayout";
 import { SidebarBlockList } from "@/components/admin/editor/SidebarBlockList";
+import { buildUrlPath, validateUrlParts, slugifySegment } from "@/lib/url-path";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
 const asJson = (v: unknown) => v as Json;
@@ -88,6 +97,15 @@ export default function PageEditor() {
      metadata: {} as Record<string, unknown>,
      source_snapshot: null as string | null,
    });
+  const [urlFields, setUrlFields] = useState({
+    categoria: "protocolo-batel",
+    procedimento: "",
+    cidade: "curitiba",
+    modificador: "",
+    modificador_tipo: "" as "" | "publico" | "indicacao" | "objetivo" | "area_corporal",
+    slug_override: false,
+    url_path: "",
+  });
   const [blocks, setBlocks] = useState<DraftBlock[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
@@ -119,6 +137,17 @@ export default function PageEditor() {
       meta_description: data.page.meta_description ?? "",
       metadata: (data.page as any).metadata ?? {},
       source_snapshot: (data.page as any).source_snapshot ?? null,
+    });
+
+    const p = data.page as any;
+    setUrlFields({
+      categoria: p.categoria ?? "protocolo-batel",
+      procedimento: p.procedimento ?? p.slug ?? "",
+      cidade: p.cidade ?? "curitiba",
+      modificador: p.modificador ?? "",
+      modificador_tipo: p.modificador_tipo ?? "",
+      slug_override: !!p.slug_override,
+      url_path: p.url_path ?? "",
     });
 
     // Mandatory diff for legacy pages
@@ -209,9 +238,44 @@ export default function PageEditor() {
 
   async function handleSave() {
     if (!data?.page) return;
+    // Validar URL fields
+    const urlErrors = validateUrlParts({
+      categoria: urlFields.categoria,
+      procedimento: urlFields.procedimento,
+      cidade: urlFields.cidade,
+      modificador: urlFields.modificador || null,
+    });
+    if (urlErrors.length > 0) {
+      toast({
+        title: "URL inválida",
+        description: urlErrors.map((e) => e.message).join(" · "),
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     try {
-      await supabase.from("pages").update({ title: pageMeta.title, meta_title: pageMeta.meta_title || null, meta_description: pageMeta.meta_description || null, metadata: asJson(pageMeta.metadata ?? {}) }).eq("id", data.page.id);
+      const urlUpdate: Record<string, unknown> = {
+        categoria: urlFields.categoria,
+        procedimento: urlFields.procedimento,
+        cidade: urlFields.cidade,
+        modificador: urlFields.modificador || null,
+        modificador_tipo: urlFields.modificador_tipo || null,
+        slug_override: urlFields.slug_override,
+      };
+      if (urlFields.slug_override && urlFields.url_path) {
+        urlUpdate.url_path = urlFields.url_path;
+      }
+      await supabase
+        .from("pages")
+        .update({
+          title: pageMeta.title,
+          meta_title: pageMeta.meta_title || null,
+          meta_description: pageMeta.meta_description || null,
+          metadata: asJson(pageMeta.metadata ?? {}),
+          ...urlUpdate,
+        } as any)
+        .eq("id", data.page.id);
       if (deletedIds.length) await supabase.from("page_blocks").delete().in("id", deletedIds);
       const inserts = blocks.filter((b) => b._new).map((b) => ({ page_id: data.page.id, type: b.type, position: b.position, enabled: b.enabled, mode: b.mode, data: asJson(b.data), html_content: b.html_content }));
       if (inserts.length) await supabase.from("page_blocks").insert(inserts as any);
@@ -250,6 +314,18 @@ export default function PageEditor() {
 
   const dirty = blocks.some((b) => b._dirty || b._new) || deletedIds.length > 0;
   const selected = blocks.find((b) => b.id === selectedId) || null;
+
+  // URL preview em tempo real
+  const previewUrlPath = urlFields.slug_override
+    ? urlFields.url_path
+    : buildUrlPath({
+        categoria: urlFields.categoria,
+        procedimento: urlFields.procedimento,
+        cidade: urlFields.cidade,
+        modificador: urlFields.modificador || null,
+      });
+  const urlChanged =
+    !!(data.page as any).url_path && (data.page as any).url_path !== previewUrlPath;
 
   return (
     <EditorLayout
