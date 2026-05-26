@@ -642,16 +642,22 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       .map((f: { question: string; answer: string }) => ({ ...f, source: "ai" }));
 
     // Deduplicação básica de FAQs (por similaridade de pergunta)
-    const mergedFaqs = [...ownFaqs];
-    if (mergedFaqs.length < 8) {
-      for (const aiFaq of aiFaqs) {
-        const isDuplicate = mergedFaqs.some(f => {
-          const q1 = f.question.toLowerCase().replace(/[^a-z0-9]/g, '');
-          const q2 = aiFaq.question.toLowerCase().replace(/[^a-z0-9]/g, '');
-          return q1.includes(q2) || q2.includes(q1);
-        });
-        if (!isDuplicate && mergedFaqs.length < 12) {
-          mergedFaqs.push(aiFaq);
+    let mergedFaqs = [...ownFaqs];
+    if (ownFaqs.length > 3) {
+      // Regra Nova: Se houver mais de 3 FAQs reais, usar SOMENTE elas (Real-first).
+      console.log(`Using only ${ownFaqs.length} real FAQs (threshold > 3)`);
+    } else {
+      // Se houver 3 ou menos, complementa moderadamente com IA
+      if (mergedFaqs.length < 8) {
+        for (const aiFaq of aiFaqs) {
+          const isDuplicate = mergedFaqs.some(f => {
+            const q1 = f.question.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const q2 = aiFaq.question.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return q1.includes(q2) || q2.includes(q1);
+          });
+          if (!isDuplicate && mergedFaqs.length < 10) {
+            mergedFaqs.push(aiFaq);
+          }
         }
       }
     }
@@ -718,16 +724,25 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
       .split(/\s+/)
       .filter((w) => w.length >= 4);
 
-    function imageScore(url: string) {
+    function imageScore(url: string, alt?: string) {
       const u = url.toLowerCase();
+      const a = (alt || "").toLowerCase();
       let s = 0;
-      for (const k of themeKeywords) if (u.includes(k)) s += 10;
-      if (/-ad\d|antes-?e?-?depois|antes_depois/i.test(u)) s += 15; // AD ganha muito peso agora
-      if (/\/wp-content\/uploads\//i.test(u)) s += 2;
-      if (/\.(jpe?g|webp)(\?|$)/i.test(u)) s += 1;
+      
+      // Prioridade máxima: OG Image (identificada no research-topic)
+      if (a.includes("og)") || a.includes("principal")) s += 100;
+
+      for (const k of themeKeywords) {
+        if (u.includes(k)) s += 10;
+        if (a.includes(k)) s += 15;
+      }
+      
+      if (/-ad\d|antes-?e?-?depois|antes_depois/i.test(u)) s += 5;
+      if (/\/wp-content\/uploads\//i.test(u)) s += 5;
+      if (/\.(jpe?g|webp)(\?|$)/i.test(u)) s += 2;
       return s;
     }
-    candidateImages.sort((a, b) => imageScore(b.url) - imageScore(a.url));
+    candidateImages.sort((a, b) => imageScore(b.url, b.alt) - imageScore(a.url, a.alt));
 
     // -----------------------------------------------------------------------
     // Distribuição de Imagens (Preservação Premium Batel)
@@ -739,8 +754,8 @@ Para cursos, escreva header e intro contextualizados — os cards continuam vind
     const isBotox = /\b(botox|toxina|botulin)/i.test(tema);
     const genericAestheticImage = "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?q=80&w=2070&auto=format&fit=crop";
     
-    // Tenta pegar a melhor imagem para o Hero (aquela com maior score e que não seja AD)
-    const bestHeroCandidate = candidateHeroImages.find(img => !/-ad\d|antes-?e?-?depois|antes_depois/i.test(img.url.toLowerCase()));
+    // Tenta pegar o melhor candidato (o com maior score) que não seja explicitamente Antes/Depois para o Hero se possível
+    const bestHeroCandidate = candidateHeroImages.find(img => !/-ad\d|antes-?e?-?depois|antes_depois/i.test(img.url.toLowerCase())) || candidateHeroImages[0];
     
     const finalHeroImage = bestHeroCandidate 
       ? sanitizeUrl(bestHeroCandidate.url) 
