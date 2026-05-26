@@ -8,7 +8,8 @@ import { Loader2, AlertCircle } from "lucide-react";
 
 export default function DocumentViewer({ type: propType }: { type?: "tcle" | "technical_differential" }) {
   const { type: paramType, slug } = useParams();
-  const type = propType || paramType;
+  const rawType = propType || paramType;
+  const type = rawType === "diferenciais" ? "technical_differential" : rawType;
 
 
   const { data: document, isLoading, error } = useQuery({
