@@ -613,7 +613,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      site_settings_public: {
+        Row: {
+          address: string | null
+          cep: string | null
+          google_maps_url: string | null
+          id: number | null
+          phone: string | null
+          rt_image: string | null
+          rt_name: string | null
+          updated_at: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          cep?: string | null
+          google_maps_url?: string | null
+          id?: number | null
+          phone?: string | null
+          rt_image?: string | null
+          rt_name?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          cep?: string | null
+          google_maps_url?: string | null
+          id?: number | null
+          phone?: string | null
+          rt_image?: string | null
+          rt_name?: string | null
+          updated_at?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_delete_page: { Args: { _page_id: string }; Returns: Json }
