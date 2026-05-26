@@ -34,12 +34,19 @@ import { SidebarBlockList } from "@/components/admin/editor/SidebarBlockList";
 import { buildUrlPath, validateUrlParts, slugifySegment } from "@/lib/url-path";
 import { Switch } from "@/components/ui/switch";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProcedureDocumentsTab } from "@/components/admin/documents/ProcedureDocumentsTab";
 
 type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
 const asJson = (v: unknown) => v as Json;
