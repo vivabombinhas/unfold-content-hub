@@ -1,0 +1,23 @@
+{
+  "tema": "Preenchimento de Malar",
+  "slug": "preenchimento-de-malar-teste",
+  "research": {
+    "publico_alvo": "Pessoas que buscam repor volume no terço médio do rosto.",
+    "termos": ["malar", "zigomático", "maçãs do rosto", "volume facial"],
+    "area_anatomica": "terco_medio"
+  },
+  "links_referencia": ["https://exemplo.com/malar"],
+  "own_old_page": true,
+  "old_page_content": {
+    "testimonials": [
+      {"name": "Clara", "text": "Adorei o preenchimento de malar, meu rosto ficou mais erguido."}
+    ],
+    "faqs": [
+      {"question": "Dói fazer malar?", "answer": "Não, usamos anestésico."}
+    ],
+    "images": [
+      {"url": "https://esteticabatel.com.br/wp-content/uploads/2024/09/Malar-Curitiba.jpg", "alt": "Imagem principal (OG)"},
+      {"url": "https://outrosite.com/logo.png", "alt": "Logo do site"}
+    ]
+  }
+}
