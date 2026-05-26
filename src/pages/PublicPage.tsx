@@ -175,19 +175,24 @@ export default function PublicPage({ slugOverride }: PublicPageProps = {}) {
   }
 
 
-   return (
-     <div className={cn("bg-brand-black text-brand-text-light min-h-screen", previewMode && "preview-mode")}>
-       <SEO 
-         title={data.page.meta_title || data.page.title}
-         description={data.page.meta_description || ""}
-         slug={data.page.slug}
-         urlPath={(data.page as any).url_path}
-         status={data.page.status}
-         previewMode={previewMode}
-           image={pageImage}
-           heroImage={heroImage}
-           schemas={schemas}
-        />
+    return (
+      <div className={cn("bg-brand-black text-brand-text-light min-h-screen", previewMode && "preview-mode")}>
+        <SEO 
+          title={data.page.meta_title || data.page.title}
+          description={data.page.meta_description || ""}
+          slug={data.page.slug}
+          urlPath={(data.page as any).url_path}
+          categoria={(data.page as any).categoria}
+          procedimento={(data.page as any).procedimento}
+          cidade={(data.page as any).cidade}
+          modificador={(data.page as any).modificador}
+          modificadorTipo={(data.page as any).modificador_tipo}
+          status={data.page.status}
+          previewMode={previewMode}
+            image={pageImage}
+            heroImage={heroImage}
+            schemas={schemas}
+         />
        <Header breadcrumbCurrent={data.page.title} />
 
       {previewMode && data.page.status !== "published" && (
