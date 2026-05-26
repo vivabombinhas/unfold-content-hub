@@ -15,7 +15,7 @@ export default function DocumentViewer() {
       const { data, error } = await supabase
         .from("procedure_documents")
         .select("*, pages(title, metadata)")
-        .eq("document_type", type)
+        .eq("document_type", type as "tcle" | "technical_differential")
         .eq("slug", slug)
         .eq("status", "published")
         .maybeSingle();
