@@ -116,6 +116,7 @@ export default function PageEditor() {
   });
   const [blocks, setBlocks] = useState<DraftBlock[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -179,6 +180,7 @@ export default function PageEditor() {
 
   useEffect(() => {
     if (selectedId) {
+      setIsDrawerOpen(true);
       const iframe = document.querySelector('iframe');
       iframe?.contentWindow?.postMessage({ type: 'SELECT_BLOCK', id: selectedId }, '*');
     }
@@ -338,8 +340,11 @@ export default function PageEditor() {
   return (
     <EditorLayout
       title={pageMeta.title || (data?.page ? data.page.slug : "")}
-      isDrawerOpen={!!selectedId}
-      onCloseDrawer={() => setSelectedId(null)}
+      isDrawerOpen={isDrawerOpen}
+      onCloseDrawer={() => {
+        setSelectedId(null);
+        setIsDrawerOpen(false);
+      }}
       isSidebarCollapsed={isSidebarCollapsed}
       setIsSidebarCollapsed={setIsSidebarCollapsed}
       topbar={
