@@ -14,6 +14,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProcedureDocument = Database["public"]["Tables"]["procedure_documents"]["Row"];
+type AdminProcedureDocument = ProcedureDocument & {
+  pages: { title: string | null; slug: string | null } | null;
+};
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-500/10 text-gray-400 border-gray-500/20",
@@ -47,16 +53,16 @@ export default function AdminDocuments() {
         .order("updated_at", { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as AdminProcedureDocument[];
     },
   });
 
   const filteredDocs = documents?.filter(doc => 
-    (doc.pages as any)?.title?.toLowerCase().includes(search.toLowerCase()) ||
+    doc.pages?.title?.toLowerCase().includes(search.toLowerCase()) ||
     doc.title?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const getDocumentHref = (doc: any) => {
+  const getDocumentHref = (doc: AdminProcedureDocument) => {
     const urlType = doc.document_type === "tcle" ? "tcle" : "diferenciais";
     return `/documentos/${urlType}/${doc.slug}${doc.status === "published" ? "" : "?preview=1"}`;
   };
@@ -108,7 +114,7 @@ export default function AdminDocuments() {
 
               <div className="space-y-1 mb-6">
                 <h3 className="text-white font-medium line-clamp-1 group-hover:text-brand-gold transition-colors">
-                  {doc.document_type === 'tcle' ? 'TCLE' : 'Diferenciais'}: {(doc.pages as any)?.title}
+                  {doc.document_type === 'tcle' ? 'TCLE' : 'Diferenciais'}: {doc.pages?.title}
                 </h3>
                 <div className="flex items-center gap-2 text-[11px] text-white/30">
                   <Clock className="size-3" />
@@ -123,7 +129,7 @@ export default function AdminDocuments() {
                   size="sm" 
                   className="flex-1 bg-white/[0.02] border-white/5 text-white/60 hover:text-white hover:bg-white/5 rounded-xl h-9 text-xs"
                 >
-                  <Link to={`/admin/paginas/${(doc.pages as any)?.slug}`}>
+                  <Link to={`/admin/paginas/${doc.pages?.slug}`}>
                     Gerenciar no Editor
                   </Link>
                 </Button>
