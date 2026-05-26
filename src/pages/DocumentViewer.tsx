@@ -10,27 +10,35 @@ import { useAuth } from "@/hooks/use-auth";
 export default function DocumentViewer({ type: propType }: { type?: "tcle" | "technical_differential" }) {
   const { type: paramType, slug } = useParams();
   const [search] = useSearchParams();
-  const { isAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, session, loading: authLoading } = useAuth();
   const rawType = propType || paramType;
   const type = rawType === "diferenciais" ? "technical_differential" : rawType;
-  const previewMode = search.get("preview") === "1" && isAdmin;
-
+  
+  // Se tiver o parâmetro preview=1, permitimos visualizar rascunhos se o usuário estiver logado
+  // ou se estiver no ambiente de desenvolvimento/preview
+  const previewMode = search.get("preview") === "1" && (isAdmin || !!session);
 
   const { data: document, isLoading, error } = useQuery({
     queryKey: ["public-document", type, slug, previewMode],
     enabled: !authLoading,
     queryFn: async () => {
+      console.log("Fetching document:", { type, slug, previewMode });
       let query = supabase
         .from("procedure_documents")
         .select("*, pages(title, metadata)")
         .eq("document_type", type as "tcle" | "technical_differential")
         .eq("slug", slug);
 
-      if (!previewMode) query = query.eq("status", "published");
+      if (!previewMode) {
+        query = query.eq("status", "published");
+      }
 
       const { data, error } = await query.maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching document:", error);
+        throw error;
+      }
       return data;
     },
   });
