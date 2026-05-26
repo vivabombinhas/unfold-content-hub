@@ -125,20 +125,28 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
         ],
-        temperature: 0.3,
       }),
     });
 
+    if (!aiResponse.ok) {
+      const errorData = await aiResponse.text();
+      console.error("AI Gateway Error:", errorData);
+      throw new Error(`Erro na IA: ${aiResponse.status}`);
+    }
+
     const aiData = await aiResponse.json();
-    let htmlContent = aiData.choices[0].message.content;
     
-    // Remove markdown code blocks if any
-    htmlContent = htmlContent.replace(/```html/g, "").replace(/```/g, "").trim();
+    if (!aiData.choices?.[0]?.message?.content) {
+      console.error("Unexpected AI response format:", aiData);
+      throw new Error("Resposta da IA em formato inválido");
+    }
+
+    let htmlContent = aiData.choices[0].message.content;
 
     // 4. Save to Database
     const docTitle = isTCLE ? `TCLE - ${page.title}` : `Diferenciais Técnicos - ${page.title}`;
