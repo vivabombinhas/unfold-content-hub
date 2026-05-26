@@ -24,6 +24,7 @@ import PageEditor from "./pages/admin/PageEditor.tsx";
  import BatchPageCreation from "./pages/admin/BatchPageCreation.tsx";
 import PageCreationWizard from "./pages/admin/PageCreationWizard.tsx";
 import Settings from "./pages/admin/Settings.tsx";
+import AdminDocuments from "./pages/admin/AdminDocuments.tsx";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const queryClient = new QueryClient();
                 <Route index element={<AdminDashboard />} />
                 <Route path="torre-de-controle" element={<ControlTower />} />
                 <Route path="paginas" element={<PagesList />} />
+                <Route path="documentos" element={<AdminDocuments />} />
                 <Route path="paginas/nova" element={<PageCreationWizard />} />
                 <Route path="paginas/lote" element={<BatchPageCreation />} />
                 <Route path="paginas/nova-legado" element={<NewPageFromTopic />} />
