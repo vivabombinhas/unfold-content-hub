@@ -14,9 +14,10 @@ serve(async (req) => {
   try {
     const url = new URL(req.url)
     const slug = url.searchParams.get('slug')
+    const path = url.searchParams.get('path')
 
-    if (!slug) {
-      return new Response("Missing slug parameter", { status: 400 })
+    if (!slug && !path) {
+      return new Response("Missing slug or path parameter", { status: 400 })
     }
 
     const supabase = createClient(
@@ -25,11 +26,15 @@ serve(async (req) => {
     )
 
     // 1. Fetch Page Data
-    const { data: page, error: pageError } = await supabase
-      .from('pages')
-      .select('*')
-      .eq('slug', slug)
-      .maybeSingle()
+    let query = supabase.from('pages').select('*')
+    
+    if (path) {
+      query = query.eq('url_path', path.replace(/^\//, '').replace(/\/$/, ''))
+    } else {
+      query = query.eq('slug', slug)
+    }
+
+    const { data: page, error: pageError } = await query.maybeSingle()
 
     if (pageError) {
       throw pageError
@@ -64,7 +69,8 @@ serve(async (req) => {
     const fullTitle = pageTitle + " · " + siteTitle
     const description = pageData.meta_description || "Protocolos exclusivos de estética avançada na Clínica Batel, Curitiba."
     const siteUrl = "https://esteticabatel.com.br"
-    const canonical = siteUrl + "/" + slug + "/"
+    const displayPath = page.url_path || slug
+    const canonical = siteUrl + "/" + displayPath.replace(/^\//, "").replace(/\/$/, "") + "/"
     const shouldNoIndex = page.status !== 'published'
     
     const heroBlock = blocks.find((b: any) => b.type === 'hero')
@@ -385,42 +391,101 @@ serve(async (req) => {
        articleHtml += EEAT_FOOTER;
     }
 
-    const schemas: any[] = [
-       {
-         "@context": "https://schema.org",
-         "@type": "MedicalProcedure",
-         "name": pageTitle,
-         "description": description,
-         "procedureType": "NonInvasiveProcedure",
-         "bodyLocation": pageData.metadata?.area_anatomica || "Corpo",
-         "provider": {
-           "@type": "MedicalOrganization",
-           "name": "Clínica de Estética Batel",
-           "url": siteUrl,
-           "logo": "https://esteticabatel.com.br/logo.png",
-           "address": {
-             "@type": "PostalAddress",
-             "addressLocality": "Curitiba",
-             "addressRegion": "PR",
-             "addressCountry": "BR"
-           }
-         },
-         "performer": {
-           "@type": "Person",
-           "name": "Dra. Daniele Florêncio",
-           "jobTitle": "Biomédica",
-           "identifier": "CRBM 8242-PR"
-         }
-       },
-      {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Início", "item": siteUrl },
-          { "@type": "ListItem", "position": 2, "name": pageTitle, "item": canonical }
-        ]
+    // 5. Schema & Breadcrumbs
+    const schemas: any[] = []
+    
+    // Medical/Procedure Schema with modifier-aware logic
+    const medicalSchema: any = {
+      "@context": "https://schema.org",
+      "@type": "MedicalProcedure",
+      "name": pageTitle,
+      "description": description,
+      "procedureType": "NonInvasiveProcedure",
+      "bodyLocation": pageData.metadata?.area_anatomica || pageData.area_corporal || "Corpo",
+      "provider": {
+        "@type": "MedicalOrganization",
+        "name": "Clínica de Estética Batel",
+        "url": siteUrl,
+        "logo": siteUrl + "/logo.png",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Curitiba",
+          "addressRegion": "PR",
+          "addressCountry": "BR"
+        }
+      },
+      "performer": {
+        "@type": "Person",
+        "name": name,
+        "jobTitle": "Biomédica",
+        "identifier": register
       }
+    }
+
+    // Add specific medical context based on modifier_tipo
+    if (page.modificador && page.modificador_tipo) {
+      switch (page.modificador_tipo) {
+        case 'indicacao':
+          medicalSchema.indication = {
+            "@type": "MedicalIndication",
+            "name": page.modificador
+          };
+          break;
+        case 'publico':
+          medicalSchema.audience = {
+            "@type": "Audience",
+            "audienceType": page.modificador
+          };
+          break;
+        case 'area-corporal':
+          medicalSchema.bodyLocation = page.modificador;
+          break;
+        case 'objetivo':
+          medicalSchema.outcome = page.modificador;
+          break;
+      }
+    }
+
+    schemas.push(medicalSchema)
+
+    // Dynamic Hierarchical Breadcrumbs
+    const breadcrumbList: any[] = [
+      { "@type": "ListItem", "position": 1, "name": "Início", "item": siteUrl }
     ]
+
+    if (page.categoria) {
+      const categoryName = page.categoria.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')
+      breadcrumbList.push({
+        "@type": "ListItem",
+        "position": 2,
+        "name": categoryName,
+        "item": siteUrl + "/" + page.categoria + "/"
+      })
+    }
+
+    if (page.procedimento) {
+      const procName = page.procedimento.split('-').map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')
+      const procPath = (page.categoria ? page.categoria + "/" : "") + page.procedimento
+      breadcrumbList.push({
+        "@type": "ListItem",
+        "position": breadcrumbList.length + 1,
+        "name": procName,
+        "item": siteUrl + "/" + procPath + "/"
+      })
+    }
+
+    breadcrumbList.push({
+      "@type": "ListItem",
+      "position": breadcrumbList.length + 1,
+      "name": pageTitle,
+      "item": canonical
+    })
+
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": breadcrumbList
+    })
 
     if (faqItems.length > 0) {
       schemas.push({
