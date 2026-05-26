@@ -12,18 +12,19 @@ import {
   ExternalLink,
   Save,
   Send,
-   Undo2,
-   Loader2,
-   Layout,
-   Settings2,
-   Sparkles,
-   AlertTriangle,
-   ShieldCheck,
-   History,
- } from "lucide-react";
+  Undo2,
+  Loader2,
+  Layout,
+  Settings2,
+  Sparkles,
+  AlertTriangle,
+  ShieldCheck,
+  History,
+  FileText,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
- import { BlockForm } from "@/components/admin/BlockForm";
- import { DiffViewer } from "@/components/admin/DiffViewer";
+import { BlockForm } from "@/components/admin/BlockForm";
+import { DiffViewer } from "@/components/admin/DiffViewer";
 import { ImportBlockModal } from "@/components/admin/ImportBlockModal";
 import { CopyLinkButton } from "@/components/admin/CopyLinkButton";
 import { useAuth } from "@/hooks/use-auth";
@@ -416,217 +417,232 @@ export default function PageEditor() {
               <BlockForm type={selected.type} data={selected.data} onChange={(next) => markDirty(selected.id, { data: next })} pageTitle={pageMeta.title} />
             </>
           ) : (
-            <div className="space-y-8">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><Settings2 className="size-4 text-white/60" /></div>
-                <div><h4 className="text-xs uppercase tracking-[0.2em] text-white/40 font-medium">Página</h4><p className="text-sm font-medium text-white/90">Configurações Gerais</p></div>
-              </div>
-               <div className="space-y-6">
-                 <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
-                 <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
-                 <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
-               </div>
+            <Tabs defaultValue="settings" className="space-y-8">
+              <TabsList className="bg-white/5 border border-white/10 w-full p-1 rounded-xl h-11">
+                <TabsTrigger value="settings" className="flex-1 rounded-lg data-[state=active]:bg-brand-gold data-[state=active]:text-brand-green">
+                  <Settings2 className="size-4 mr-2" /> Configurações
+                </TabsTrigger>
+                <TabsTrigger value="documents" className="flex-1 rounded-lg data-[state=active]:bg-brand-gold data-[state=active]:text-brand-green">
+                  <FileText className="size-4 mr-2" /> Documentos
+                </TabsTrigger>
+              </TabsList>
 
-               <div className="pt-8 border-t border-white/5 space-y-4">
-                 <div className="flex items-center justify-between">
-                   <h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">URL da página</h3>
-                   <div className="flex items-center gap-2">
-                     <Label className="text-[10px] uppercase text-white/40">Editar manualmente</Label>
-                     <Switch
-                       checked={urlFields.slug_override}
-                       onCheckedChange={(v) =>
-                         setUrlFields((f) => ({
-                           ...f,
-                           slug_override: v,
-                           url_path: v ? (f.url_path || buildUrlPath(f)) : f.url_path,
-                         }))
-                       }
-                     />
-                   </div>
-                 </div>
+              <TabsContent value="settings" className="space-y-8 mt-0 focus-visible:outline-none">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center border border-white/10"><Settings2 className="size-4 text-white/60" /></div>
+                  <div><h4 className="text-xs uppercase tracking-[0.2em] text-white/40 font-medium">Página</h4><p className="text-sm font-medium text-white/90">Configurações Gerais</p></div>
+                </div>
+                <div className="space-y-6">
+                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Título</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.title} onChange={(e) => setPageMeta((p) => ({ ...p, title: e.target.value }))} /></div>
+                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Title</Label><Input className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_title} onChange={(e) => setPageMeta((p) => ({ ...p, meta_title: e.target.value }))} /></div>
+                  <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">SEO Description</Label><Textarea rows={4} className="bg-white/5 border-white/10 rounded-xl focus:ring-brand-gold/50" value={pageMeta.meta_description} onChange={(e) => setPageMeta((p) => ({ ...p, meta_description: e.target.value }))} /></div>
+                </div>
 
-                 {!urlFields.slug_override ? (
-                   <div className="grid grid-cols-2 gap-3">
-                     <div className="space-y-1.5">
-                       <Label className="text-[10px] uppercase text-white/40">Procedimento</Label>
-                       <Input
-                         className="bg-white/5 border-white/10 rounded-xl text-sm"
-                         placeholder="bioestimuladores"
-                         value={urlFields.procedimento}
-                         onChange={(e) =>
-                           setUrlFields((f) => ({ ...f, procedimento: slugifySegment(e.target.value) }))
-                         }
-                       />
-                     </div>
-                     <div className="space-y-1.5">
-                       <Label className="text-[10px] uppercase text-white/40">Cidade</Label>
-                       <Input
-                         className="bg-white/5 border-white/10 rounded-xl text-sm"
-                         placeholder="curitiba"
-                         value={urlFields.cidade}
-                         onChange={(e) =>
-                           setUrlFields((f) => ({ ...f, cidade: slugifySegment(e.target.value) }))
-                         }
-                       />
-                     </div>
-                     <div className="space-y-1.5">
-                       <Label className="text-[10px] uppercase text-white/40">Modificador (opcional)</Label>
-                       <Input
-                         className="bg-white/5 border-white/10 rounded-xl text-sm"
-                         placeholder="flacidez · para-mulheres-ate-35-anos"
-                         value={urlFields.modificador}
-                         onChange={(e) =>
-                           setUrlFields((f) => ({ ...f, modificador: slugifySegment(e.target.value) }))
-                         }
-                       />
-                     </div>
-                     <div className="space-y-1.5">
-                       <Label className="text-[10px] uppercase text-white/40">Tipo do modificador</Label>
-                       <Select
-                         value={urlFields.modificador_tipo || "none"}
-                         onValueChange={(v) =>
-                           setUrlFields((f) => ({
-                             ...f,
-                             modificador_tipo: v === "none" ? "" : (v as any),
-                           }))
-                         }
-                       >
-                         <SelectTrigger className="bg-white/5 border-white/10 rounded-xl text-sm">
-                           <SelectValue placeholder="—" />
-                         </SelectTrigger>
-                         <SelectContent>
-                           <SelectItem value="none">—</SelectItem>
-                           <SelectItem value="publico">Público (ex: mulheres 35+)</SelectItem>
-                           <SelectItem value="indicacao">Indicação (ex: flacidez)</SelectItem>
-                           <SelectItem value="objetivo">Objetivo (ex: rejuvenescimento)</SelectItem>
-                           <SelectItem value="area_corporal">Área corporal (ex: rosto)</SelectItem>
-                         </SelectContent>
-                       </Select>
-                     </div>
-                   </div>
-                 ) : (
-                   <div className="space-y-1.5">
-                     <Label className="text-[10px] uppercase text-white/40">URL Path completo</Label>
-                     <Input
-                       className="bg-white/5 border-white/10 rounded-xl text-sm font-mono"
-                       placeholder="protocolo-batel/bioestimuladores/em-curitiba/flacidez"
-                       value={urlFields.url_path}
-                       onChange={(e) =>
-                         setUrlFields((f) => ({
-                           ...f,
-                           url_path: e.target.value.replace(/^\/+|\/+$/g, ""),
-                         }))
-                       }
-                     />
-                     <p className="text-[10px] text-white/30">
-                       Use apenas a-z, 0-9, hífen e barras. Sem acentos.
-                     </p>
-                   </div>
-                 )}
+                <div className="pt-8 border-t border-white/5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">URL da página</h3>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[10px] uppercase text-white/40">Editar manualmente</Label>
+                      <Switch
+                        checked={urlFields.slug_override}
+                        onCheckedChange={(v) =>
+                          setUrlFields((f) => ({
+                            ...f,
+                            slug_override: v,
+                            url_path: v ? (f.url_path || buildUrlPath(f)) : f.url_path,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
 
-                 <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 space-y-2">
-                   <div className="text-[9px] uppercase tracking-widest text-white/30">URL final</div>
-                   <div className="text-xs font-mono text-brand-gold break-all">/{previewUrlPath}/</div>
-                   {urlChanged && (
-                     <div className="text-[10px] text-yellow-400/80 flex items-start gap-1.5">
-                       <AlertTriangle className="size-3 mt-0.5 shrink-0" />
-                       <span>A URL antiga será redirecionada automaticamente (301).</span>
-                     </div>
-                   )}
-                 </div>
-               </div>
+                  {!urlFields.slug_override ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase text-white/40">Procedimento</Label>
+                        <Input
+                          className="bg-white/5 border-white/10 rounded-xl text-sm"
+                          placeholder="bioestimuladores"
+                          value={urlFields.procedimento}
+                          onChange={(e) =>
+                            setUrlFields((f) => ({ ...f, procedimento: slugifySegment(e.target.value) }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase text-white/40">Cidade</Label>
+                        <Input
+                          className="bg-white/5 border-white/10 rounded-xl text-sm"
+                          placeholder="curitiba"
+                          value={urlFields.cidade}
+                          onChange={(e) =>
+                            setUrlFields((f) => ({ ...f, cidade: slugifySegment(e.target.value) }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase text-white/40">Modificador (opcional)</Label>
+                        <Input
+                          className="bg-white/5 border-white/10 rounded-xl text-sm"
+                          placeholder="flacidez · para-mulheres-ate-35-anos"
+                          value={urlFields.modificador}
+                          onChange={(e) =>
+                            setUrlFields((f) => ({ ...f, modificador: slugifySegment(e.target.value) }))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase text-white/40">Tipo do modificador</Label>
+                        <Select
+                          value={urlFields.modificador_tipo || "none"}
+                          onValueChange={(v) =>
+                            setUrlFields((f) => ({
+                              ...f,
+                              modificador_tipo: v === "none" ? "" : (v as any),
+                            }))
+                          }
+                        >
+                          <SelectTrigger className="bg-white/5 border-white/10 rounded-xl text-sm">
+                            <SelectValue placeholder="—" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">—</SelectItem>
+                            <SelectItem value="publico">Público (ex: mulheres 35+)</SelectItem>
+                            <SelectItem value="indicacao">Indicação (ex: flacidez)</SelectItem>
+                            <SelectItem value="objetivo">Objetivo (ex: rejuvenescimento)</SelectItem>
+                            <SelectItem value="area_corporal">Área corporal (ex: rosto)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] uppercase text-white/40">URL Path completo</Label>
+                      <Input
+                        className="bg-white/5 border-white/10 rounded-xl text-sm font-mono"
+                        placeholder="protocolo-batel/bioestimuladores/em-curitiba/flacidez"
+                        value={urlFields.url_path}
+                        onChange={(e) =>
+                          setUrlFields((f) => ({
+                            ...f,
+                            url_path: e.target.value.replace(/^\/+|\/+$/g, ""),
+                          }))
+                        }
+                      />
+                      <p className="text-[10px] text-white/30">
+                        Use apenas a-z, 0-9, hífen e barras. Sem acentos.
+                      </p>
+                    </div>
+                  )}
 
-               <div className="pt-8 border-t border-white/5 space-y-8">
-                 <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context & Compliance</h3></div>
-                   <Button
-                     variant="outline"
-                     size="sm"
-                     onClick={() => setShowAudit(!showAudit)}
-                     className={cn(
-                       "h-7 text-[9px] uppercase tracking-wider transition-all",
-                       showAudit ? "bg-brand-gold text-brand-green border-brand-gold" : "bg-white/5 border-white/10 text-white/60"
-                     )}
-                   >
-                     <History className="size-3 mr-1.5" />
-                     {showAudit ? "Fechar Auditoria" : "Ver Diff Original"}
-                   </Button>
-                 </div>
+                  <div className="rounded-xl bg-white/[0.03] border border-white/5 p-3 space-y-2">
+                    <div className="text-[9px] uppercase tracking-widest text-white/30">URL final</div>
+                    <div className="text-xs font-mono text-brand-gold break-all">/{previewUrlPath}/</div>
+                    {urlChanged && (
+                      <div className="text-[10px] text-yellow-400/80 flex items-start gap-1.5">
+                        <AlertTriangle className="size-3 mt-0.5 shrink-0" />
+                        <span>A URL antiga será redirecionada automaticamente (301).</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-                 {showAudit && pageMeta.source_snapshot && (
-                   <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-                     <div className="flex items-center gap-2 text-brand-gold">
-                       <History className="size-3" />
-                       <span className="text-[10px] uppercase tracking-wider font-bold">Auditoria: Original vs Gerado</span>
-                     </div>
-                     <DiffViewer
-                       oldText={pageMeta.source_snapshot}
-                       newText={blocks.map(b => {
-                         const d = b.data as any;
-                         return `${d.title || d.title_html || ''}\n${d.paragraphs?.join('\n') || d.body || d.text || ''}`;
-                       }).join('\n\n')}
-                       className="max-h-[500px] overflow-y-auto"
-                     />
-                     <p className="text-[9px] text-white/30 italic">O diff compara o snapshot extraído (snapshot bruto) com o texto principal dos blocos gerados.</p>
-                   </div>
-                 )}
+                <div className="pt-8 border-t border-white/5 space-y-8">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2"><Sparkles className="size-3.5 text-brand-gold" /><h3 className="text-[11px] uppercase text-brand-gold/80 font-medium">IA Context & Compliance</h3></div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAudit(!showAudit)}
+                      className={cn(
+                        "h-7 text-[9px] uppercase tracking-wider transition-all",
+                        showAudit ? "bg-brand-gold text-brand-green border-brand-gold" : "bg-white/5 border-white/10 text-white/60"
+                      )}
+                    >
+                      <History className="size-3 mr-1.5" />
+                      {showAudit ? "Fechar Auditoria" : "Ver Diff Original"}
+                    </Button>
+                  </div>
 
-                 <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-4">
-                     <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
-                     <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
-                   </div>
-                   {pageMeta.metadata?.compliance_valid !== undefined && (
-                     <Badge variant="outline" className={cn(
-                       "text-[9px] uppercase tracking-widest",
-                       pageMeta.metadata.compliance_valid ? "text-green-400 border-green-400/20 bg-green-400/5" : "text-yellow-400 border-yellow-400/20 bg-yellow-400/5"
-                     )}>
-                       {pageMeta.metadata.compliance_valid ? "Compliance OK" : "Compliance Requer Atenção"}
-                     </Badge>
-                   )}
-                 </div>
+                  {showAudit && pageMeta.source_snapshot && (
+                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center gap-2 text-brand-gold">
+                        <History className="size-3" />
+                        <span className="text-[10px] uppercase tracking-wider font-bold">Auditoria: Original vs Gerado</span>
+                      </div>
+                      <DiffViewer
+                        oldText={pageMeta.source_snapshot}
+                        newText={blocks.map(b => {
+                          const d = b.data as any;
+                          return `${d.title || d.title_html || ''}\n${d.paragraphs?.join('\n') || d.body || d.text || ''}`;
+                        }).join('\n\n')}
+                        className="max-h-[500px] overflow-y-auto"
+                      />
+                      <p className="text-[9px] text-white/30 italic">O diff compara o snapshot extraído (snapshot bruto) com o texto principal dos blocos gerados.</p>
+                    </div>
+                  )}
 
-                 {pageMeta.metadata?.compliance_warnings && (pageMeta.metadata.compliance_warnings as string[]).length > 0 && (
-                   <div className="bg-yellow-400/5 border border-yellow-400/20 p-4 rounded-xl space-y-2">
-                     <div className="flex items-center gap-2 text-yellow-400">
-                       <AlertTriangle className="size-3" />
-                       <span className="text-[10px] uppercase tracking-wider font-bold">Alertas de Compliance</span>
-                     </div>
-                     <ul className="space-y-1">
-                       {(pageMeta.metadata.compliance_warnings as string[]).map((w, i) => (
-                         <li key={i} className="text-[11px] text-white/60 flex items-start gap-2">
-                           <span className="mt-1 size-1 rounded-full bg-yellow-400/40 shrink-0" />
-                           {w}
-                         </li>
-                       ))}
-                     </ul>
-                   </div>
-                 )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Tema</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.tema ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, tema: e.target.value } }))} /></div>
+                      <div className="space-y-2"><Label className="text-[11px] uppercase text-white/30 font-medium">Categoria</Label><Input className="bg-white/5 border-white/10 rounded-xl" value={String(pageMeta.metadata?.categoria ?? "")} onChange={(e) => setPageMeta((p) => ({ ...p, metadata: { ...p.metadata, categoria: e.target.value } }))} /></div>
+                    </div>
+                    {pageMeta.metadata?.compliance_valid !== undefined && (
+                      <Badge variant="outline" className={cn(
+                        "text-[9px] uppercase tracking-widest",
+                        pageMeta.metadata.compliance_valid ? "text-green-400 border-green-400/20 bg-green-400/5" : "text-yellow-400 border-yellow-400/20 bg-yellow-400/5"
+                      )}>
+                        {pageMeta.metadata.compliance_valid ? "Compliance OK" : "Compliance Requer Atenção"}
+                      </Badge>
+                    )}
+                  </div>
 
-                 {(data.page as any).source_metadata?.origin === "batel_legacy" && (
-                   <div className="bg-brand-gold/5 border border-brand-gold/20 p-4 rounded-xl space-y-3">
-                     <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-2 text-brand-gold">
-                         <ShieldCheck className="size-3" />
-                         <span className="text-[10px] uppercase tracking-wider font-bold">Origem Legada Batel</span>
-                       </div>
-                       <History className="size-3 text-brand-gold/40 cursor-help" />
-                     </div>
-                     <div className="grid grid-cols-2 gap-2 text-[10px]">
-                       <div className="p-2 bg-white/5 rounded-lg">
-                         <span className="text-white/40 block mb-1">FAQs Reais</span>
-                         <span className="text-white/90 font-mono">{(data.page as any).source_metadata.stats?.faqs_count ?? 0}</span>
-                       </div>
-                       <div className="p-2 bg-white/5 rounded-lg">
-                         <span className="text-white/40 block mb-1">Depoimentos</span>
-                         <span className="text-white/90 font-mono">{(data.page as any).source_metadata.stats?.testimonials_count ?? 0}</span>
-                       </div>
-                     </div>
-                   </div>
-                 )}
-               </div>
-              </div>
-            )}
+                  {pageMeta.metadata?.compliance_warnings && (pageMeta.metadata.compliance_warnings as string[]).length > 0 && (
+                    <div className="bg-yellow-400/5 border border-yellow-400/20 p-4 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2 text-yellow-400">
+                        <AlertTriangle className="size-3" />
+                        <span className="text-[10px] uppercase tracking-wider font-bold">Alertas de Compliance</span>
+                      </div>
+                      <ul className="space-y-1">
+                        {(pageMeta.metadata.compliance_warnings as string[]).map((w, i) => (
+                          <li key={i} className="text-[11px] text-white/60 flex items-start gap-2">
+                            <span className="mt-1 size-1 rounded-full bg-yellow-400/40 shrink-0" />
+                            {w}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {(data.page as any).source_metadata?.origin === "batel_legacy" && (
+                    <div className="bg-brand-gold/5 border border-brand-gold/20 p-4 rounded-xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-brand-gold">
+                          <ShieldCheck className="size-3" />
+                          <span className="text-[10px] uppercase tracking-wider font-bold">Origem Legada Batel</span>
+                        </div>
+                        <History className="size-3 text-brand-gold/40 cursor-help" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[10px]">
+                        <div className="p-2 bg-white/5 rounded-lg">
+                          <span className="text-white/40 block mb-1">FAQs Reais</span>
+                          <span className="text-white/90 font-mono">{(data.page as any).source_metadata.stats?.faqs_count ?? 0}</span>
+                        </div>
+                        <div className="p-2 bg-white/5 rounded-lg">
+                          <span className="text-white/40 block mb-1">Depoimentos</span>
+                          <span className="text-white/90 font-mono">{(data.page as any).source_metadata.stats?.testimonials_count ?? 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="documents" className="mt-0 focus-visible:outline-none">
+                <ProcedureDocumentsTab pageId={data.page.id} slug={data.page.slug} />
+              </TabsContent>
+            </Tabs>
+          )}
           {isImportModalOpen && <ImportBlockModal open={isImportModalOpen} onOpenChange={setIsImportModalOpen} onImport={handleImportBlock} pageTitle={pageMeta.title} pageCategory={(pageMeta.metadata?.category as any) || ""} />}
         </div>
       }
