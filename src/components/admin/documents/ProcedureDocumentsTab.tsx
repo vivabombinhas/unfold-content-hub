@@ -170,7 +170,7 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
 
             <Button variant="ghost" size="sm" className="h-8 text-xs text-white/40 hover:text-white" asChild>
               <a href={getDocumentHref(type, doc)} target="_blank" rel="noreferrer">
-                <Eye className="size-3.5 mr-2" /> {doc.status === "published" ? "Ver Público" : "Prévia"}
+                <Eye className="size-3.5 mr-2" /> {doc.status === "published" ? "Ver Público" : "Visualizar Rascunho"}
               </a>
             </Button>
           </div>
