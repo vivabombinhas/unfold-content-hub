@@ -101,6 +101,11 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
     toast({ title: "Link copiado!" });
   };
 
+  const getDocumentHref = (type: string, doc: any) => {
+    const urlType = type === "tcle" ? "tcle" : "diferenciais";
+    return `/documentos/${urlType}/${doc.slug}${doc.status === "published" ? "" : "?preview=1"}`;
+  };
+
 
   const tcle = documents?.find(d => d.document_type === "tcle");
   const tech = documents?.find(d => d.document_type === "technical_differential");
@@ -160,8 +165,8 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
             )}
 
             <Button variant="ghost" size="sm" className="h-8 text-xs text-white/40 hover:text-white" asChild>
-              <a href={`/documentos/${type === 'tcle' ? 'tcle' : 'diferenciais'}/${doc.slug}`} target="_blank" rel="noreferrer">
-                <Eye className="size-3.5 mr-2" /> Ver Público
+              <a href={getDocumentHref(type, doc)} target="_blank" rel="noreferrer">
+                <Eye className="size-3.5 mr-2" /> {doc.status === "published" ? "Ver Público" : "Prévia"}
               </a>
             </Button>
           </div>
