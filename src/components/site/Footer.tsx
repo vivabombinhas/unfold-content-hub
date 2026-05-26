@@ -53,7 +53,7 @@ export const Footer = ({ documents = [] }: { documents?: any[] }) => {
               )}
               {tech && (
                 <li>
-                  <a href={`/documentos/technical_differential/${tech.slug}`} target="_blank" className="hover:text-brand-gold transition-colors font-bold">
+                  <a href={`/documentos/diferenciais/${tech.slug}`} target="_blank" className="hover:text-brand-gold transition-colors font-bold">
                     Diferenciais Técnicos
                   </a>
                 </li>

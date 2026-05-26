@@ -94,10 +94,12 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
   });
 
   const copyLink = (type: string, docSlug: string) => {
-    const url = `${window.location.origin}/documentos/${type}/${docSlug}`;
+    const urlType = type === "tcle" ? "tcle" : "diferenciais";
+    const url = `${window.location.origin}/documentos/${urlType}/${docSlug}`;
     navigator.clipboard.writeText(url);
     toast({ title: "Link copiado!" });
   };
+
 
   const tcle = documents?.find(d => d.document_type === "tcle");
   const tech = documents?.find(d => d.document_type === "technical_differential");
@@ -157,7 +159,7 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
             )}
 
             <Button variant="ghost" size="sm" className="h-8 text-xs text-white/40 hover:text-white" asChild>
-              <a href={`/documentos/${type}/${doc.slug}`} target="_blank" rel="noreferrer">
+              <a href={`/documentos/${type === 'tcle' ? 'tcle' : 'diferenciais'}/${doc.slug}`} target="_blank" rel="noreferrer">
                 <Eye className="size-3.5 mr-2" /> Ver Público
               </a>
             </Button>

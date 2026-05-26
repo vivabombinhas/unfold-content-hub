@@ -6,8 +6,10 @@ import { Footer } from "@/components/site/Footer";
 import { SEO } from "@/components/site/SEO";
 import { Loader2, AlertCircle } from "lucide-react";
 
-export default function DocumentViewer() {
-  const { type, slug } = useParams();
+export default function DocumentViewer({ type: propType }: { type?: "tcle" | "technical_differential" }) {
+  const { type: paramType, slug } = useParams();
+  const type = propType || paramType;
+
 
   const { data: document, isLoading, error } = useQuery({
     queryKey: ["public-document", type, slug],

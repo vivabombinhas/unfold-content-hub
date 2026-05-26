@@ -38,7 +38,8 @@ const queryClient = new QueryClient();
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/p/:slug" element={<PublicPage />} />
-              <Route path="/documentos/:type/:slug" element={<DocumentViewer />} />
+              <Route path="/documentos/tcle/:slug" element={<DocumentViewer type="tcle" />} />
+              <Route path="/documentos/diferenciais/:slug" element={<DocumentViewer type="technical_differential" />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
