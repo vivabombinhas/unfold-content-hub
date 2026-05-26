@@ -415,9 +415,19 @@ export default function PageEditor() {
         <div className="p-8 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
           {selected ? (
             <>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="size-8 rounded-xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20"><Layout className="size-4 text-brand-gold" /></div>
-                <div><h4 className="text-xs uppercase tracking-[0.2em] text-white/40 font-medium">Editando</h4><p className="text-sm font-medium text-white/90">{BLOCK_LABELS[selected.type]}</p></div>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20"><Layout className="size-4 text-brand-gold" /></div>
+                  <div><h4 className="text-xs uppercase tracking-[0.2em] text-white/40 font-medium">Editando</h4><p className="text-sm font-medium text-white/90">{BLOCK_LABELS[selected.type]}</p></div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSelectedId(null)}
+                  className="h-8 text-[10px] uppercase tracking-wider text-white/40 hover:text-white hover:bg-white/5 rounded-lg"
+                >
+                  Configurações Gerais
+                </Button>
               </div>
               <BlockForm type={selected.type} data={selected.data} onChange={(next) => markDirty(selected.id, { data: next })} pageTitle={pageMeta.title} />
             </>
