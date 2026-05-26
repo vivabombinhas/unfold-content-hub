@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import PublicPage from "./pages/PublicPage.tsx";
+import DocumentViewer from "./pages/DocumentViewer.tsx";
 import SlugRedirectHandler from "./pages/SlugRedirectHandler.tsx";
 import { AuthProvider } from "@/hooks/use-auth";
 import AdminLogin from "./pages/admin/AdminLogin.tsx";
@@ -37,6 +38,7 @@ const queryClient = new QueryClient();
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/p/:slug" element={<PublicPage />} />
+              <Route path="/documentos/:type/:slug" element={<DocumentViewer />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
