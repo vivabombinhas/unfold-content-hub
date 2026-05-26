@@ -385,6 +385,62 @@ export type Database = {
         }
         Relationships: []
       }
+      procedure_documents: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          html_content: string | null
+          id: string
+          page_id: string
+          published_at: string | null
+          reviewed_at: string | null
+          slug: string
+          source_context: Json | null
+          status: Database["public"]["Enums"]["document_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          html_content?: string | null
+          id?: string
+          page_id: string
+          published_at?: string | null
+          reviewed_at?: string | null
+          slug: string
+          source_context?: Json | null
+          status?: Database["public"]["Enums"]["document_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
+          html_content?: string | null
+          id?: string
+          page_id?: string
+          published_at?: string | null
+          reviewed_at?: string | null
+          slug?: string
+          source_context?: Json | null
+          status?: Database["public"]["Enums"]["document_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procedure_documents_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           created_at: string
@@ -581,6 +637,8 @@ export type Database = {
         | "procedimento_detalhado"
         | "beneficios_grid"
         | "procedimento_detalhado_v2"
+      document_status: "draft" | "reviewed" | "approved" | "published"
+      document_type: "tcle" | "technical_differential"
       modificador_tipo: "publico" | "indicacao" | "objetivo" | "area_corporal"
       page_status: "draft" | "published"
     }
@@ -729,6 +787,8 @@ export const Constants = {
         "beneficios_grid",
         "procedimento_detalhado_v2",
       ],
+      document_status: ["draft", "reviewed", "approved", "published"],
+      document_type: ["tcle", "technical_differential"],
       modificador_tipo: ["publico", "indicacao", "objetivo", "area_corporal"],
       page_status: ["draft", "published"],
     },
