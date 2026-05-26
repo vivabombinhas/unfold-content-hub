@@ -61,7 +61,14 @@ export default function PublicPage({ slugOverride }: PublicPageProps = {}) {
         .eq("enabled", true)
         .order("position");
       if (be) throw be;
-      return { page: p, blocks: (blocks ?? []) as unknown as BlockRow[] };
+
+      const { data: docs } = await supabase
+        .from("procedure_documents")
+        .select("*")
+        .eq("page_id", p.id)
+        .eq("status", "published");
+
+      return { page: p, blocks: (blocks ?? []) as unknown as BlockRow[], documents: docs || [] };
     },
   });
 
@@ -215,7 +222,7 @@ export default function PublicPage({ slugOverride }: PublicPageProps = {}) {
 
       <LocalizacaoSection />
 
-      <Footer />
+      <Footer documents={data.documents} />
       <FloatingCTA />
     </div>
   );

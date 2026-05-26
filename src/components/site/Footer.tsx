@@ -1,7 +1,10 @@
 import { Phone, Mail, MapPin, Instagram } from "lucide-react";
 import { Medal } from "./Medal";
 
-export const Footer = () => {
+export const Footer = ({ documents = [] }: { documents?: any[] }) => {
+  const tcle = documents.find(d => d.document_type === "tcle");
+  const tech = documents.find(d => d.document_type === "technical_differential");
+
   return (
     <footer className="bg-brand-black text-brand-text-soft border-t border-brand-gold/15 relative z-[2]">
       <div className="container-editorial section-pad">
@@ -36,13 +39,25 @@ export const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-[10px] font-body font-semibold uppercase tracking-[0.22em] text-brand-gold mb-5">Documentos</h4>
+            <h4 className="text-[10px] font-body font-semibold uppercase tracking-[0.22em] text-brand-gold mb-5">Institucional</h4>
             <ul className="space-y-2 text-xs">
               <li><a href="#" className="hover:text-brand-gold transition-colors">Alvará Sanitário</a></li>
-              <li><a href="#" className="hover:text-brand-gold transition-colors">CNPJ · Razão Social</a></li>
-              <li><a href="#" className="hover:text-brand-gold transition-colors">TCLE · Termo de Consentimento</a></li>
-              <li><a href="#" className="hover:text-brand-gold transition-colors">Política de Privacidade · LGPD</a></li>
-              <li><a href="#" className="hover:text-brand-gold transition-colors">Diferenciais Técnicos (PDF)</a></li>
+              <li><a href="#" className="hover:text-brand-gold transition-colors">CNPJ: 00.000.000/0001-00</a></li>
+              <li><a href="#" className="hover:text-brand-gold transition-colors">Política de Privacidade</a></li>
+              {tcle && (
+                <li>
+                  <a href={`/documentos/tcle/${tcle.slug}`} target="_blank" className="hover:text-brand-gold transition-colors font-bold">
+                    TCLE · Consentimento
+                  </a>
+                </li>
+              )}
+              {tech && (
+                <li>
+                  <a href={`/documentos/diferenciais/${tech.slug}`} target="_blank" className="hover:text-brand-gold transition-colors font-bold">
+                    Diferenciais Técnicos
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>
