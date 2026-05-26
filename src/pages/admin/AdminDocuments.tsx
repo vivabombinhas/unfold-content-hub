@@ -56,6 +56,11 @@ export default function AdminDocuments() {
     doc.title?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const getDocumentHref = (doc: any) => {
+    const urlType = doc.document_type === "tcle" ? "tcle" : "diferenciais";
+    return `/documentos/${urlType}/${doc.slug}${doc.status === "published" ? "" : "?preview=1"}`;
+  };
+
   return (
     <div className="p-6 lg:p-10 space-y-8 max-w-7xl mx-auto bg-[#0A0A0A] min-h-screen">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -128,7 +133,7 @@ export default function AdminDocuments() {
                   size="icon" 
                   className="size-9 rounded-xl text-white/20 hover:text-brand-gold hover:bg-brand-gold/10"
                 >
-                  <a href={`/documentos/${doc.document_type === 'tcle' ? 'tcle' : 'diferenciais'}/${doc.slug}`} target="_blank" rel="noreferrer">
+                  <a href={getDocumentHref(doc)} target="_blank" rel="noreferrer" title={doc.status === "published" ? "Ver documento público" : "Ver prévia autenticada"}>
                     <ExternalLink className="size-4" />
                   </a>
                 </Button>
