@@ -1,34 +1,41 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { SEO } from "@/components/site/SEO";
 import { Loader2, AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function DocumentViewer({ type: propType }: { type?: "tcle" | "technical_differential" }) {
   const { type: paramType, slug } = useParams();
+  const [search] = useSearchParams();
+  const { isAdmin, loading: authLoading } = useAuth();
   const rawType = propType || paramType;
   const type = rawType === "diferenciais" ? "technical_differential" : rawType;
+  const previewMode = search.get("preview") === "1" && isAdmin;
 
 
   const { data: document, isLoading, error } = useQuery({
-    queryKey: ["public-document", type, slug],
+    queryKey: ["public-document", type, slug, previewMode],
+    enabled: !authLoading,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("procedure_documents")
         .select("*, pages(title, metadata)")
         .eq("document_type", type as "tcle" | "technical_differential")
-        .eq("slug", slug)
-        .eq("status", "published")
-        .maybeSingle();
+        .eq("slug", slug);
+
+      if (!previewMode) query = query.eq("status", "published");
+
+      const { data, error } = await query.maybeSingle();
 
       if (error) throw error;
       return data;
     },
   });
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-brand-black flex flex-col items-center justify-center text-center p-10">
         <Loader2 className="w-12 h-12 text-brand-gold animate-spin mb-4" />
