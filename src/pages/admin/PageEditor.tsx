@@ -398,7 +398,10 @@ export default function PageEditor() {
         <SidebarBlockList
           blocks={blocks}
           selectedId={selectedId}
-          onSelect={setSelectedId}
+          onSelect={(id) => {
+            setSelectedId(id);
+            setIsDrawerOpen(true);
+          }}
           onToggle={(id, enabled) => markDirty(id, { enabled })}
           onRemove={removeBlock}
           onDragEnd={handleDragEnd}
