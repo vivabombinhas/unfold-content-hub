@@ -25,6 +25,10 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProcedureDocument = Database["public"]["Tables"]["procedure_documents"]["Row"];
+type ProcedureDocumentUpdate = Database["public"]["Tables"]["procedure_documents"]["Update"] & { id: string };
 
 interface ProcedureDocumentsTabProps {
   pageId: string;
@@ -47,7 +51,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabProps) {
   const qc = useQueryClient();
-  const [editingDoc, setEditingDoc] = useState<any>(null);
+  const [editingDoc, setEditingDoc] = useState<ProcedureDocument | null>(null);
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ["procedure-documents", pageId],
@@ -73,13 +77,13 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
       qc.invalidateQueries({ queryKey: ["procedure-documents", pageId] });
       toast({ title: "Documento gerado com sucesso" });
     },
-    onError: (e: any) => {
-      toast({ title: "Erro ao gerar documento", description: e.message, variant: "destructive" });
+    onError: (e: unknown) => {
+      toast({ title: "Erro ao gerar documento", description: e instanceof Error ? e.message : "Tente novamente.", variant: "destructive" });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: any) => {
+    mutationFn: async ({ id, ...updates }: ProcedureDocumentUpdate) => {
       const { data, error } = await supabase
         .from("procedure_documents")
         .update(updates)
@@ -101,7 +105,7 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
     toast({ title: "Link copiado!" });
   };
 
-  const getDocumentHref = (type: string, doc: any) => {
+  const getDocumentHref = (type: string, doc: ProcedureDocument) => {
     const urlType = type === "tcle" ? "tcle" : "diferenciais";
     return `/documentos/${urlType}/${doc.slug}${doc.status === "published" ? "" : "?preview=1"}`;
   };
@@ -110,7 +114,7 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
   const tcle = documents?.find(d => d.document_type === "tcle");
   const tech = documents?.find(d => d.document_type === "technical_differential");
 
-  const renderDocCard = (type: "tcle" | "technical_differential", doc: any) => {
+  const renderDocCard = (type: "tcle" | "technical_differential", doc?: ProcedureDocument) => {
     const label = type === "tcle" ? "TCLE" : "Diferenciais Técnicos";
     
     return (
@@ -220,7 +224,7 @@ export function ProcedureDocumentsTab({ pageId, slug }: ProcedureDocumentsTabPro
             <Button variant="ghost" onClick={() => setEditingDoc(null)}>Cancelar</Button>
             <Button 
               className="bg-brand-gold text-brand-green" 
-              onClick={() => updateMutation.mutate({ id: editingDoc.id, html_content: editingDoc.html_content, status: "draft" })}
+              onClick={() => editingDoc && updateMutation.mutate({ id: editingDoc.id, html_content: editingDoc.html_content, status: "draft" })}
             >
               Salvar Alterações
             </Button>
