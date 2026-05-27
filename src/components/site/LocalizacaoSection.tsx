@@ -41,7 +41,10 @@ function telHref(phone: string | null | undefined): string {
   return `tel:+${phone.replace(/\D/g, "")}`;
 }
 
-export function LocalizacaoSection() {
+export function LocalizacaoSection({ documents = [] }: { documents?: any[] }) {
+  const tcle = documents.find(d => d.document_type === "tcle");
+  const tech = documents.find(d => d.document_type === "technical_differential");
+
   const { data } = useQuery({
     queryKey: ["site-settings-localizacao"],
     queryFn: async () => {
@@ -97,15 +100,30 @@ export function LocalizacaoSection() {
                 Documentação técnica
               </p>
               <div className="flex flex-wrap gap-2">
-                {["Diferenciais técnicos", "Alvará sanitário", "TCLE"].map((label) => (
+                <a
+                  href="#"
+                  className="text-[11px] uppercase tracking-[0.15em] px-4 py-2 border border-brand-gold/30 hover:border-brand-gold hover:bg-brand-gold/5 transition-colors"
+                >
+                  Alvará sanitário (PDF)
+                </a>
+                {tech && (
                   <a
-                    key={label}
-                    href="#"
-                    className="text-[11px] uppercase tracking-[0.15em] px-4 py-2 border border-brand-gold/30 hover:border-brand-gold hover:bg-brand-gold/5 transition-colors"
+                    href={`/documentos/diferenciais/${tech.slug}`}
+                    target="_blank"
+                    className="text-[11px] uppercase tracking-[0.15em] px-4 py-2 border border-brand-gold/30 hover:border-brand-gold hover:bg-brand-gold/5 transition-colors font-bold"
                   >
-                    {label} (PDF)
+                    Diferenciais Técnicos
                   </a>
-                ))}
+                )}
+                {tcle && (
+                  <a
+                    href={`/documentos/tcle/${tcle.slug}`}
+                    target="_blank"
+                    className="text-[11px] uppercase tracking-[0.15em] px-4 py-2 border border-brand-gold/30 hover:border-brand-gold hover:bg-brand-gold/5 transition-colors font-bold"
+                  >
+                    TCLE · Consentimento
+                  </a>
+                )}
               </div>
             </div>
           </div>
