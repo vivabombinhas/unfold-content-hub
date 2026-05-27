@@ -63,6 +63,15 @@ serve(async (req) => {
       blocks = liveBlocks || []
     }
 
+    // 2.5 Fetch Procedure Documents
+    const { data: documents, error: docsError } = await supabase
+      .from('procedure_documents')
+      .select('*')
+      .eq('page_id', page.id)
+      .eq('status', 'published')
+    
+    if (docsError) console.error("Error fetching documents:", docsError)
+
     // 3. Metadata Setup
     const siteTitle = "Clínica de Estética Batel · Curitiba"
     const pageTitle = pageData.meta_title || pageData.title || "Tratamento"
