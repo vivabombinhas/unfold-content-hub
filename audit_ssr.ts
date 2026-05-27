@@ -1,8 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { parse } from "https://esm.sh/node-html-parser@6.1.13";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_URL = "https://ldsixdxmdzngagbminwh.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxkc2l4ZHhtZHpuZ2FnYm1pbndoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTUyNTgsImV4cCI6MjA5Mjg3MTI1OH0.L_L9QAPkc61Yqgpn5yshXQlEZmH5W8KEaFa3p-aYQtU";
+
 const PREVIEW_URL = "https://id-preview--9deebc0c-a5bb-4019-bd59-256e19a773cc.lovable.app"; // Using preview URL for audit
 const RENDER_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/render-page`;
 
