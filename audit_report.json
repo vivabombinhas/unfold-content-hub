@@ -1,0 +1,34 @@
+[
+  {
+    "slug": "modelo",
+    "title": {
+      "db": "Página Modelo | Estética Batel",
+      "ssr": "Página Modelo | Estética Batel"
+    },
+    "description": {
+      "db": "Modelo padrão para novas páginas.",
+      "ssr": "Modelo padrão para novas páginas."
+    },
+    "h1": {
+      "db": "Tratamento Personalizado",
+      "ssr": "Tratamento Personalizado"
+    },
+    "canonical": {
+      "db": "https://esteticabatel.com.br/modelo/",
+      "ssr": "https://esteticabatel.com.br/modelo/"
+    },
+    "index": {
+      "db": true,
+      "ssr": true
+    },
+    "eeat": {
+      "rt": true,
+      "localization": true
+    },
+    "docs": {
+      "db": 0,
+      "tcle": false,
+      "tech": false
+    }
+  }
+]
