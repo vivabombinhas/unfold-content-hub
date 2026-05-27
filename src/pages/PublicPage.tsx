@@ -220,7 +220,7 @@ export default function PublicPage({ slugOverride }: PublicPageProps = {}) {
           )}
        </PoolsProvider>
 
-      <LocalizacaoSection />
+      <LocalizacaoSection documents={data.documents} />
 
       <Footer documents={data.documents} />
       <FloatingCTA />
