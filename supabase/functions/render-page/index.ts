@@ -366,11 +366,49 @@ serve(async (req) => {
       }
     })
 
-    // Guaranteed EEAT Footer / RT Section
+    // Guaranteed EEAT Footer / RT Section / Localization
     const name = "Dra. Daniele Florêncio"
     const register = "Biomédica · CRBM 8242-PR"
     const dateStr = new Date().toLocaleDateString('pt-BR')
     
+    // Get documents links
+    const tcleDoc = documents?.find((d: any) => d.document_type === 'tcle')
+    const techDoc = documents?.find((d: any) => d.document_type === 'technical_differential')
+    
+    let docLinksHtml = '<a href="#" class="doc-link">Alvará Sanitário (PDF)</a>'
+    if (techDoc) {
+      docLinksHtml += `\n<a href="/documentos/diferenciais/${techDoc.slug}" target="_blank" class="doc-link">Diferenciais Técnicos</a>`
+    }
+    if (tcleDoc) {
+      docLinksHtml += `\n<a href="/documentos/tcle/${tcleDoc.slug}" target="_blank" class="doc-link">TCLE · Consentimento</a>`
+    }
+
+    const LOCALIZACAO_SECTION = `
+<section id="contato" class="block-section localization-section">
+  <div class="container">
+    <div class="loc-grid">
+      <div class="loc-info">
+        <span class="eyebrow">Onde estamos</span>
+        <h2>No coração do Batel.</h2>
+        <p class="address">Rua Brigadeiro Franco, 2670<br>Batel · Curitiba/PR<br>CEP 80250-030</p>
+        <div class="loc-contact">
+          <p><strong>Telefone:</strong> (41) 3000-0000</p>
+          <p><strong>WhatsApp:</strong> <a href="https://wa.me/5541999999999" target="_blank">Clique aqui</a></p>
+        </div>
+        <div class="loc-docs">
+          <p class="doc-label">DOCUMENTAÇÃO TÉCNICA</p>
+          <div class="doc-links">
+            ${docLinksHtml}
+          </div>
+        </div>
+      </div>
+      <div class="loc-map">
+        <iframe title="Mapa" src="https://www.google.com/maps?q=Rua+Brigadeiro+Franco+2670+Batel+Curitiba&output=embed" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+</section>`;
+
     const EEAT_FOOTER = '<section id="eeat-authority" class="block-section rt-section">\n' +
       '  <div class="container">\n' +
       '    <hr class="eeat-divider">\n' +
@@ -392,6 +430,8 @@ serve(async (req) => {
       '    </div>\n' +
       '  </div>\n' +
       '</section>\n';
+
+    articleHtml += LOCALIZACAO_SECTION;
 
     // Replace old RT if it exists, or add footer
     if (articleHtml.includes('id="rt"')) {
