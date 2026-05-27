@@ -95,8 +95,6 @@ serve(async (req) => {
     const applyCompliance = (text: string): string => {
       if (!text) return "";
       
-      // Block list for critical terms - if they appear in certain contexts, we might want to flag, 
-      // but for SSR we rewrite or sanitize.
       let sanitized = text
         .replace(/Dra\.?\s+Daniele\s+Batel/gi, 'Dra. Daniele Florêncio')
         .replace(/apresenta\s+risco\s+à\s+vida/gi, 'é um procedimento seguro')
@@ -121,7 +119,6 @@ serve(async (req) => {
       return sanitized;
     };
 
-    // FORBIDDEN TERMS — global enforcement across HTML + JSON-LD
     const FORBIDDEN_PATTERNS: { pattern: RegExp; label: string }[] = [
       { pattern: /risco\s+[àa]\s+vida/gi, label: 'risco à vida' },
       { pattern: /risco\s+de\s+morte/gi, label: 'risco de morte' },
@@ -134,7 +131,6 @@ serve(async (req) => {
       { pattern: /especialistas\s+qualificados/gi, label: 'especialistas qualificados' },
     ];
 
-    // Strip leading "1. ", "2.", "(3)" filler numbering from AI-generated FAQs
     const stripFaqNumbering = (s: string): string =>
       s.replace(/^\s*\(?\d{1,2}[\.\)\-:]\s*/, '').trim();
 
@@ -153,7 +149,6 @@ serve(async (req) => {
         'risco à vida', 'risco de morte', 'perigo de vida', 'médico', 
         'dermatologista', 'cirurgião plástico', 'nossa garantia'
       ];
-      // If question is alarmist or generic filler
       const alarmist = ['morte', 'morrer', 'fatal', 'perigoso'];
       if (alarmist.some(term => combined.includes(term))) return true;
       
@@ -227,15 +222,13 @@ serve(async (req) => {
 
           rawItems.forEach((item: any) => {
             if (!item.question || !item.answer) return;
-            if (faqItems.length >= 12) return; // Strategic limit
+            if (faqItems.length >= 12) return;
 
-            // 1. Prohibited check
             if (isForbiddenFaq(item.question, item.answer)) return;
 
             const q = applyCompliance(stripFaqNumbering(item.question.trim()));
             const a = applyCompliance(item.answer.trim());
             
-            // 2. Strong Semantic Deduplication
             const intent = getFaqIntent(q);
             if (intent && seenFaqIntents.has(intent)) return;
 
@@ -366,12 +359,10 @@ serve(async (req) => {
       }
     })
 
-    // Guaranteed EEAT Footer / RT Section / Localization
     const name = "Dra. Daniele Florêncio"
     const register = "Biomédica · CRBM 8242-PR"
     const dateStr = new Date().toLocaleDateString('pt-BR')
     
-    // Get documents links
     const tcleDoc = documents?.find((d: any) => d.document_type === 'tcle')
     const techDoc = documents?.find((d: any) => d.document_type === 'technical_differential')
     
@@ -433,17 +424,13 @@ serve(async (req) => {
 
     articleHtml += LOCALIZACAO_SECTION;
 
-    // Replace old RT if it exists, or add footer
     if (articleHtml.includes('id="rt"')) {
-       // We could replace it, but for safety let's just make sure it's consistent
     } else {
        articleHtml += EEAT_FOOTER;
     }
 
-    // 5. Schema & Breadcrumbs
     const schemas: any[] = []
     
-    // Medical/Procedure Schema with modifier-aware logic
     const medicalSchema: any = {
       "@context": "https://schema.org",
       "@type": "MedicalProcedure",
@@ -471,7 +458,6 @@ serve(async (req) => {
       }
     }
 
-    // Add specific medical context based on modifier_tipo
     if (page.modificador && page.modificador_tipo) {
       switch (page.modificador_tipo) {
         case 'indicacao':
@@ -497,7 +483,6 @@ serve(async (req) => {
 
     schemas.push(medicalSchema)
 
-    // Dynamic Hierarchical Breadcrumbs
     const breadcrumbList: any[] = [
       { "@type": "ListItem", "position": 1, "name": "Início", "item": siteUrl }
     ]
@@ -590,8 +575,18 @@ serve(async (req) => {
 '         .authority-item { color: var(--gold); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; }\n' +
 '         .cta-button { display: inline-block; background: var(--gold); color: black; padding: 16px 32px; text-decoration: none; font-weight: 700; border-radius: 4px; margin-top: 24px; }\n' +
 '         .cases-placeholder { border: 1px dashed rgba(197, 160, 89, 0.3); padding: 40px; text-align: center; color: var(--text-muted); font-style: italic; }\n' +
-'         footer { padding: 40px 0; text-align: center; font-size: 14px; color: var(--text-muted); }\n' +
-'        @media (max-width: 768px) { h1 { font-size: 2.2rem; } h2 { font-size: 1.8rem; } }\n' +
+'         .localization-section { background: var(--black); border-top: 1px solid rgba(197, 160, 89, 0.1); }\n' +
+'         .loc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }\n' +
+'         .loc-info { padding: 40px 0; }\n' +
+'         .loc-docs { margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(197, 160, 89, 0.1); }\n' +
+'         .doc-label { font-size: 10px; color: var(--gold); letter-spacing: 0.2em; margin-bottom: 12px; font-weight: 700; }\n' +
+'         .doc-links { display: flex; flex-wrap: wrap; gap: 12px; }\n' +
+'         .doc-link { color: var(--text-muted); text-decoration: none; font-size: 11px; text-transform: uppercase; border: 1px solid rgba(197,160,89,0.3); padding: 8px 16px; transition: 0.3s; }\n' +
+'         .doc-link:hover { border-color: var(--gold); color: white; background: rgba(197,160,89,0.05); }\n' +
+'         footer { padding: 60px 0; text-align: center; font-size: 14px; color: var(--text-muted); border-top: 1px solid rgba(197,160,89,0.1); }\n' +
+'         .footer-docs { margin-bottom: 24px; display: flex; justify-content: center; gap: 16px; font-size: 12px; flex-wrap: wrap; }\n' +
+'         .footer-docs a { color: var(--gold); text-decoration: none; font-weight: 600; }\n' +
+'        @media (max-width: 768px) { h1 { font-size: 2.2rem; } h2 { font-size: 1.8rem; } .loc-grid { grid-template-columns: 1fr; } }\n' +
 '    </style>\n' +
 '    <script type="application/ld+json">\n' +
 '        ' + JSON.stringify(schemas, null, 2) + '\n' +
@@ -602,6 +597,12 @@ serve(async (req) => {
 '        ' + articleHtml + '\n' +
 '        <footer>\n' +
 '            <div class="container">\n' +
+'                <div class="footer-docs">\n' +
+'                  <a href="#">Alvará Sanitário</a>\n' +
+'                  ' + (techDoc ? '<a href="/documentos/diferenciais/' + techDoc.slug + '">Diferenciais Técnicos</a>' : '') + '\n' +
+'                  ' + (tcleDoc ? '<a href="/documentos/tcle/' + tcleDoc.slug + '">TCLE · Consentimento</a>' : '') + '\n' +
+'                  <a href="#">Política de Privacidade</a>\n' +
+'                </div>\n' +
 '                <p>&copy; ' + new Date().getFullYear() + ' Clínica de Estética Batel. Todos os direitos reservados.</p>\n' +
 '                <p>Curitiba - Paraná</p>\n' +
 '            </div>\n' +
@@ -610,15 +611,12 @@ serve(async (req) => {
 '</body>\n' +
 '</html>';
 
-    // ===== GLOBAL COMPLIANCE GUARD =====
-    // Final pass: scan entire HTML (visible + JSON-LD) for forbidden terms.
-    // Replace any leftover with safe equivalents and emit alerts in headers + meta.
     const REPLACEMENTS: Record<string, string> = {
       'risco à vida': 'riscos clínicos controlados',
       'risco a vida': 'riscos clínicos controlados',
       'risco de morte': 'riscos clínicos controlados',
       'perigo de vida': 'riscos clínicos controlados',
-      'nossa garantia': 'compromisso de excelência',
+      'nossa garantia': 'compromisso de excellence',
       'garantia de resultado': 'expectativa de resultado',
       'dermatologista': 'biomédica habilitada',
       'cirurgião plástico': 'equipe técnica especializada',
@@ -636,7 +634,6 @@ serve(async (req) => {
     }
     const complianceStatus = violations.length === 0 ? 'clean' : 'sanitized';
     const violationsJson = JSON.stringify(violations);
-    // Inject status meta + HTML comment so QA can read them deterministically
     html = html.replace(
       '<meta property="og:site_name" content="Estética Batel">',
       '<meta property="og:site_name" content="Estética Batel">\n' +
